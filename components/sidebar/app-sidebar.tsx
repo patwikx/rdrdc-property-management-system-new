@@ -187,7 +187,7 @@ const getNavigationItems = (userRole: string) => {
         items: [
           {
             title: "Users",
-            url: "/system/users",
+            url: "/users",
           },
           {
             title: "Audit Logs",

@@ -492,12 +492,12 @@ export default function TenantPage({ params }: TenantPageProps) {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Tenant Information */}
+              {/* Business Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <User className="h-5 w-5" />
-                    <span>Tenant Information</span>
+                    <Building className="h-5 w-5" />
+                    <span>Business Information</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -505,32 +505,35 @@ export default function TenantPage({ params }: TenantPageProps) {
                     <Form {...form}>
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-2">
+
+
                           <FormField
-                            control={form.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">First Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} className="h-8" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">Last Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} className="h-8" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          control={form.control}
+                          name="company"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Company</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-8" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="businessName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Business Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-8" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         </div>
                         
                         <FormField
@@ -574,12 +577,12 @@ export default function TenantPage({ params }: TenantPageProps) {
                   ) : (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">BP Code</label>
-                        <p className="text-sm font-mono">{tenant.bpCode}</p>
+                        <label className="text-xs font-medium text-muted-foreground">Company</label>
+                        <p className="text-sm">{tenant.company}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Full Name</label>
-                        <p className="text-sm">{tenant.firstName} {tenant.lastName}</p>
+                        <label className="text-xs font-medium text-muted-foreground">Business Name</label>
+                        <p className="text-sm">{tenant.businessName}</p>
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground">Status</label>
@@ -691,56 +694,57 @@ export default function TenantPage({ params }: TenantPageProps) {
                 </CardContent>
               </Card>
 
-              {/* Business Information */}
+              {/* Tenant Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Building className="h-5 w-5" />
-                    <span>Business Information</span>
+                    <User className="h-5 w-5" />
+                    <span>Tenant Information</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {isEditing ? (
                     <Form {...form}>
                       <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Company</FormLabel>
-                              <FormControl>
-                                <Input {...field} className="h-8" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="businessName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Business Name</FormLabel>
-                              <FormControl>
-                                <Input {...field} className="h-8" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                          <FormField
+                            control={form.control}
+                            name="firstName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">First Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} className="h-8" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="lastName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Last Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} className="h-8" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                       </div>
                     </Form>
                   ) : (
                     <div className="space-y-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Company</label>
-                        <p className="text-sm">{tenant.company}</p>
+ 
+
+                                           <div>
+                        <label className="text-xs font-medium text-muted-foreground">BP Code</label>
+                        <p className="text-sm font-mono">{tenant.bpCode}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Business Name</label>
-                        <p className="text-sm">{tenant.businessName}</p>
+                        <label className="text-xs font-medium text-muted-foreground">Full Name</label>
+                        <p className="text-sm">{tenant.firstName} {tenant.lastName}</p>
                       </div>
                     </div>
                   )}
