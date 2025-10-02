@@ -10,7 +10,7 @@ import { DynamicBreadcrumb } from '@/components/breadcrumb/dynamic-breadcrumb';
 import { GlobalSearch } from '@/components/search/global-search';
 
 export const metadata = {
-  title: "Dashboard | Asset Management System",
+  title: "Dashboard | Property Management System",
   description: "Asset Management System Dashboard",
 };
 
