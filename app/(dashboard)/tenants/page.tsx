@@ -238,7 +238,7 @@ export default function TenantsPage() {
                       </div>
                       <div>
                         <CardTitle className="text-lg">
-                          {tenant.firstName} {tenant.lastName}
+                          {tenant.businessName}
                         </CardTitle>
                         <CardDescription className="font-mono text-xs">
                           {tenant.bpCode}

@@ -77,7 +77,7 @@ function PropertyCard({ property }: { property: Awaited<ReturnType<typeof getPro
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center justify-between pt-4 border-t">
           <span className="text-xs text-muted-foreground">
             Created {format(new Date(property.createdAt), 'MMM dd, yyyy')}
           </span>
