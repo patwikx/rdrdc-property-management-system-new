@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Plus, Search, Building, Phone, Mail, Calendar } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { User, Plus, Search, Building, Phone, Mail, Calendar, X } from "lucide-react"
 import { getAllTenants, TenantWithDetails } from "@/lib/actions/tenant-actions"
+import { TenantStatus, LeaseStatus } from "@prisma/client"
 import { format } from "date-fns"
 import Link from "next/link"
 
@@ -29,10 +31,22 @@ function getLeaseStatusColor(status: string) {
   }
 }
 
+interface TenantFilters {
+  status: TenantStatus | 'all'
+  leaseStatus: LeaseStatus | 'all'
+  hasActiveLease: 'all' | 'yes' | 'no'
+}
+
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<TenantWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [filters, setFilters] = useState<TenantFilters>({
+    status: 'all',
+    leaseStatus: 'all',
+    hasActiveLease: 'all'
+  })
+
 
   useEffect(() => {
     async function fetchTenants() {
@@ -49,14 +63,43 @@ export default function TenantsPage() {
     fetchTenants()
   }, [])
 
-  // Filter tenants based on search query
-  const filteredTenants = tenants.filter(tenant => 
-    tenant.bpCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    `${tenant.firstName} ${tenant.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Filter tenants based on search query and filters
+  const filteredTenants = tenants.filter(tenant => {
+    // Search filter
+    const matchesSearch = !searchQuery || (
+      tenant.bpCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${tenant.firstName} ${tenant.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
+    // Status filter
+    const matchesStatus = filters.status === 'all' || tenant.status === filters.status
+
+    // Active lease filter
+    const activeLease = tenant.leases.find(lease => lease.status === 'ACTIVE')
+    const matchesActiveLease = filters.hasActiveLease === 'all' || 
+      (filters.hasActiveLease === 'yes' && activeLease) ||
+      (filters.hasActiveLease === 'no' && !activeLease)
+
+    // Lease status filter
+    const matchesLeaseStatus = filters.leaseStatus === 'all' || 
+      (activeLease && activeLease.status === filters.leaseStatus)
+
+    return matchesSearch && matchesStatus && matchesActiveLease && matchesLeaseStatus
+  })
+
+  const hasActiveFilters = Object.values(filters).some(value => value !== 'all') || searchQuery
+
+  const clearAllFilters = () => {
+    setFilters({
+      status: 'all',
+      leaseStatus: 'all',
+      hasActiveLease: 'all'
+    })
+    setSearchQuery('')
+  }
 
   if (isLoading) {
     return (
@@ -91,17 +134,86 @@ export default function TenantsPage() {
         </Link>
       </div>
 
-      {/* Search and Stats */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tenants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      {/* Search and Filters */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tenants..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <Select
+            value={filters.status}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value as TenantStatus | 'all' }))}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="INACTIVE">Inactive</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.leaseStatus}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, leaseStatus: value as LeaseStatus | 'all' }))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Lease Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Leases</SelectItem>
+              <SelectItem value="ACTIVE">Active Lease</SelectItem>
+              <SelectItem value="PENDING">Pending Lease</SelectItem>
+              <SelectItem value="TERMINATED">Terminated</SelectItem>
+              <SelectItem value="EXPIRED">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.hasActiveLease}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, hasActiveLease: value as 'all' | 'yes' | 'no' }))}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Has Lease" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tenants</SelectItem>
+              <SelectItem value="yes">With Lease</SelectItem>
+              <SelectItem value="no">No Lease</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearAllFilters}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear
+            </Button>
+          )}
         </div>
+
         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
           <span>{filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''}</span>
           <span>•</span>

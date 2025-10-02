@@ -3,23 +3,17 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { FileCheck, Plus, Search, Filter, X, Calendar, Building, DollarSign } from "lucide-react"
+import { FileCheck, Plus, Search, X, Calendar, Building, DollarSign } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getLeases, getLeaseStats } from "@/lib/actions/lease-actions"
 import { LeaseStatus } from "@prisma/client"
 import { format } from "date-fns"
 
-const leaseStatusOptions = [
-  { value: '', label: 'All Statuses' },
-  { value: LeaseStatus.ACTIVE, label: 'Active' },
-  { value: LeaseStatus.PENDING, label: 'Pending' },
-  { value: LeaseStatus.TERMINATED, label: 'Terminated' },
-  { value: LeaseStatus.EXPIRED, label: 'Expired' },
-]
 
 function LeaseStatsCards() {
   const [stats, setStats] = useState({
@@ -329,76 +323,56 @@ function SearchAndFilter({
   onSearchChange: (value: string) => void
   onStatusChange: (value: LeaseStatus | undefined) => void
 }) {
-  const [showFilters, setShowFilters] = useState(false)
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search leases..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-          {search && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-              onClick={() => onSearchChange('')}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filter
-          {status && <Badge variant="secondary" className="ml-2">1</Badge>}
-        </Button>
+    <div className="flex items-center gap-4">
+      <div className="relative flex-1 max-w-sm">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search leases..."
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10"
+        />
+        {search && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+            onClick={() => onSearchChange('')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      {showFilters && (
-        <Card className="p-4">
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Lease Status</label>
-              <select
-                value={status || ''}
-                onChange={(e) => onStatusChange(e.target.value as LeaseStatus || undefined)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {leaseStatusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {(search || status) && (
-              <div className="flex items-center justify-between pt-2 border-t">
-                <span className="text-sm text-muted-foreground">Active filters</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onSearchChange('')
-                    onStatusChange(undefined)
-                  }}
-                >
-                  Clear all
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
+      <Select
+        value={status || 'all'}
+        onValueChange={(value) => onStatusChange(value === 'all' ? undefined : value as LeaseStatus)}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Lease status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Statuses</SelectItem>
+          <SelectItem value={LeaseStatus.ACTIVE}>Active</SelectItem>
+          <SelectItem value={LeaseStatus.PENDING}>Pending</SelectItem>
+          <SelectItem value={LeaseStatus.TERMINATED}>Terminated</SelectItem>
+          <SelectItem value={LeaseStatus.EXPIRED}>Expired</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {(search || status) && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onSearchChange('')
+            onStatusChange(undefined)
+          }}
+        >
+          <X className="h-4 w-4 mr-2" />
+          Clear
+        </Button>
       )}
     </div>
   )
