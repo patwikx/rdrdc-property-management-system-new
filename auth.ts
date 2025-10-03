@@ -49,9 +49,9 @@ export const {
     updateAge: 60 * 60, // 1 hour
   },
   pages: {
-    signIn: "/auth/sign-in",
+    signIn: "/",
     error: "/auth/error",
-    signOut: "/auth/sign-in"
+    signOut: "/"
   },
   events: {
     async signIn({ user }) {
