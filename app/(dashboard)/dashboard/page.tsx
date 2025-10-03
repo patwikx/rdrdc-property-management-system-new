@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { getDashboardStats, getRecentActivities, getUpcomingTasks, getExpiringLeases, getOverduePayments } from "@/lib/actions/dashboard-actions"
 
 import { OccupancyChart, PropertyTypeChart } from "@/components/dashboard/dashboard-charts"
+import { OccupancyOverview } from "@/components/dashboard/occupancy-overview"
 import { FinancialOverview } from "@/components/dashboard/financial-overview"
 import { MaintenanceOverview } from "@/components/dashboard/maintenance-overview"
 import { DashboardStatsCards } from "@/components/dashboard/stat-cards"
@@ -29,6 +30,11 @@ async function ChartsSection() {
       <PropertyTypeChart stats={stats} />
     </>
   )
+}
+
+async function OccupancySection() {
+  const stats = await getDashboardStats()
+  return <OccupancyOverview stats={stats} />
 }
 
 async function FinancialSection() {
@@ -83,6 +89,10 @@ export default function DashboardPage() {
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-6">
         <Suspense fallback={<LoadingSkeleton type="chart" />}>
           <ChartsSection />
+        </Suspense>
+
+        <Suspense fallback={<LoadingSkeleton type="card" cols={6} />}>
+          <OccupancySection />
         </Suspense>
 
         <Suspense fallback={<LoadingSkeleton type="card" cols={2} />}>

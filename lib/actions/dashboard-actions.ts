@@ -8,6 +8,7 @@ import { LeaseStatus, MaintenanceStatus, PaymentStatus, TenantStatus, UnitStatus
 export interface DashboardStats {
   properties: {
     total: number
+    totalLeasableArea: number
     byType: {
       RESIDENTIAL: number
       COMMERCIAL: number
@@ -21,6 +22,13 @@ export interface DashboardStats {
     maintenance: number
     reserved: number
     occupancyRate: number
+    totalArea: number
+    occupiedArea: number
+  }
+  occupancy: {
+    overallRate: number
+    unitBasedRate: number
+    areaBasedRate: number
   }
   tenants: {
     total: number
@@ -82,12 +90,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const today = new Date()
 
-  // Properties stats
-  const [totalProperties, propertiesByType] = await Promise.all([
+  // Properties stats with leasable area
+  const [totalProperties, propertiesByType, totalLeasableArea] = await Promise.all([
     prisma.property.count(),
     prisma.property.groupBy({
       by: ['propertyType'],
       _count: true,
+    }),
+    prisma.property.aggregate({
+      _sum: { leasableArea: true },
     }),
   ])
 
@@ -96,12 +107,19 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return acc
   }, {} as Record<string, number>)
 
-  // Units stats
-  const [totalUnits, unitsByStatus] = await Promise.all([
+  // Units stats with area calculations
+  const [totalUnits, unitsByStatus, totalUnitsArea, occupiedUnitsArea] = await Promise.all([
     prisma.unit.count(),
     prisma.unit.groupBy({
       by: ['status'],
       _count: true,
+    }),
+    prisma.unit.aggregate({
+      _sum: { totalArea: true },
+    }),
+    prisma.unit.aggregate({
+      where: { status: UnitStatus.OCCUPIED },
+      _sum: { totalArea: true },
     }),
   ])
 
@@ -110,8 +128,19 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return acc
   }, {} as Record<UnitStatus, number>)
 
-  const occupancyRate = totalUnits > 0 
+  const unitBasedOccupancyRate = totalUnits > 0 
     ? ((unitStatusStats.OCCUPIED || 0) / totalUnits) * 100 
+    : 0
+
+  const totalArea = totalUnitsArea._sum.totalArea || 0
+  const occupiedArea = occupiedUnitsArea._sum.totalArea || 0
+  const areaBasedOccupancyRate = totalArea > 0 
+    ? (occupiedArea / totalArea) * 100 
+    : 0
+
+  // Overall occupancy rate (using leasable area vs occupied area)
+  const overallOccupancyRate = (totalLeasableArea._sum.leasableArea || 0) > 0 
+    ? (occupiedArea / (totalLeasableArea._sum.leasableArea || 1)) * 100 
     : 0
 
   // Tenants stats
@@ -225,6 +254,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return {
     properties: {
       total: totalProperties,
+      totalLeasableArea: totalLeasableArea._sum.leasableArea || 0,
       byType: {
         RESIDENTIAL: propertyTypeStats.RESIDENTIAL || 0,
         COMMERCIAL: propertyTypeStats.COMMERCIAL || 0,
@@ -237,7 +267,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       vacant: unitStatusStats.VACANT || 0,
       maintenance: unitStatusStats.MAINTENANCE || 0,
       reserved: unitStatusStats.RESERVED || 0,
-      occupancyRate: Math.round(occupancyRate * 100) / 100,
+      occupancyRate: Math.round(unitBasedOccupancyRate * 100) / 100,
+      totalArea,
+      occupiedArea,
+    },
+    occupancy: {
+      overallRate: Math.round(overallOccupancyRate * 100) / 100,
+      unitBasedRate: Math.round(unitBasedOccupancyRate * 100) / 100,
+      areaBasedRate: Math.round(areaBasedOccupancyRate * 100) / 100,
     },
     tenants: {
       total: totalTenants,

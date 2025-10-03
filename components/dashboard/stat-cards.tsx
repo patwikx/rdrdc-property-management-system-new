@@ -86,14 +86,14 @@ export function DashboardStatsCards({ stats }: DashboardStatsCardsProps) {
         title="Total Properties"
         value={stats.properties.total}
         icon={Building2}
-        description={`${stats.properties.byType.COMMERCIAL} commercial, ${stats.properties.byType.RESIDENTIAL} residential`}
+        description={`${(stats.properties.totalLeasableArea / 1000).toFixed(1)}k sqm leasable area`}
         href="/properties"
       />
       <StatCard
-        title="Active Units"
-        value={stats.units.occupied}
-        icon={Building2}
-        description={`${stats.units.occupancyRate}% occupancy rate`}
+        title="Overall Occupancy"
+        value={`${stats.occupancy.overallRate}%`}
+        icon={TrendingUp}
+        description={`${stats.units.occupied} of ${stats.units.total} units occupied`}
         trend={{ value: 5, positive: true }}
         href="/properties/units"
       />
