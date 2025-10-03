@@ -13,9 +13,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
 } from "recharts"
-import { Building, TrendingUp, Users, BarChart3 } from "lucide-react"
+import { Building, TrendingUp, BarChart3 } from "lucide-react"
 import type { DashboardStats } from "@/lib/actions/dashboard-actions"
 
 interface OccupancyChartProps {

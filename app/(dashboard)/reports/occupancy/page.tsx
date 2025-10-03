@@ -16,14 +16,11 @@ import {
   Filter, 
   TrendingDown,
   TrendingUp,
-  AlertTriangle,
   CheckCircle,
-  DollarSign,
   BarChart3,
   X,
   RefreshCw,
   Home,
-  Users,
   Calendar,
   Target
 } from "lucide-react"
@@ -38,7 +35,7 @@ import {
   type OpportunityLossData,
   type PropertyPerformanceData
 } from "@/lib/actions/occupancy-reports-actions"
-import { PropertyType, UnitStatus } from "@prisma/client"
+import { PropertyType } from "@prisma/client"
 import { exportToCSV, exportToPDF, type ExportColumn } from "@/lib/utils/export-utils"
 
 interface OccupancyFilters {
@@ -68,15 +65,6 @@ interface OccupancyStats {
   worstPerformingProperty: string
 }
 
-function getUnitStatusColor(status: UnitStatus) {
-  switch (status) {
-    case "OCCUPIED": return "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-    case "VACANT": return "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600"
-    case "MAINTENANCE": return "bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
-    case "RESERVED": return "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-    default: return "bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600"
-  }
-}
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-PH", {

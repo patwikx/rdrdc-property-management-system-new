@@ -45,9 +45,9 @@ export function PropertyUnits({ property }: PropertyUnitsProps) {
     return (
       <div className="text-center py-12">
         <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">No units found</h3>
+        <h3 className="mt-4 text-lg font-semibold">No spaces found</h3>
         <p className="mt-2 text-muted-foreground">
-          This property doesn&apos;t have any units yet.
+          This property doesn&apos;t have any spaces yet.
         </p>
         <Link href={`/properties/${property.id}/units/create`}>
           <Button className="mt-4" variant="outline">
@@ -62,11 +62,11 @@ export function PropertyUnits({ property }: PropertyUnitsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Units ({property.units.length})</h3>
+        <h3 className="text-lg font-semibold">Spaces ({property.units.length})</h3>
         <Link href={`/properties/${property.id}/units/create`}>
           <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Unit
+            Add Space
           </Button>
         </Link>
       </div>
@@ -87,7 +87,7 @@ export function PropertyUnits({ property }: PropertyUnitsProps) {
           </div>
           {searchTerm && (
             <div className="text-sm text-muted-foreground">
-              {filteredUnits.length} of {property.units.length} units
+              {filteredUnits.length} of {property.units.length} spaces
             </div>
           )}
         </div>
@@ -97,9 +97,9 @@ export function PropertyUnits({ property }: PropertyUnitsProps) {
       {property.units.length > 0 && filteredUnits.length === 0 && (
         <div className="text-center py-8">
           <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h4 className="mt-2 text-sm font-semibold">No units found</h4>
+          <h4 className="mt-2 text-sm font-semibold">No spaces found</h4>
           <p className="text-sm text-muted-foreground">
-            No units match your search criteria. Try adjusting your search terms.
+            No spaces match your search criteria. Try adjusting your search terms.
           </p>
         </div>
       )}

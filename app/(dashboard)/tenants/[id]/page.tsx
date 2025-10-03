@@ -20,6 +20,8 @@ import { format } from "date-fns"
 import { z } from "zod"
 import { TenantPDCSection } from "@/components/tenants/tenant-pdc-section"
 import { TenantNoticesSection } from "@/components/tenants/tenant-notices-section"
+import { UploadDocumentForm } from "@/components/properties/upload-document-form"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 const TenantUpdateSchema = z.object({
   bpCode: z.string().min(1, "BP Code is required"),
@@ -42,24 +44,26 @@ interface TenantPageProps {
   }>
 }
 
-function getTenantStatusVariant(status: string) {
+function getTenantStatusColor(status: string) {
   switch (status) {
-    case 'ACTIVE': return 'default' as const
-    case 'PENDING': return 'secondary' as const
-    case 'INACTIVE': return 'outline' as const
-    default: return 'outline' as const
+    case 'ACTIVE': return 'bg-green-600 text-white border-green-600'
+    case 'PENDING': return 'border-yellow-200 text-yellow-700 bg-yellow-50'
+    case 'INACTIVE': return 'border-gray-200 text-gray-700 bg-gray-50'
+    default: return 'border-gray-200 text-gray-700 bg-gray-50'
   }
 }
 
-function getLeaseStatusVariant(status: string) {
+
+function getLeaseStatusColor(status: string) {
   switch (status) {
-    case 'ACTIVE': return 'default' as const
-    case 'PENDING': return 'secondary' as const
-    case 'TERMINATED': return 'destructive' as const
-    case 'EXPIRED': return 'outline' as const
-    default: return 'outline' as const
+    case 'ACTIVE': return 'bg-green-600 text-white border-green-600'
+    case 'PENDING': return 'border-yellow-200 text-yellow-700 bg-yellow-50'
+    case 'TERMINATED': return 'border-red-200 text-red-700 bg-red-50'
+    case 'EXPIRED': return 'border-gray-200 text-gray-700 bg-gray-50'
+    default: return 'border-gray-200 text-gray-700 bg-gray-50'
   }
 }
+
 
 function getMaintenanceStatusVariant(status: string) {
   switch (status) {
@@ -91,6 +95,7 @@ export default function TenantPage({ params }: TenantPageProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [tenantId, setTenantId] = useState<string>("")
   const [activeTab, setActiveTab] = useState("overview")
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
   const form = useForm<TenantUpdateData>({
     resolver: zodResolver(TenantUpdateSchema),
@@ -219,6 +224,12 @@ export default function TenantPage({ params }: TenantPageProps) {
     }
   }
 
+  const handleDocumentUploaded = () => {
+    setIsUploadDialogOpen(false)
+    // Reload tenant data to show the new document
+    window.location.reload()
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -252,7 +263,7 @@ export default function TenantPage({ params }: TenantPageProps) {
               <h2 className="text-3xl font-bold tracking-tight">
                 {tenant.firstName} {tenant.lastName}
               </h2>
-              <Badge variant={getTenantStatusVariant(tenant.status)}>
+              <Badge className={getTenantStatusColor(tenant.status)}>
                 {tenant.status}
               </Badge>
             </div>
@@ -313,29 +324,27 @@ export default function TenantPage({ params }: TenantPageProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="leases">Leases</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="leases">Leases ({tenant.leases.length})</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance ({tenant.maintenanceRequests.length})</TabsTrigger>
+          <TabsTrigger value="documents">Documents ({tenant.documents.length})</TabsTrigger>
+          <TabsTrigger value="payments">Payments ({tenant.pdcs.length})</TabsTrigger>
           <TabsTrigger value="notices">Notices</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-4">
             <div className="lg:col-span-3 space-y-6">
-              {/* Quick Stats */}
-              <div className="grid gap-4 md:grid-cols-4">
+              {/* Summary Cards */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Active Leases</CardTitle>
                     <Home className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {tenant.leases.filter(l => l.status === 'ACTIVE').length}
-                    </div>
+                    <div className="text-2xl font-bold">{tenant.leases.filter(l => l.status === 'ACTIVE').length}</div>
                     <p className="text-xs text-muted-foreground">
-                      {totalUnits} unit{totalUnits !== 1 ? 's' : ''}
+                      {totalUnits} space{totalUnits !== 1 ? 's' : ''}
                     </p>
                   </CardContent>
                 </Card>
@@ -343,14 +352,14 @@ export default function TenantPage({ params }: TenantPageProps) {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Monthly Rent</CardTitle>
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <CreditCard className="h-4 w-4 text-green-600" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">
                       ₱{activeLease?.totalRentAmount.toLocaleString() || '0'}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Current lease
+                      Current lease amount
                     </p>
                   </CardContent>
                 </Card>
@@ -358,7 +367,7 @@ export default function TenantPage({ params }: TenantPageProps) {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
-                    <Wrench className="h-4 w-4 text-muted-foreground" />
+                    <Wrench className="h-4 w-4 text-orange-600" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-orange-600">
@@ -376,9 +385,7 @@ export default function TenantPage({ params }: TenantPageProps) {
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {tenant.documents.length}
-                    </div>
+                    <div className="text-2xl font-bold">{tenant.documents.length}</div>
                     <p className="text-xs text-muted-foreground">
                       Files uploaded
                     </p>
@@ -393,7 +400,7 @@ export default function TenantPage({ params }: TenantPageProps) {
                     <CardTitle className="flex items-center space-x-2">
                       <Home className="h-5 w-5" />
                       <span>Active Lease</span>
-                      <Badge variant={getLeaseStatusVariant(activeLease.status)}>
+                      <Badge className={getLeaseStatusColor(activeLease.status)}>
                         {activeLease.status}
                       </Badge>
                     </CardTitle>
@@ -417,7 +424,7 @@ export default function TenantPage({ params }: TenantPageProps) {
                     
                     {activeLease.leaseUnits.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Leased Units</label>
+                        <label className="text-sm font-medium text-muted-foreground">Leased Spaces</label>
                         <div className="mt-2 space-y-2">
                           {activeLease.leaseUnits.map((leaseUnit) => (
                             <div key={leaseUnit.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -587,7 +594,7 @@ export default function TenantPage({ params }: TenantPageProps) {
                       <div>
                         <label className="text-xs font-medium text-muted-foreground">Status</label>
                         <div className="mt-1">
-                          <Badge className={(tenant.status)} variant="outline">
+                          <Badge className={getTenantStatusColor(tenant.status)}>
                             {tenant.status}
                           </Badge>
                         </div>
@@ -789,14 +796,14 @@ export default function TenantPage({ params }: TenantPageProps) {
                           <p className="text-sm">₱{lease.securityDeposit.toLocaleString()}</p>
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground">Units</label>
-                          <p className="text-sm">{lease.leaseUnits.length} unit{lease.leaseUnits.length !== 1 ? 's' : ''}</p>
+                          <label className="text-xs font-medium text-muted-foreground">Spaces</label>
+                          <p className="text-sm">{lease.leaseUnits.length} space{lease.leaseUnits.length !== 1 ? 's' : ''}</p>
                         </div>
                       </div>
 
                       {lease.leaseUnits.length > 0 && (
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground">Leased Units</label>
+                          <label className="text-xs font-medium text-muted-foreground">Leased Spaces</label>
                           <div className="mt-2 grid gap-2 md:grid-cols-2">
                             {lease.leaseUnits.map((leaseUnit) => (
                               <div key={leaseUnit.id} className="flex items-center justify-between p-2 bg-muted rounded">
@@ -884,10 +891,32 @@ export default function TenantPage({ params }: TenantPageProps) {
         <TabsContent value="documents" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Documents</CardTitle>
-              <CardDescription>
-                All documents related to this tenant
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Documents</CardTitle>
+                  <CardDescription>
+                    All documents related to this tenant
+                  </CardDescription>
+                </div>
+                <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Upload Document
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
+                    <DialogHeader>
+                      <DialogTitle>Upload Document</DialogTitle>
+                    </DialogHeader>
+                    <UploadDocumentForm 
+                      tenantId={tenant.id}
+                      onSuccess={handleDocumentUploaded}
+                      onCancel={() => setIsUploadDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
               {tenant.documents.length > 0 ? (

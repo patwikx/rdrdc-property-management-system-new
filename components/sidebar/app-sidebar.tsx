@@ -150,6 +150,20 @@ const getNavigationItems = (userRole: string) => {
       title: "Documents",
       url: "/documents",
       icon: FileText,
+      items: [
+        {
+          title: "All Documents",
+          url: "/documents",
+        },
+        {
+          title: "By Property",
+          url: "/documents?filter=property",
+        },
+        {
+          title: "By Tenant",
+          url: "/documents?filter=tenant",
+        },
+      ],
     },
   ]
 

@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
-import { 
-  Loader2, 
+import {  
   AlertTriangle, 
   Search, 
   RefreshCw,
@@ -73,6 +72,7 @@ export default function ARAgingPage() {
 
   useEffect(() => {
     applyFilters()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, searchQuery, tenants])
 
   const applyFilters = () => {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,9 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calculator, Receipt, CheckCircle, Clock, AlertCircle, Plus, Search } from "lucide-react"
+import { Calculator, Receipt, CheckCircle, Clock, AlertCircle, Plus, Search, Edit } from "lucide-react"
 import { PropertyWithDetails } from "@/lib/actions/property-actions"
 import { CreateTaxForm } from "./create-tax-form"
+import { EditTaxForm } from "./edit-tax-form"
+import { MarkPaidDialog } from "./mark-paid-dialog"
 import { format } from "date-fns"
 
 interface RealPropertyTaxProps {
@@ -22,12 +23,40 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
   const [selectedYear, setSelectedYear] = useState<string>("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedTitleId, setSelectedTitleId] = useState<string>("")
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingTax, setEditingTax] = useState<typeof allPropertyTaxes[0] | null>(null)
+  const [isMarkPaidDialogOpen, setIsMarkPaidDialogOpen] = useState(false)
+  const [markingPaidTax, setMarkingPaidTax] = useState<typeof allPropertyTaxes[0] | null>(null)
 
   const handleTaxCreated = () => {
     setIsAddDialogOpen(false)
     setSelectedTitleId("")
     // Refresh the page or update the property data
     window.location.reload()
+  }
+
+  const handleTaxUpdated = () => {
+    setIsEditDialogOpen(false)
+    setEditingTax(null)
+    // Refresh the page or update the property data
+    window.location.reload()
+  }
+
+  const handleTaxMarkedPaid = () => {
+    setIsMarkPaidDialogOpen(false)
+    setMarkingPaidTax(null)
+    // Refresh the page or update the property data
+    window.location.reload()
+  }
+
+  const handleEditTax = (tax: typeof allPropertyTaxes[0]) => {
+    setEditingTax(tax)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleMarkAsPaid = (tax: typeof allPropertyTaxes[0]) => {
+    setMarkingPaidTax(tax)
+    setIsMarkPaidDialogOpen(true)
   }
 
   // Collect all property taxes from all titles
@@ -316,7 +345,7 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
               </div>
             ) : (
               <div className="divide-y">
-                {filteredTaxes.map((tax, index) => (
+                {filteredTaxes.map((tax) => (
                   <div key={tax.id} className="p-4 hover:bg-muted/50 transition-colors">
                     {/* Main Row */}
                     <div className="flex items-center justify-between">
@@ -369,11 +398,20 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
                         
                         {/* Actions Column */}
                         <div className="flex space-x-2 min-w-[120px] justify-end">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditTax(tax)}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Button>
                           {!tax.isPaid && (
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => handleMarkAsPaid(tax)}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
                               Mark Paid
                             </Button>
                           )}
@@ -416,6 +454,46 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Tax Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
+          <DialogHeader>
+            <DialogTitle>Edit Property Tax Record</DialogTitle>
+          </DialogHeader>
+          {editingTax && (
+            <EditTaxForm 
+              tax={{
+                id: editingTax.id,
+                taxYear: editingTax.taxYear,
+                TaxDecNo: editingTax.TaxDecNo,
+                taxAmount: editingTax.taxAmount,
+                dueDate: editingTax.dueDate,
+                isPaid: editingTax.isPaid,
+                paidDate: editingTax.paidDate,
+                remarks: editingTax.remarks,
+                isAnnual: editingTax.isAnnual,
+                isQuarterly: editingTax.isQuarterly,
+                whatQuarter: editingTax.whatQuarter,
+              }}
+              onSuccess={handleTaxUpdated}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mark as Paid Dialog */}
+      {markingPaidTax && (
+        <MarkPaidDialog
+          isOpen={isMarkPaidDialogOpen}
+          onOpenChange={setIsMarkPaidDialogOpen}
+          taxId={markingPaidTax.id}
+          taxDecNo={markingPaidTax.TaxDecNo}
+          taxAmount={markingPaidTax.taxAmount}
+          onSuccess={handleTaxMarkedPaid}
+        />
+      )}
     </div>
   )
 }

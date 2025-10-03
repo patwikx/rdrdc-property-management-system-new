@@ -23,7 +23,7 @@ export function PropertyOverview({ property }: PropertyOverviewProps) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Units</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Spaces</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -77,26 +77,26 @@ export function PropertyOverview({ property }: PropertyOverviewProps) {
       {/* Unit Status Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Unit Status Overview</CardTitle>
-          <CardDescription>Current status of all units in this property</CardDescription>
+          <CardTitle>Space Status Overview</CardTitle>
+          <CardDescription>Current status of all spaces in this property</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-700">{occupiedUnits}</div>
-              <div className="text-sm text-green-600">Occupied</div>
+            <div className="text-center p-4 rounded-lg border">
+              <div className="text-2xl font-bold">{occupiedUnits}</div>
+              <div className="text-sm">Occupied</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-2xl font-bold text-gray-700">{vacantUnits}</div>
-              <div className="text-sm text-gray-600">Vacant</div>
+            <div className="text-center p-4  rounded-lg border">
+              <div className="text-2xl font-bold ">{vacantUnits}</div>
+              <div className="text-sm">Vacant</div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-700">{maintenanceUnits}</div>
-              <div className="text-sm text-yellow-600">Maintenance</div>
+            <div className="text-center p-4 rounded-lg border">
+              <div className="text-2xl font-bold ">{maintenanceUnits}</div>
+              <div className="text-sm">Maintenance</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-700">{reservedUnits}</div>
-              <div className="text-sm text-blue-600">Reserved</div>
+            <div className="text-center p-4 rounded-lg border">
+              <div className="text-2xl font-bold ">{reservedUnits}</div>
+              <div className="text-sm">Reserved</div>
             </div>
           </div>
         </CardContent>

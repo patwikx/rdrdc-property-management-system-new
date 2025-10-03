@@ -13,7 +13,6 @@ import {
   FileText, 
   Download, 
   Filter, 
-  Calendar,
   Building,
   Users,
   TrendingUp,
@@ -99,6 +98,7 @@ export default function LeasingReportsPage() {
 
   useEffect(() => {
     fetchAllData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchAllData = async () => {

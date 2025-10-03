@@ -8,11 +8,14 @@ interface PropertyTabsProps {
 }
 
 export function PropertyTabs({ property, activeTab, setActiveTab }: PropertyTabsProps) {
+  // Calculate total property taxes count from all titles
+  const totalTaxesCount = property.titles.reduce((sum, title) => sum + title.propertyTaxes.length, 0)
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'units', label: `Units (${property._count.units})`, icon: Building2 },
+    { id: 'units', label: `Spaces (${property._count.units})`, icon: Building2 },
     { id: 'titles', label: `Titles (${property._count.titles})`, icon: Receipt },
-    { id: 'taxes', label: `Real Property Tax`, icon: Calculator },
+    { id: 'taxes', label: `Real Property Tax (${totalTaxesCount})`, icon: Calculator },
     { id: 'documents', label: `Documents (${property._count.documents})`, icon: FileText },
     { id: 'utilities', label: `Utilities (${property._count.utilities})`, icon: Zap },
     { id: 'movements', label: `Movements (${property._count.titleMovements})`, icon: Activity },

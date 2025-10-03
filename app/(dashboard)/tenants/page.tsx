@@ -245,7 +245,7 @@ export default function TenantsPage() {
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge className={getTenantStatusColor(tenant.status)}>
+                    <Badge className={getTenantStatusColor(tenant.status)} variant="outline">
                       {tenant.status}
                     </Badge>
                   </div>
@@ -288,7 +288,7 @@ export default function TenantsPage() {
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
-                        <div>Units: {totalUnits}</div>
+                        <div>Spaces: {totalUnits}</div>
                         <div>Rent: ₱{activeLease.totalRentAmount.toLocaleString()}/month</div>
                         <div>Until: {format(new Date(activeLease.endDate), 'MMM dd, yyyy')}</div>
                       </div>

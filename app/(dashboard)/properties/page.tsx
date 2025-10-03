@@ -53,7 +53,7 @@ function PropertyCard({ property }: { property: Awaited<ReturnType<typeof getPro
             <p className="font-medium">{property.leasableArea.toLocaleString()} sqm</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Total Units</p>
+            <p className="text-muted-foreground">Total Spaces</p>
             <p className="font-medium">{property._count.units}</p>
           </div>
         </div>

@@ -28,31 +28,31 @@ const documentTypeOptions = [
     value: DocumentType.LEASE, 
     label: "Lease Agreement", 
     description: "Rental contracts and lease documents",
-    color: "bg-blue-600"
+    color: "bg-blue-600 text-white border-blue-600"
   },
   { 
     value: DocumentType.CONTRACT, 
     label: "Contract", 
     description: "Service contracts and agreements",
-    color: "bg-green-600"
+    color: "bg-emerald-600 text-white border-emerald-600"
   },
   { 
     value: DocumentType.INVOICE, 
     label: "Invoice", 
     description: "Bills, receipts, and invoices",
-    color: "bg-yellow-600"
+    color: "bg-amber-600 text-white border-amber-600"
   },
   { 
     value: DocumentType.MAINTENANCE, 
     label: "Maintenance", 
     description: "Maintenance records and reports",
-    color: "bg-orange-600"
+    color: "bg-orange-600 text-white border-orange-600"
   },
   { 
     value: DocumentType.OTHER, 
     label: "Other", 
     description: "Miscellaneous documents",
-    color: "bg-gray-600"
+    color: "bg-slate-600 text-white border-slate-600"
   },
 ]
 
@@ -245,20 +245,22 @@ export function UploadDocumentForm({
 
             {/* Document Type Preview */}
             <div className="bg-muted/50 rounded-lg p-4">
-              <h4 className="font-medium mb-2">Document Type Preview</h4>
-              <div className="flex items-center space-x-2 mb-2">
+              <h4 className="font-semibold mb-3 text-foreground">Document Type Preview</h4>
+              <div className="flex items-center space-x-2 mb-3">
                 {documentTypeOptions.map((option) => (
                   <Badge 
                     key={option.value}
-                    className={`${option.color} ${
-                      form.watch('documentType') === option.value ? 'ring-2 ring-primary ring-offset-2' : 'opacity-50'
+                    className={`${option.color} font-medium shadow-sm ${
+                      form.watch('documentType') === option.value 
+                        ? 'ring-2 ring-primary ring-offset-2 opacity-100 scale-105 transition-all duration-200' 
+                        : 'opacity-60 hover:opacity-80 transition-opacity duration-200'
                     }`}
                   >
                     {option.label}
                   </Badge>
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-foreground/80 font-medium">
                 {documentTypeOptions.find(opt => opt.value === form.watch('documentType'))?.description}
               </p>
             </div>

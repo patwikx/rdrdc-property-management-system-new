@@ -55,6 +55,9 @@ export interface PropertyWithDetails {
       isPaid: boolean
       paidDate: Date | null
       remarks: string | null
+      isAnnual: boolean
+      isQuarterly: boolean
+      whatQuarter: string | null
     }[]
   }[]
   documents: {
@@ -354,7 +357,7 @@ export async function getPropertyById(id: string): Promise<PropertyWithDetails |
     throw new Error("Unauthorized")
   }
 
-  console.log("Fetching property with ID:", id)
+
   const property = await prisma.property.findUnique({
     where: { id },
     include: {
@@ -413,6 +416,9 @@ export async function getPropertyById(id: string): Promise<PropertyWithDetails |
               isPaid: true,
               paidDate: true,
               remarks: true,
+              isAnnual: true,
+              isQuarterly: true,
+              whatQuarter: true,
             },
             orderBy: {
               taxYear: 'desc',
@@ -484,13 +490,6 @@ export async function getPropertyById(id: string): Promise<PropertyWithDetails |
       },
     },
   })
-
-  if (property) {
-    console.log("Property found:", property.propertyName)
-    console.log("Units count:", property.units?.length)
-    console.log("First unit:", property.units?.[0])
-    console.log("First unit floors:", property.units?.[0]?.unitFloors)
-  }
   return property
 }
 
@@ -547,6 +546,9 @@ export async function getPropertyByCode(propertyCode: string): Promise<PropertyW
               isPaid: true,
               paidDate: true,
               remarks: true,
+              isAnnual: true,
+              isQuarterly: true,
+              whatQuarter: true,
             },
             orderBy: {
               taxYear: 'desc',

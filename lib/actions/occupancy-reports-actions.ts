@@ -3,58 +3,6 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { UnitStatus, PropertyType, LeaseStatus } from "@prisma/client"
-import type { Prisma } from "@prisma/client"
-
-type PropertyWithUnits = Prisma.PropertyGetPayload<{
-  include: {
-    units: {
-      include: {
-        leaseUnits: {
-          include: {
-            lease: {
-              include: {
-                tenant: {
-                  select: {
-                    bpCode: true
-                    businessName: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}>
-
-type PropertyWithUnitsSimple = Prisma.PropertyGetPayload<{
-  include: {
-    units: {
-      include: {
-        leaseUnits: {
-          include: {
-            lease: true
-          }
-        }
-      }
-    }
-  }
-}>
-
-type PropertyWithUnitsActive = Prisma.PropertyGetPayload<{
-  include: {
-    units: {
-      include: {
-        leaseUnits: {
-          include: {
-            lease: true
-          }
-        }
-      }
-    }
-  }
-}>
 
 export interface OccupancyReportData {
   property: {

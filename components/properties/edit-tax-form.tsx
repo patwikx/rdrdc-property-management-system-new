@@ -11,45 +11,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { PropertyTaxSchema, PropertyTaxFormData } from "@/lib/validations/property-tax-schema"
-import { createPropertyTax } from "@/lib/actions/property-tax-actions"
+import { PropertyTaxUpdateSchema, PropertyTaxUpdateData } from "@/lib/validations/property-tax-schema"
+import { updatePropertyTax } from "@/lib/actions/property-tax-actions"
 import { Save, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
-interface CreateTaxFormProps {
-  propertyTitleId: string
+interface PropertyTaxData {
+  id: string
+  taxYear: number
+  TaxDecNo: string
+  taxAmount: number
+  dueDate: Date
+  isPaid: boolean
+  paidDate: Date | null
+  remarks: string | null
+  isAnnual: boolean
+  isQuarterly: boolean
+  whatQuarter: string | null
+}
+
+interface EditTaxFormProps {
+  tax: PropertyTaxData
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTaxFormProps) {
+export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<PropertyTaxFormData>({
-    resolver: zodResolver(PropertyTaxSchema),
+  const form = useForm<PropertyTaxUpdateData>({
+    resolver: zodResolver(PropertyTaxUpdateSchema),
     defaultValues: {
-      propertyTitleId,
-      taxYear: new Date().getFullYear(),
-      TaxDecNo: "",
-      taxAmount: 0,
-      dueDate: new Date(),
-      isPaid: false,
-      isAnnual: true,
-      isQuarterly: false,
-      whatQuarter: "",
-      remarks: "",
+      id: tax.id,
+      taxYear: tax.taxYear,
+      TaxDecNo: tax.TaxDecNo,
+      taxAmount: tax.taxAmount,
+      dueDate: tax.dueDate,
+      isPaid: tax.isPaid,
+      paidDate: tax.paidDate || undefined,
+      isAnnual: tax.isAnnual,
+      isQuarterly: tax.isQuarterly,
+      whatQuarter: tax.whatQuarter || "",
+      remarks: tax.remarks || "",
     },
   })
 
   const isQuarterly = form.watch('isQuarterly')
 
-  async function onSubmit(data: PropertyTaxFormData) {
+  async function onSubmit(data: PropertyTaxUpdateData) {
     setIsLoading(true)
     
     try {
-      const result = await createPropertyTax(data)
+      const result = await updatePropertyTax(data)
       
       if (result.error) {
         toast.error(result.error)
@@ -58,7 +73,7 @@ export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTa
             if (error && typeof error === 'object' && '_errors' in error) {
               const messages = (error as { _errors: string[] })._errors
               if (messages && messages.length > 0) {
-                form.setError(field as keyof PropertyTaxFormData, {
+                form.setError(field as keyof PropertyTaxUpdateData, {
                   message: messages[0],
                 })
               }
@@ -66,12 +81,11 @@ export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTa
           })
         }
       } else {
-        toast.success("Property tax record created successfully")
-        form.reset()
+        toast.success("Property tax record updated successfully")
         onSuccess?.()
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      console.error("Error updating property tax:", error)
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
@@ -281,7 +295,7 @@ export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTa
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Select Quarter *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isLoading}>
                       <FormControl>
                         <SelectTrigger className="h-12 text-base">
                           <SelectValue placeholder="Choose quarter" />
@@ -312,6 +326,7 @@ export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTa
                   <Textarea
                     placeholder="Any additional notes or comments..."
                     {...field}
+                    value={field.value || ""}
                     disabled={isLoading}
                     rows={2}
                     className="resize-none"
@@ -333,12 +348,12 @@ export function CreateTaxForm({ propertyTitleId, onSuccess, onCancel }: CreateTa
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Create Tax Record
+                  Update Tax Record
                 </>
               )}
             </Button>
