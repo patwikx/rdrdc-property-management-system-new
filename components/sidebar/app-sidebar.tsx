@@ -61,10 +61,6 @@ const getNavigationItems = (userRole: string) => {
           title: "Spaces",
           url: "/properties/units",
         },
-        {
-          title: "Title Movement",
-          url: "/properties/title-movement",
-        },
       ],
     },
     {
@@ -94,6 +90,10 @@ const getNavigationItems = (userRole: string) => {
         {
           title: "PDC Monitoring",
           url: "/pdc-monitoring",
+        },
+                {
+          title: "AR Aging",
+          url: "/ar-aging",
         },
       ],
     },
