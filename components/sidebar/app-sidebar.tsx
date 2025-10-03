@@ -137,11 +137,7 @@ const getNavigationItems = (userRole: string) => {
           url: "/projects",
         },
         {
-          title: "Tasks",
-          url: "/projects/tasks",
-        },
-        {
-          title: "Boards",
+          title: "All Boards",
           url: "/projects/boards",
         },
       ],
