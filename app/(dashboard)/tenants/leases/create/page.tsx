@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, X, Building, Users, Calendar, DollarSign } from "lucide-react"
+import { Plus, X, Building, Users, Calendar, DollarSign, Check, ChevronsUpDown } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -12,13 +12,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LeaseSchema, LeaseFormData } from "@/lib/validations/lease-schema"
 import { createLease, getAvailableUnits } from "@/lib/actions/lease-actions"
 import { getAllTenants } from "@/lib/actions/tenant-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface Tenant {
   id: string
@@ -52,13 +54,14 @@ export default function CreateLeasePage() {
   const [unitRentAmounts, setUnitRentAmounts] = useState<Record<string, number>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [openTenantSelect, setOpenTenantSelect] = useState(false)
 
   const form = useForm<LeaseFormData>({
     resolver: zodResolver(LeaseSchema),
     defaultValues: {
       tenantId: "",
       startDate: new Date(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       securityDeposit: 0,
       unitIds: [],
       unitRentAmounts: {}
@@ -69,7 +72,7 @@ export default function CreateLeasePage() {
     async function loadData() {
       try {
         const [tenantsResult, unitsResult] = await Promise.all([
-          getAllTenants(), // Get all tenants
+          getAllTenants(),
           getAvailableUnits()
         ])
         
@@ -160,14 +163,16 @@ export default function CreateLeasePage() {
   }
 
   const getTenantName = (tenant: Tenant) => {
-    return tenant.firstName && tenant.lastName 
-      ? `${tenant.firstName} ${tenant.lastName}`
-      : tenant.businessName || tenant.company
+    return tenant.businessName && tenant.company
+  }
+
+  const getTenantDisplayText = (tenantId: string) => {
+    const tenant = tenants.find(t => t.id === tenantId)
+    return tenant ? getTenantName(tenant) : "Select a tenant"
   }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      {/* Header */}
       <div className="flex items-center space-x-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Create New Lease</h2>
@@ -180,9 +185,7 @@ export default function CreateLeasePage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Main Form */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Tenant Selection */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -198,34 +201,66 @@ export default function CreateLeasePage() {
                     control={form.control}
                     name="tenantId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Tenant</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a tenant" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {tenants.map((tenant) => (
-                              <SelectItem key={tenant.id} value={tenant.id}>
-                                <div className="flex items-center space-x-2">
-                                  <span>{getTenantName(tenant)}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {tenant.bpCode}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={openTenantSelect} onOpenChange={setOpenTenantSelect}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={openTenantSelect}
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? getTenantDisplayText(field.value) : "Select a tenant"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search tenant..." />
+                              <CommandList>
+                                <CommandEmpty>No tenant found.</CommandEmpty>
+                                <CommandGroup>
+                                  {tenants.map((tenant) => (
+                                    <CommandItem
+                                      key={tenant.id}
+                                      value={`${getTenantName(tenant)} ${tenant.bpCode} ${tenant.email}`}
+                                      onSelect={() => {
+                                        form.setValue("tenantId", tenant.id)
+                                        setOpenTenantSelect(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === tenant.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex items-center space-x-2">
+                                        <span>{getTenantName(tenant)}</span>
+                                        <Badge variant="outline" className="text-xs">
+                                          {tenant.bpCode}
+                                        </Badge>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </CardContent>
-              </Card>    
-          {/* Lease Period */}
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -275,7 +310,6 @@ export default function CreateLeasePage() {
                 </CardContent>
               </Card>
 
-              {/* Unit Selection */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -336,9 +370,7 @@ export default function CreateLeasePage() {
               </Card>
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-6">
-              {/* Financial Details */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -389,7 +421,6 @@ export default function CreateLeasePage() {
                 </CardContent>
               </Card>
 
-              {/* Selected Units Summary */}
               {selectedUnits.length > 0 && (
                 <Card>
                   <CardHeader>
@@ -427,7 +458,6 @@ export default function CreateLeasePage() {
                 </Card>
               )}
 
-              {/* Actions */}
               <div className="space-y-2">
                 <Button 
                   type="submit" 
