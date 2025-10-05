@@ -65,16 +65,8 @@ const floorTypeOptions = [
   "Ground Floor",
   "Second Floor", 
   "Third Floor",
-  "Fourth Floor",
-  "Fifth Floor",
-  "Basement",
   "Mezzanine",
   "Rooftop",
-  "Storage",
-  "Office Space",
-  "Retail Space",
-  "Warehouse",
-  "Other"
 ]
 
 export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel }: CreateUnitFormProps) {
