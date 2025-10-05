@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { ArrowLeft, Save, User, Building, Phone, Calendar, Home, Search } from "lucide-react"
+import { Save, User, Building, Phone, Calendar, Home, Search } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { createTenantAction, createTenantWithLeaseAction } from "@/lib/actions/tenant-server-actions"
@@ -347,12 +347,6 @@ export default function CreateTenantPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href="/tenants">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Tenants
-            </Button>
-          </Link>
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Add New Tenant</h2>
             <p className="text-muted-foreground">
