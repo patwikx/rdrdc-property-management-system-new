@@ -57,8 +57,8 @@ const workflowSteps = [
   },
   {
     step: 3,
-    title: "Create Units",
-    description: "Define leasable units and spaces",
+    title: "Create Spaces",
+    description: "Define leasable spaces and spaces",
     icon: Home,
     status: "upcoming"
   },
@@ -316,29 +316,6 @@ export default function CreatePropertyPage() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="totalUnits"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expected Total Units</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number"
-                              min="0"
-                              placeholder="0"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              disabled={isLoading}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Estimated number of leasable units (optional)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
 
                   {/* Hidden field for property type */}
@@ -459,7 +436,7 @@ export default function CreatePropertyPage() {
                   <div>
                     <p className="text-sm font-medium">After Creation</p>
                     <p className="text-xs text-muted-foreground">
-                      You can add units, titles, documents, and utilities next
+                      You can add spaces, titles, documents, and utilities next
                     </p>
                   </div>
                 </div>
@@ -479,7 +456,7 @@ export default function CreatePropertyPage() {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <Home className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm">Units & Spaces</span>
+                  <span className="text-sm">Spaces</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Receipt className="h-4 w-4 text-green-600" />

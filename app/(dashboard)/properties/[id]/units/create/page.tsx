@@ -60,9 +60,9 @@ export default function CreateUnitPage({ params }: CreateUnitPageProps) {
       {/* Header */}
       <div className="flex items-center space-x-4">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Create New Unit</h1>
+          <h1 className="text-2xl font-bold">Create New Space</h1>
           <p className="text-muted-foreground">
-            Add a new unit to {property.propertyName}
+            Add a new space to {property.propertyName}
           </p>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default function CreateUnitPage({ params }: CreateUnitPageProps) {
         <CardHeader>
           <CardTitle className="text-lg">Property Information</CardTitle>
           <CardDescription>
-            Creating unit for this property
+            Creating space for this property
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -96,9 +96,9 @@ export default function CreateUnitPage({ params }: CreateUnitPageProps) {
       {/* Create Unit Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Unit Details</CardTitle>
+          <CardTitle>Space Details</CardTitle>
           <CardDescription>
-            Configure the unit information and floor details
+            Configure the space information and floor details
           </CardDescription>
         </CardHeader>
         <CardContent>

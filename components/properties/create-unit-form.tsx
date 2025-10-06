@@ -163,7 +163,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
           })
         }
       } else {
-        toast.success("Unit created successfully")
+        toast.success("Space created successfully")
         form.reset()
         onSuccess?.()
       }
@@ -192,7 +192,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                   name="unitNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Unit Number *</FormLabel>
+                      <FormLabel className="text-sm font-medium">Space Number *</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="e.g., 101, A-1, Ground Floor" 
@@ -202,7 +202,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                         />
                       </FormControl>
                       <FormDescription className="text-xs">
-                        Unique identifier for this unit
+                        Unique identifier for this space
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -218,7 +218,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                         <FormControl>
                           <SelectTrigger className="h-10">
-                            <SelectValue placeholder="Select unit status" />
+                            <SelectValue placeholder="Select space status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -266,7 +266,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                           </SelectContent>
                         </Select>
                         <FormDescription className="text-xs">
-                          Link this unit to a specific property title
+                          Link this space to a specific property title
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -484,7 +484,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <Home className="h-5 w-5 mr-2" />
-                  Unit Preview
+                  Space Preview
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -545,7 +545,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Create Unit
+                    Create Space
                   </>
                 )}
               </Button>
