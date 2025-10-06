@@ -7,13 +7,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { markPropertyTaxAsPaid } from "@/lib/actions/property-tax-actions"
+import { markUnitTaxAsPaid } from "@/lib/actions/unit-tax-actions"
 import { CheckCircle, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
-interface MarkPaidDialogProps {
+interface MarkUnitTaxPaidDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   taxId: string
@@ -22,7 +22,14 @@ interface MarkPaidDialogProps {
   onSuccess?: () => void
 }
 
-export function MarkPaidDialog({ isOpen, onOpenChange, taxId, taxDecNo, taxAmount, onSuccess }: MarkPaidDialogProps) {
+export function MarkUnitTaxPaidDialog({
+  isOpen,
+  onOpenChange,
+  taxId,
+  taxDecNo,
+  taxAmount,
+  onSuccess,
+}: MarkUnitTaxPaidDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [paidDate, setPaidDate] = useState<Date>(new Date())
   const [paidRemarks, setPaidRemarks] = useState("")
@@ -31,12 +38,12 @@ export function MarkPaidDialog({ isOpen, onOpenChange, taxId, taxDecNo, taxAmoun
     setIsLoading(true)
 
     try {
-      const result = await markPropertyTaxAsPaid(taxId, paidDate, paidRemarks.trim() || undefined)
+      const result = await markUnitTaxAsPaid(taxId, paidDate, paidRemarks.trim() || undefined)
 
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success("Property tax marked as paid successfully")
+        toast.success("Unit tax marked as paid successfully")
         onOpenChange(false)
         onSuccess?.()
         // Reset form
@@ -44,7 +51,7 @@ export function MarkPaidDialog({ isOpen, onOpenChange, taxId, taxDecNo, taxAmoun
         setPaidRemarks("")
       }
     } catch (error) {
-      console.error("Error marking property tax as paid:", error)
+      console.error("Error marking unit tax as paid:", error)
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
@@ -121,7 +128,7 @@ export function MarkPaidDialog({ isOpen, onOpenChange, taxId, taxDecNo, taxAmoun
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancel
             </Button>
             <Button onClick={handleMarkAsPaid} disabled={isLoading || !paidDate} className="min-w-[120px]">

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,17 +12,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { PropertyTaxUpdateSchema, type PropertyTaxUpdateData } from "@/lib/validations/property-tax-schema"
-import { updatePropertyTax } from "@/lib/actions/property-tax-actions"
 import { Save, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { updateUnitTax } from "@/lib/actions/unit-tax-actions"
 
-interface PropertyTaxData {
+const UnitTaxUpdateSchema = z.object({
+  id: z.string(),
+  taxYear: z.number().min(1900).max(2100),
+  taxDecNo: z.string().min(1, "Tax Declaration Number is required"),
+  taxAmount: z.number().min(0, "Tax amount must be positive"),
+  dueDate: z.date(),
+  isPaid: z.boolean(),
+  paidDate: z.date().optional().nullable(),
+  isAnnual: z.boolean(),
+  isQuarterly: z.boolean(),
+  whatQuarter: z.string().optional(),
+  remarks: z.string().optional(),
+})
+
+type UnitTaxUpdateData = z.infer<typeof UnitTaxUpdateSchema>
+
+interface UnitTaxData {
   id: string
   taxYear: number
-  TaxDecNo: string
+  taxDecNo: string
   taxAmount: number
   dueDate: Date
   isPaid: boolean
@@ -32,21 +48,21 @@ interface PropertyTaxData {
   whatQuarter: string | null
 }
 
-interface EditTaxFormProps {
-  tax: PropertyTaxData
+interface EditUnitTaxFormProps {
+  tax: UnitTaxData
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
+export function EditUnitTaxForm({ tax, onSuccess, onCancel }: EditUnitTaxFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<PropertyTaxUpdateData>({
-    resolver: zodResolver(PropertyTaxUpdateSchema),
+  const form = useForm<UnitTaxUpdateData>({
+    resolver: zodResolver(UnitTaxUpdateSchema),
     defaultValues: {
       id: tax.id,
       taxYear: tax.taxYear,
-      TaxDecNo: tax.TaxDecNo,
+      taxDecNo: tax.taxDecNo,
       taxAmount: tax.taxAmount,
       dueDate: tax.dueDate,
       isPaid: tax.isPaid,
@@ -60,11 +76,11 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
 
   const isQuarterly = form.watch("isQuarterly")
 
-  async function onSubmit(data: PropertyTaxUpdateData) {
+  async function onSubmit(data: UnitTaxUpdateData) {
     setIsLoading(true)
 
     try {
-      const result = await updatePropertyTax(data)
+      const result = await updateUnitTax(data)
 
       if (result.error) {
         toast.error(result.error)
@@ -73,7 +89,7 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
             if (error && typeof error === "object" && "_errors" in error) {
               const messages = (error as { _errors: string[] })._errors
               if (messages && messages.length > 0) {
-                form.setError(field as keyof PropertyTaxUpdateData, {
+                form.setError(field as keyof UnitTaxUpdateData, {
                   message: messages[0],
                 })
               }
@@ -81,11 +97,11 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
           })
         }
       } else {
-        toast.success("Property tax record updated successfully")
+        toast.success("Unit tax record updated successfully")
         onSuccess?.()
       }
     } catch (error) {
-      console.error("Error updating property tax:", error)
+      console.error("Error updating unit tax:", error)
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
@@ -122,7 +138,7 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
 
             <FormField
               control={form.control}
-              name="TaxDecNo"
+              name="taxDecNo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Tax Declaration Number *</FormLabel>

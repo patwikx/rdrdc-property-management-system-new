@@ -75,7 +75,7 @@ const routeConfig: Record<string, { title: string; icon?: LucideIcon }> = {
 
   // Taxes subsections
   property: { title: "Property Taxes", icon: Building2 },
-  unit: { title: "Unit Taxes", icon: Home },
+  unit: { title: "Space Taxes", icon: Home },
 
   // Maintenance subsections
   requests: { title: "Requests", icon: Wrench },
