@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import {
-  getUnreadNotifications,
+  getAllNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   type NotificationData,
@@ -52,7 +52,7 @@ export function NotificationsMenu() {
     setIsLoading(true)
     try {
       console.log("[v0] Fetching notifications...")
-      const data = await getUnreadNotifications()
+      const data = await getAllNotifications()
       console.log("[v0] Notifications fetched:", data.length)
       setNotifications(data)
     } catch (error) {
@@ -75,7 +75,9 @@ export function NotificationsMenu() {
 
   const handleMarkAsRead = async (notificationId: string, actionUrl: string | null) => {
     await markNotificationAsRead(notificationId)
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n)),
+    )
 
     if (actionUrl) {
       setIsOpen(false)
@@ -84,10 +86,10 @@ export function NotificationsMenu() {
 
   const handleMarkAllAsRead = async () => {
     await markAllNotificationsAsRead()
-    setNotifications([])
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, readAt: new Date() })))
   }
 
-  const unreadCount = notifications.length
+  const unreadCount = notifications.filter((n) => !n.isRead).length
 
   if (!mounted) {
     return (
@@ -135,14 +137,17 @@ export function NotificationsMenu() {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4">
               <Bell className="h-8 w-8 text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground text-center">No new notifications</p>
+              <p className="text-sm text-muted-foreground text-center">No notifications</p>
             </div>
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                  className={cn(
+                    "p-4 hover:bg-muted/50 transition-colors cursor-pointer",
+                    notification.isRead && "opacity-60 bg-muted/20",
+                  )}
                   onClick={() => handleMarkAsRead(notification.id, notification.actionUrl)}
                 >
                   {notification.actionUrl ? (
@@ -161,7 +166,7 @@ export function NotificationsMenu() {
           <>
             <Separator />
             <div className="p-2">
-              <Link href="/system/notifications">
+              <Link href="/dashboard/system/notifications">
                 <Button variant="ghost" className="w-full text-xs" size="sm">
                   View all notifications
                 </Button>
@@ -183,7 +188,20 @@ function NotificationItem({ notification }: { notification: NotificationData }) 
       <div className="flex items-start gap-2">
         <span className="text-base mt-0.5">{typeIcon}</span>
         <div className="flex-1 space-y-1">
-          <p className="text-sm font-medium leading-none">{notification.title}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium leading-none flex-1">{notification.title}</p>
+            <Badge
+              variant={notification.isRead ? "secondary" : "default"}
+              className={cn(
+                "text-[10px] h-5 px-2",
+                notification.isRead 
+                  ? "bg-muted text-muted-foreground" 
+                  : "bg-blue-500 text-white"
+              )}
+            >
+              {notification.isRead ? "Read" : "New"}
+            </Badge>
+          </div>
           <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
           <div className="flex items-center gap-2 pt-1">
             <span className="text-xs text-muted-foreground">

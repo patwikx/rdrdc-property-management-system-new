@@ -15,7 +15,7 @@ export interface NotificationData {
   createdAt: Date
 }
 
-export async function getUnreadNotifications(): Promise<NotificationData[]> {
+export async function getAllNotifications(): Promise<NotificationData[]> {
   const session = await auth()
 
   if (!session?.user?.id) {
@@ -26,11 +26,10 @@ export async function getUnreadNotifications(): Promise<NotificationData[]> {
     const notifications = await prisma.notification.findMany({
       where: {
         userId: session.user.id,
-        isRead: false,
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
-      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 10,
+      orderBy: [{ isRead: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
+      take: 20,
     })
 
     return notifications.map((notification) => ({
