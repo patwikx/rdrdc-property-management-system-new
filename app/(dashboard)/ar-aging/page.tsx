@@ -41,7 +41,7 @@ interface ARAgingResponse {
   error?: string;
 }
 
-type TenantStatus = 'OK' | '1ST NOTICE' | '2ND NOTICE' | '3RD NOTICE' | 'EVICTION' | 'DEMAND LETTER';
+type TenantStatus = 'OK' | 'FOR NOTICE';
 
 interface FilterState {
   status: string
@@ -169,16 +169,10 @@ export default function ARAgingPage() {
     if (monthsOverdue < 1) {
       return { status: "OK", color: "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600" }
     } else if (monthsOverdue >= 1 && monthsOverdue < 2) {
-      return { status: "1ST NOTICE", color: "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600" }
-    } else if (monthsOverdue >= 2 && monthsOverdue < 3) {
-      return { status: "2ND NOTICE", color: "bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600" }
-    } else if (monthsOverdue >= 3 && monthsOverdue < 4) {
-      return { status: "3RD NOTICE", color: "bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600" }
-    } else if (monthsOverdue >= 4 && monthsOverdue < 6) {
-      return { status: "EVICTION", color: "bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700" }
-    } else {
-      return { status: "DEMAND LETTER", color: "bg-red-800 hover:bg-red-900 dark:bg-red-700 dark:hover:bg-red-800" }
+      return { status: "FOR NOTICE", color: "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600" }
     }
+    // Default/fallback value
+    return { status: "FOR NOTICE", color: "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600" }
   }
 
   const formatCurrency = (amount: number): string => {
