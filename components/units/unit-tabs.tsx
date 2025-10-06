@@ -12,7 +12,7 @@ export function UnitTabs({ unit, activeTab, setActiveTab }: UnitTabsProps) {
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'tenant', label: 'Current Tenant', icon: User },
     { id: 'history', label: `History (${unit.leaseUnits.length})`, icon: History },
-    { id: 'taxes', label: `Taxes (${unit.unitTaxes.length})`, icon: Receipt },
+    { id: 'taxes', label: `Space Real Property Tax (${unit.unitTaxes.length})`, icon: Receipt },
     { id: 'utilities', label: `Utilities (${unit.utilityAccounts.length})`, icon: Zap },
     { id: 'maintenance', label: `Maintenance (${unit.maintenanceRequests.length})`, icon: Wrench },
     { id: 'documents', label: `Documents (${unit.documents.length})`, icon: FileText },

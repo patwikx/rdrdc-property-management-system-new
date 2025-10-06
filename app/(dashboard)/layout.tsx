@@ -43,12 +43,12 @@ export default async function DashboardLayout({
 
   // Redirect to sign-in if there's no session or user
   if (!session?.user) {
-    redirect("/auth/sign-in");
+    redirect("/");
   }
 
   // Ensure we have a complete user session
   if (!isValidUserSession(session)) {
-    redirect("/auth/sign-in?error=IncompleteProfile");
+    redirect("/?error=IncompleteProfile");
   }
 
   return (
