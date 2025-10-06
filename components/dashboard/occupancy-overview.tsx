@@ -23,7 +23,7 @@ export function OccupancyOverview({ stats }: OccupancyOverviewProps) {
       details: `${(stats.units.occupiedArea / 1000).toFixed(1)}k of ${(stats.properties.totalLeasableArea / 1000).toFixed(1)}k sqm`
     },
     {
-      title: "Unit-Based Rate",
+      title: "Space-Based Rate",
       description: "Based on number of occupied spaces",
       value: stats.occupancy.unitBasedRate,
       icon: Building,

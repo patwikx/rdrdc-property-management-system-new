@@ -18,7 +18,7 @@ export function TaxOverview({ stats }: TaxOverviewProps) {
     <Card className="col-span-1 lg:col-span-2">
       <CardHeader>
         <CardTitle>Tax Overview</CardTitle>
-        <CardDescription>Property and unit tax status</CardDescription>
+        <CardDescription>Property and space tax status</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -45,7 +45,7 @@ export function TaxOverview({ stats }: TaxOverviewProps) {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Unit Taxes</h4>
+              <h4 className="text-sm font-semibold">Space Taxes</h4>
               <Badge variant="outline">{unitTotal} Total</Badge>
             </div>
             <div className="space-y-3">

@@ -197,7 +197,7 @@ async function TaxOverview() {
     <Card className="col-span-1 lg:col-span-2">
       <CardHeader>
         <CardTitle>Tax Overview</CardTitle>
-        <CardDescription>Property and unit taxes</CardDescription>
+        <CardDescription>Property and space taxes</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -215,7 +215,7 @@ async function TaxOverview() {
             </div>
           </div>
           <div>
-            <h4 className="text-sm font-medium mb-2">Unit Taxes</h4>
+            <h4 className="text-sm font-medium mb-2">Space Taxes</h4>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Due</span>
