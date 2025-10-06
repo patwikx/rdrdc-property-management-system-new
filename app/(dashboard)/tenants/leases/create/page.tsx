@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, X, Building, Users, Calendar, DollarSign, Check, ChevronsUpDown, Search } from "lucide-react"
+import { Plus, X, Building, Users, Calendar as CalendarIcon, DollarSign, Check, ChevronsUpDown, Search } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -56,6 +57,8 @@ export default function CreateLeasePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [openTenantSelect, setOpenTenantSelect] = useState(false)
   const [unitSearchQuery, setUnitSearchQuery] = useState("")
+  const [selectedProperty, setSelectedProperty] = useState<string>("all")
+  const [openPropertyFilter, setOpenPropertyFilter] = useState(false)
 
   const form = useForm<LeaseFormData>({
     resolver: zodResolver(LeaseSchema),
@@ -174,12 +177,25 @@ export default function CreateLeasePage() {
 
   const filteredUnits = units.filter(unit => {
     const searchLower = unitSearchQuery.toLowerCase()
-    return (
+    const matchesSearch = (
       unit.unitNumber.toLowerCase().includes(searchLower) ||
       unit.property.propertyName.toLowerCase().includes(searchLower) ||
       unit.property.propertyCode.toLowerCase().includes(searchLower)
     )
+    const matchesProperty = selectedProperty === "all" || unit.property.id === selectedProperty
+    
+    return matchesSearch && matchesProperty
   })
+
+  const uniqueProperties = Array.from(
+    new Map(units.map(unit => [unit.property.id, unit.property])).values()
+  )
+
+  const getPropertyDisplayText = (propertyId: string) => {
+    if (propertyId === "all") return "All Properties"
+    const property = uniqueProperties.find(p => p.id === propertyId)
+    return property ? property.propertyName : "All Properties"
+  }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -274,7 +290,7 @@ export default function CreateLeasePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5" />
+                    <CalendarIcon className="h-5 w-5" />
                     <span>Lease Period</span>
                   </CardTitle>
                   <CardDescription>
@@ -286,15 +302,36 @@ export default function CreateLeasePage() {
                     control={form.control}
                     name="startDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Start Date</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
-                          />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              captionLayout="dropdown"
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -304,15 +341,36 @@ export default function CreateLeasePage() {
                     control={form.control}
                     name="endDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>End Date</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
-                          />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                                captionLayout="dropdown"
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -320,45 +378,101 @@ export default function CreateLeasePage() {
                 </CardContent>
               </Card>
 
-              {/* Unit Selection */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Building className="h-5 w-5" />
-                    <span>Unit Selection</span>
+                    <span>Space Selection</span>
                   </CardTitle>
                   <CardDescription>
-                    Select units to include in this lease and set rent amounts
+                    Select spaces to include in this lease and set rent amounts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {units.length === 0 ? (
                     <div className="text-center py-8">
                       <Building className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <h3 className="mt-4 text-lg font-semibold">No available units</h3>
+                      <h3 className="mt-4 text-lg font-semibold">No available spaces</h3>
                       <p className="mt-2 text-muted-foreground">
-                        All units are currently occupied or reserved.
+                        All spaces are currently occupied or reserved.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* Search Bar */}
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search units by number or property..."
-                          value={unitSearchQuery}
-                          onChange={(e) => setUnitSearchQuery(e.target.value)}
-                          className="pl-9"
-                        />
+                      <div className="flex gap-3">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search spaces by number or property..."
+                            value={unitSearchQuery}
+                            onChange={(e) => setUnitSearchQuery(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
+                        
+                        <Popover open={openPropertyFilter} onOpenChange={setOpenPropertyFilter}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openPropertyFilter}
+                              className="w-[250px] justify-between"
+                            >
+                              {getPropertyDisplayText(selectedProperty)}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[250px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search property..." />
+                              <CommandList>
+                                <CommandEmpty>No property found.</CommandEmpty>
+                                <CommandGroup>
+                                  <CommandItem
+                                    value="all properties"
+                                    onSelect={() => {
+                                      setSelectedProperty("all")
+                                      setOpenPropertyFilter(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedProperty === "all" ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    All Properties
+                                  </CommandItem>
+                                  {uniqueProperties.map((property) => (
+                                    <CommandItem
+                                      key={property.id}
+                                      value={property.propertyName}
+                                      onSelect={() => {
+                                        setSelectedProperty(property.id)
+                                        setOpenPropertyFilter(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          selectedProperty === property.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {property.propertyName}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
 
-                      {/* Units Grid */}
                       {filteredUnits.length === 0 ? (
                         <div className="text-center py-8">
                           <Building className="mx-auto h-8 w-8 text-muted-foreground" />
                           <p className="mt-2 text-sm text-muted-foreground">
-                            No units found matching &quot;{unitSearchQuery}&quot;
+                            No spaces found matching &quote;{unitSearchQuery}&quote;
                           </p>
                         </div>
                       ) : (
@@ -452,7 +566,7 @@ export default function CreateLeasePage() {
 
                   <div className="space-y-2 pt-4 border-t">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Selected Units:</span>
+                      <span className="text-muted-foreground">Selected Spaces:</span>
                       <span className="font-medium">{selectedUnits.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -474,7 +588,7 @@ export default function CreateLeasePage() {
               {selectedUnits.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Selected Units</CardTitle>
+                    <CardTitle className="text-sm">Selected Spaces</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
