@@ -707,6 +707,12 @@ export async function moveTask(
     throw new Error("Unauthorized")
   }
 
+  console.log('=== MOVE TASK DEBUG ===')
+  console.log('Task ID:', taskId)
+  console.log('Source Column:', sourceColumnId)
+  console.log('Destination Column:', destinationColumnId)
+  console.log('Destination Index:', destinationIndex)
+
   try {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -716,16 +722,10 @@ export async function moveTask(
       return { error: "Task not found" }
     }
 
-    // Update the task's column and order
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        columnId: destinationColumnId,
-        order: destinationIndex,
-      },
-    })
+    console.log('Current task column:', task.columnId)
+    console.log('Current task order:', task.order)
 
-    // Reorder tasks in the destination column
+    // Get all tasks in the destination column (excluding the task being moved)
     const destinationTasks = await prisma.task.findMany({
       where: { 
         columnId: destinationColumnId,
@@ -734,17 +734,65 @@ export async function moveTask(
       orderBy: { order: 'asc' },
     })
 
-    // Update orders for tasks that come after the inserted task
+    console.log('Destination tasks count:', destinationTasks.length)
+    console.log('Destination tasks before move:', destinationTasks.map(t => ({ id: t.id, order: t.order, title: t.title })))
+
+    // Create array with all tasks in their final positions
+    const finalTaskOrder: string[] = []
+    
+    // Build final order: insert moved task at destinationIndex
+    for (let i = 0; i < destinationTasks.length; i++) {
+      if (i === destinationIndex) {
+        finalTaskOrder.push(taskId)
+      }
+      finalTaskOrder.push(destinationTasks[i].id)
+    }
+    
+    // If destinationIndex is at the end
+    if (destinationIndex >= destinationTasks.length) {
+      finalTaskOrder.push(taskId)
+    }
+
+    console.log('Final task order:', finalTaskOrder)
+
+    // Update all tasks with their new sequential order
     await Promise.all(
-      destinationTasks
-        .filter((_, index) => index >= destinationIndex)
-        .map((task, index) =>
+      finalTaskOrder.map((id, index) =>
+        prisma.task.update({
+          where: { id },
+          data: {
+            columnId: destinationColumnId,
+            order: index,
+          },
+        })
+      )
+    )
+
+    console.log('Updated destination column tasks')
+
+    // If moving between different columns, reorder the source column
+    if (sourceColumnId !== destinationColumnId) {
+      const sourceTasks = await prisma.task.findMany({
+        where: { 
+          columnId: sourceColumnId,
+          id: { not: taskId },
+        },
+        orderBy: { order: 'asc' },
+      })
+
+      console.log('Source tasks to reorder:', sourceTasks.length)
+
+      await Promise.all(
+        sourceTasks.map((t, index) =>
           prisma.task.update({
-            where: { id: task.id },
-            data: { order: destinationIndex + index + 1 },
+            where: { id: t.id },
+            data: { order: index },
           })
         )
-    )
+      )
+
+      console.log('Reordered source column tasks')
+    }
 
     // Create activity log
     await prisma.taskActivity.create({
@@ -757,6 +805,7 @@ export async function moveTask(
     })
 
     revalidatePath(`/projects/${task.projectId}`)
+ 
     return { success: "Task moved successfully" }
   } catch (error) {
     console.error("Error moving task:", error)

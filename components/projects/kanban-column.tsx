@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { TaskCard } from "./task-card"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
 interface Task {
   id: string
@@ -48,11 +49,12 @@ interface KanbanColumnProps {
   column: Column
   projectId: string
   projectMembers: ProjectMember[]
+  isReceiving?: boolean
 }
 
-export function KanbanColumn({ column, projectId, projectMembers }: KanbanColumnProps) {
+export function KanbanColumn({ column, projectId, projectMembers, isReceiving }: KanbanColumnProps) {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
-  
+ 
   const { setNodeRef } = useDroppable({
     id: column.id,
   })
@@ -90,14 +92,17 @@ export function KanbanColumn({ column, projectId, projectMembers }: KanbanColumn
       {/* Tasks Container */}
       <div
         ref={setNodeRef}
-        className="space-y-3 min-h-[400px] pb-2"
+        className={cn(
+          "space-y-3 min-h-[400px] pb-2 rounded-lg transition-all duration-200",
+          isReceiving && "ring-2 ring-primary ring-offset-2 bg-primary/5 ring-offset-background"
+        )}
       >
         <SortableContext items={(column.tasks || []).filter(task => task && task.id).map(task => task.id)} strategy={verticalListSortingStrategy}>
           {(column.tasks || []).filter(task => task && task.id).map((task) => (
             <TaskCard key={task.id} task={task} projectMembers={projectMembers} />
           ))}
         </SortableContext>
-        
+       
         {/* Add New Card Button */}
         <Button
           variant="ghost"
@@ -108,7 +113,7 @@ export function KanbanColumn({ column, projectId, projectMembers }: KanbanColumn
           Add new card
         </Button>
       </div>
-      
+     
       <CreateTaskDialog
         open={isCreateTaskOpen}
         onOpenChange={setIsCreateTaskOpen}

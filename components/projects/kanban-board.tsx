@@ -1,16 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCorners,
+  DragOverEvent,
 } from "@dnd-kit/core"
 import { arrayMove, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable"
 import { toast } from "sonner"
@@ -18,7 +19,6 @@ import { toast } from "sonner"
 import { ProjectWithDetails, moveTask, reorderTasks } from "@/lib/actions/project-actions"
 import { KanbanColumn } from "./kanban-column"
 import { TaskCard } from "./task-card"
-
 
 interface KanbanBoardProps {
   project: ProjectWithDetails
@@ -54,7 +54,8 @@ interface Column {
 }
 
 export function KanbanBoard({ project }: KanbanBoardProps) {
-  const board = project.boards?.[0] // Using the first board for now
+  const router = useRouter()
+  const board = project.boards?.[0]
   
   const [columns, setColumns] = useState<Column[]>(
     (board?.columns || []).map(col => ({
@@ -64,6 +65,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
   )
   
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [activeColumn, setActiveColumn] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,82 +85,26 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
       if (task) {
         setActiveTask(task)
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error("Error in handleDragStart:", error)
       setActiveTask(null)
     }
   }, [columns])
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    try {
-      const { active, over } = event
-      
-      if (!over) return
+    if (!event.over) {
+      setActiveColumn(null)
+      return
+    }
 
-      const activeId = active.id as string
-      const overId = over.id as string
+    const overId = event.over.id as string
 
-      // Find the active task and its column
-      const activeColumn = columns.find(col => 
-        col.tasks && col.tasks.some(task => task && task.id === activeId)
-      )
-      const activeTask = activeColumn?.tasks?.find(task => task && task.id === activeId)
-      
-      if (!activeTask || !activeColumn) return
+    // Find which column we're over
+    const overColumn = columns.find(col => col.id === overId) ||
+      columns.find(col => col.tasks && col.tasks.some(task => task && task.id === overId))
 
-      // Find the over column (either by column id or task id)
-      let overColumn = columns.find(col => col.id === overId)
-      if (!overColumn) {
-        overColumn = columns.find(col => 
-          col.tasks && col.tasks.some(task => task && task.id === overId)
-        )
-      }
-      
-      if (!overColumn || activeColumn.id === overColumn.id) return
-
-      // Move task between columns
-      setColumns(prevColumns => {
-        try {
-          const newColumns = [...prevColumns]
-          
-          // Remove task from active column
-          const activeColIndex = newColumns.findIndex(col => col.id === activeColumn.id)
-          if (activeColIndex === -1 || !newColumns[activeColIndex].tasks) return prevColumns
-          
-          const activeTaskIndex = newColumns[activeColIndex].tasks.findIndex(task => task && task.id === activeId)
-          if (activeTaskIndex === -1) return prevColumns
-          
-          const [movedTask] = newColumns[activeColIndex].tasks.splice(activeTaskIndex, 1)
-          if (!movedTask) return prevColumns
-          
-          // Add task to over column
-          const overColIndex = newColumns.findIndex(col => col.id === overColumn.id)
-          if (overColIndex === -1) return prevColumns
-          
-          if (!newColumns[overColIndex].tasks) {
-            newColumns[overColIndex].tasks = []
-          }
-          
-          let insertIndex = newColumns[overColIndex].tasks.length
-          
-          // If dropping on a specific task, insert before it
-          if (overId !== overColumn.id) {
-            const overTaskIndex = newColumns[overColIndex].tasks.findIndex(task => task && task.id === overId)
-            if (overTaskIndex !== -1) {
-              insertIndex = overTaskIndex
-            }
-          }
-          
-          newColumns[overColIndex].tasks.splice(insertIndex, 0, movedTask)
-          
-          return newColumns
-        } catch (error) {
-          console.error("Error in setColumns:", error)
-          return prevColumns
-        }
-      })
-    } catch (error) {
-      console.error("Error in handleDragOver:", error)
+    if (overColumn) {
+      setActiveColumn(overColumn.id)
     }
   }, [columns])
 
@@ -166,34 +112,49 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
     const { active, over } = event
     
     setActiveTask(null)
+    setActiveColumn(null)
     
-    if (!over) return
+    if (!over) {
+      return
+    }
 
     const activeId = active.id as string
     const overId = over.id as string
 
-    // Find the active task and its current column
-    const activeColumn = columns.find(col => 
+    // Use the ORIGINAL board data to find columns
+    const originalColumns = (board?.columns || []).map(col => ({
+      ...col,
+      tasks: (col.tasks || []).filter(task => task && task.id).sort((a, b) => a.order - b.order)
+    }))
+
+    // Find which column the active task is ACTUALLY in (from server data)
+    const activeColumn = originalColumns.find(col => 
       col.tasks && col.tasks.some(task => task && task.id === activeId)
     )
     const activeTask = activeColumn?.tasks?.find(task => task && task.id === activeId)
     
-    if (!activeTask || !activeColumn || !activeColumn.tasks) return
+    if (!activeTask || !activeColumn || !activeColumn.tasks) {
+      return
+    }
 
-    // Find the destination column
-    let overColumn = columns.find(col => col.id === overId)
+    // Find which column we're dropping into
+    let overColumn = originalColumns.find(col => col.id === overId)
     if (!overColumn) {
-      overColumn = columns.find(col => 
+      overColumn = originalColumns.find(col => 
         col.tasks && col.tasks.some(task => task && task.id === overId)
       )
     }
     
-    if (!overColumn || !overColumn.tasks) return
+    if (!overColumn || !overColumn.tasks) {
+      return
+    }
 
     const activeTaskIndex = activeColumn.tasks.findIndex(task => task && task.id === activeId)
     const overTaskIndex = overColumn.tasks.findIndex(task => task && task.id === overId)
     
-    if (activeTaskIndex === -1) return
+    if (activeTaskIndex === -1) {
+      return
+    }
 
     if (activeColumn.id === overColumn.id) {
       // Reordering within the same column
@@ -202,20 +163,17 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
         const taskIds = newTasks.filter(task => task && task.id).map(task => task.id)
         
         try {
-          await reorderTasks(activeColumn.id, taskIds)
-          toast.success("Tasks reordered successfully")
+          const result = await reorderTasks(activeColumn.id, taskIds)
+          if (result.error) {
+            toast.error(result.error)
+          } else {
+            toast.success("Tasks reordered successfully")
+          }
+          router.refresh()
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           toast.error("Failed to reorder tasks")
-          // Revert the change
-          setColumns(prevColumns => {
-            const newColumns = [...prevColumns]
-            const colIndex = newColumns.findIndex(col => col.id === activeColumn.id)
-            if (colIndex !== -1 && newColumns[colIndex].tasks) {
-              newColumns[colIndex].tasks = arrayMove(newColumns[colIndex].tasks, overTaskIndex, activeTaskIndex)
-            }
-            return newColumns
-          })
+          router.refresh()
         }
       }
     } else {
@@ -223,23 +181,22 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
       const destinationIndex = overTaskIndex === -1 ? overColumn.tasks.length : overTaskIndex
       
       try {
-        await moveTask(activeId, activeColumn.id, overColumn.id, destinationIndex)
-        toast.success("Task moved successfully")
+        const result = await moveTask(activeId, activeColumn.id, overColumn.id, destinationIndex)
+        
+        if (result.error) {
+          toast.error(result.error)
+        } else {
+          toast.success("Task moved successfully")
+        }
+        router.refresh()
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast.error("Failed to move task")
-        // Revert the change by resetting columns from project data
-        setColumns(
-          (board?.columns || []).map(col => ({
-            ...col,
-            tasks: (col.tasks || []).sort((a, b) => a.order - b.order)
-          }))
-        )
+        router.refresh()
       }
     }
-  }, [columns, board?.columns])
+  }, [board?.columns, router])
 
-  // Ensure columns state is always valid
   useEffect(() => {
     if (board?.columns) {
       setColumns(
@@ -251,7 +208,6 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
     }
   }, [board])
   
-  // Early return AFTER all hooks have been called
   if (!board) {
     return (
       <div className="text-center py-12">
@@ -283,6 +239,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
                     name: `${member.user.firstName} ${member.user.lastName}`
                   }))
                 ]}
+                isReceiving={activeColumn === column.id && activeTask !== null}
               />
             ))}
           </SortableContext>

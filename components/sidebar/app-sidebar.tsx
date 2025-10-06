@@ -104,11 +104,11 @@ const getNavigationItems = (userRole: string) => {
       items: [
         {
           title: "Property Taxes",
-          url: "/taxes/property",
+          url: "/taxes/property-taxes",
         },
         {
-          title: "Unit Taxes",
-          url: "/taxes/unit",
+          title: "Space Taxes",
+          url: "/taxes/space-taxes",
         },
       ],
     },
@@ -173,12 +173,16 @@ const getNavigationItems = (userRole: string) => {
         icon: FileBarChart,
         items: [
           {
-            title: "Financial Reports",
-            url: "/reports/financial",
+            title: "Reports Dashboard",
+            url: "/reports",
           },
           {
             title: "Occupancy Reports",
             url: "/reports/occupancy",
+          },
+          {
+            title: "Leasing Reports",
+            url: "/reports/leasing",
           },
           {
             title: "Tax Reports",
