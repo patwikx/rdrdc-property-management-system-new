@@ -65,7 +65,7 @@ async function DashboardStats() {
         description={`${stats.properties.byType.COMMERCIAL} commercial, ${stats.properties.byType.RESIDENTIAL} residential`}
       />
       <StatCard
-        title="Total Units"
+        title="Total Spaces"
         value={stats.units.total}
         icon={Building2}
         description={`${stats.units.occupancyRate}% occupied`}

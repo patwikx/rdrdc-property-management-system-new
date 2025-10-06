@@ -24,7 +24,7 @@ export function OccupancyOverview({ stats }: OccupancyOverviewProps) {
     },
     {
       title: "Unit-Based Rate",
-      description: "Based on number of occupied units",
+      description: "Based on number of occupied spaces",
       value: stats.occupancy.unitBasedRate,
       icon: Building,
       color: "text-green-600 dark:text-green-400",
@@ -103,7 +103,7 @@ export function OccupancyOverview({ stats }: OccupancyOverviewProps) {
         <div className="mt-6 pt-4 border-t">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Vacant Units</div>
+              <div className="text-sm text-muted-foreground">Vacant Spaces</div>
               <div className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
                 {stats.units.vacant}
               </div>

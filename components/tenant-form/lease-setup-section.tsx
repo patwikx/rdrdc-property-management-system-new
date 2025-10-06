@@ -1,15 +1,18 @@
 // components/tenant-form/LeaseSetupSection.tsx
 import { useState } from "react"
-import { Calendar, Home, Search } from "lucide-react"
+import { Calendar, Home, Search, Check, ChevronsUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
 import { TenantFormData, UnitData, SelectedUnitData } from "@/types/tenant-form"
 import { UnitCard } from "./unit-card"
 import { UnitConfiguration } from "./unit-configuration"
-
+import { cn } from "@/lib/utils"
 
 interface PropertyWithDetails {
   id: string
@@ -39,6 +42,7 @@ export function LeaseSetupSection({
   onUpdateFloorRate,
 }: LeaseSetupSectionProps) {
   const [unitSearchQuery, setUnitSearchQuery] = useState("")
+  const [openPropertySelect, setOpenPropertySelect] = useState(false)
   const createLease = form.watch('createLease')
 
   const handleRemoveUnit = (unitId: string, event: React.MouseEvent) => {
@@ -49,6 +53,11 @@ export function LeaseSetupSection({
     if (unit) {
       onToggleUnit(unit, event)
     }
+  }
+
+  const getPropertyDisplayText = (propertyId: string) => {
+    const property = properties.find(p => p.id === propertyId)
+    return property ? property.propertyName : "Select property"
   }
 
   return (
@@ -94,22 +103,55 @@ export function LeaseSetupSection({
               control={form.control}
               name="propertyId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-sm font-medium">Property *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select property" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={property.id}>
-                          {property.propertyName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openPropertySelect} onOpenChange={setOpenPropertySelect}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openPropertySelect}
+                          className={cn(
+                            "w-full justify-between h-10",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value ? getPropertyDisplayText(field.value) : "Select property"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search property..." />
+                        <CommandList>
+                          <CommandEmpty>No property found.</CommandEmpty>
+                          <CommandGroup>
+                            {properties.map((property) => (
+                              <CommandItem
+                                key={property.id}
+                                value={property.propertyName}
+                                onSelect={() => {
+                                  form.setValue("propertyId", property.id)
+                                  setOpenPropertySelect(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === property.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {property.propertyName}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription className="text-xs">
                     Choose the property for this lease
                   </FormDescription>
@@ -146,16 +188,16 @@ export function LeaseSetupSection({
 
           {selectedProperty && (
             <div className="space-y-4">
-              <FormLabel className="text-sm font-medium">Available Units</FormLabel>
+              <FormLabel className="text-sm font-medium">Available Spaces</FormLabel>
               <FormDescription className="text-xs">
-                Select one or more units for this lease. Click on units to select them.
+                Select one or more spaces for this lease. Click on spaces to select them.
               </FormDescription>
               
               {/* Unit Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search units by number, area, or rent..."
+                  placeholder="Search spaces by number, area, or rent..."
                   value={unitSearchQuery}
                   onChange={(e) => setUnitSearchQuery(e.target.value)}
                   className="pl-10 h-10"
@@ -175,8 +217,8 @@ export function LeaseSetupSection({
                 
                 return (
                   <div className="text-sm text-muted-foreground">
-                    {availableUnits.length} available unit{availableUnits.length !== 1 ? 's' : ''} found 
-                    (of {allUnits.length} total units)
+                    {availableUnits.length} available space{availableUnits.length !== 1 ? 's' : ''} found 
+                    (of {allUnits.length} total spaces)
                     {selectedUnitsData.length > 0 && (
                       <span className="ml-2">• {selectedUnitsData.length} selected</span>
                     )}
@@ -215,12 +257,12 @@ export function LeaseSetupSection({
                 <div className="text-center py-8">
                   <Home className="mx-auto h-8 w-8 text-muted-foreground" />
                   <h4 className="mt-2 text-sm font-semibold">
-                    {unitSearchQuery ? 'No units found' : 'No available units'}
+                    {unitSearchQuery ? 'No spaces found' : 'No available spaces'}
                   </h4>
                   <p className="text-sm text-muted-foreground">
                     {unitSearchQuery 
                       ? 'Try adjusting your search terms'
-                      : 'All units in this property are currently occupied'
+                      : 'All spaces in this property are currently occupied'
                     }
                   </p>
                 </div>

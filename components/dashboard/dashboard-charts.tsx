@@ -62,7 +62,7 @@ export function OccupancyChart({ stats }: OccupancyChartProps) {
               <span className="font-medium">{data.name}</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              {data.value} units ({percentage}%)
+              {data.value} spaces ({percentage}%)
             </div>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function OccupancyChart({ stats }: OccupancyChartProps) {
               <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <CardTitle className="text-lg">Unit Status Distribution</CardTitle>
+              <CardTitle className="text-lg">Space Status Distribution</CardTitle>
               <CardDescription>Current occupancy breakdown across all properties</CardDescription>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function OccupancyChart({ stats }: OccupancyChartProps) {
               <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                 {stats.units.total}
               </div>
-              <div className="text-xs text-muted-foreground">Total Units</div>
+              <div className="text-xs text-muted-foreground">Total Spaces</div>
             </div>
             <div>
               <div className="text-lg font-semibold text-green-600 dark:text-green-400">

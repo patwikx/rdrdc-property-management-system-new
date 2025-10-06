@@ -27,14 +27,14 @@ export function UnitConfiguration({
     <div className="mt-6 space-y-4">
       <div className="flex items-center space-x-2 pb-2 border-b">
         <Building className="h-5 w-5 text-primary" />
-        <h4 className="font-medium">Selected Units Configuration</h4>
+        <h4 className="font-medium">Selected Space Configuration</h4>
       </div>
       
       {selectedUnitsData.map((unitData) => (
         <Card key={unitData.unit.id} className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between">
-              <span>Unit {unitData.unit.unitNumber}</span>
+              <span>Space {unitData.unit.unitNumber}</span>
               <Button
                 variant="ghost"
                 size="sm"

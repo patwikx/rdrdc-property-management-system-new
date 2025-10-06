@@ -80,7 +80,7 @@ export function TenantPreview({ form, selectedProperty, selectedUnitsData }: Ten
               )}
               {selectedUnitsData.length > 0 && (
                 <div className="text-xs">
-                  Units: {selectedUnitsData.map(u => u.unit.unitNumber).join(', ')} 
+                  Spaces: {selectedUnitsData.map(u => u.unit.unitNumber).join(', ')} 
                   • Total: ₱{selectedUnitsData.reduce((sum, u) => sum + (u.customRentAmount || 0), 0).toLocaleString()}/month
                 </div>
               )}

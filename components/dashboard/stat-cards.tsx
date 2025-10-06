@@ -93,7 +93,7 @@ export function DashboardStatsCards({ stats }: DashboardStatsCardsProps) {
         title="Overall Occupancy"
         value={`${stats.occupancy.overallRate}%`}
         icon={TrendingUp}
-        description={`${stats.units.occupied} of ${stats.units.total} units occupied`}
+        description={`${stats.units.occupied} of ${stats.units.total} spaces occupied`}
         trend={{ value: 5, positive: true }}
         href="/properties/units"
       />
