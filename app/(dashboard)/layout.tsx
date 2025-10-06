@@ -8,6 +8,7 @@ import { AppSidebar } from '@/components/sidebar/app-sidebar';
 import { Separator } from '@/components/ui/separator';
 import { DynamicBreadcrumb } from '@/components/breadcrumb/dynamic-breadcrumb';
 import { GlobalSearch } from '@/components/search/global-search';
+import { DateTimeDisplay } from '@/components/date-time-display';
 
 export const metadata = {
   title: "Dashboard | Property Management System",
@@ -63,9 +64,10 @@ export default async function DashboardLayout({
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <DynamicBreadcrumb />
-            <div className="ml-auto">
+            <div className="flex-1 flex justify-center">
               <GlobalSearch />
             </div>
+            <DateTimeDisplay />
           </header>
 
           {/* Main Content */}

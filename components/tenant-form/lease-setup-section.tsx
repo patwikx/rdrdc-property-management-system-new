@@ -31,6 +31,19 @@ interface LeaseSetupSectionProps {
   onUpdateFloorRate: (unitId: string, floorId: string, newRate: number, area: number) => void
 }
 
+const leaseStatusOptions = [
+  {
+    value: "PENDING",
+    label: "Pending",
+    color: "bg-yellow-500"
+  },
+  {
+    value: "ACTIVE",
+    label: "Active",
+    color: "bg-green-500"
+  }
+]
+
 export function LeaseSetupSection({
   form,
   isLoading,
@@ -58,6 +71,10 @@ export function LeaseSetupSection({
   const getPropertyDisplayText = (propertyId: string) => {
     const property = properties.find(p => p.id === propertyId)
     return property ? property.propertyName : "Select property"
+  }
+
+  const getStatusOption = (value: string) => {
+    return leaseStatusOptions.find(option => option.value === value)
   }
 
   return (
@@ -169,12 +186,25 @@ export function LeaseSetupSection({
                   <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
                     <FormControl>
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder="Select status">
+                          {field.value && getStatusOption(field.value) && (
+                            <div className="flex items-center gap-2">
+                              <div className={cn("w-2 h-2 rounded-full", getStatusOption(field.value)?.color)} />
+                              <span>{getStatusOption(field.value)?.label}</span>
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      {leaseStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                            <span>{option.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs">

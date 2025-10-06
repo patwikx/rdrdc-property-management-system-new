@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { DocumentSchema, DocumentFormData } from "@/lib/validations/document-schema"
 import { createDocument } from "@/lib/actions/document-actions"
-import { Save, X, FileText, Building, Home, User, Upload } from "lucide-react"
+import { Save, X, FileText, Building, Home, User, Upload, Check, ChevronsUpDown } from "lucide-react"
 import { toast } from "sonner"
 import { DocumentType } from "@prisma/client"
 import { FileUpload, UploadedFileDisplay } from "@/components/file-upload"
+import { cn } from "@/lib/utils"
 
 const documentTypeOptions = [
   { 
@@ -102,6 +104,9 @@ export function CreateDocumentForm({
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("")
   const [uploadedFileName, setUploadedFileName] = useState<string>("")
+  const [openProperty, setOpenProperty] = useState(false)
+  const [openUnit, setOpenUnit] = useState(false)
+  const [openTenant, setOpenTenant] = useState(false)
 
   const form = useForm<DocumentFormData>({
     resolver: zodResolver(DocumentSchema),
@@ -318,32 +323,84 @@ export function CreateDocumentForm({
             )}
           />
 
-          {/* Associations */}
+          {/* Associations with Combobox */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Property Combobox */}
             <FormField
               control={form.control}
               name="propertyId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="flex items-center space-x-2">
                     <Building className="h-4 w-4" />
                     <span>Property (Optional)</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select property" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="no-property">No property</SelectItem>
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={property.id}>
-                          {property.propertyCode} - {property.propertyName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openProperty} onOpenChange={setOpenProperty}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openProperty}
+                          className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value && field.value !== "no-property"
+                            ? properties.find((property) => property.id === field.value)
+                                ? `${properties.find((property) => property.id === field.value)?.propertyCode} - ${properties.find((property) => property.id === field.value)?.propertyName}`
+                                : "Select property"
+                            : "Select property"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search property..." />
+                        <CommandList>
+                          <CommandEmpty>No property found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="no-property"
+                              onSelect={() => {
+                                form.setValue("propertyId", "")
+                                setOpenProperty(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  !field.value || field.value === "no-property" ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              No property
+                            </CommandItem>
+                            {properties.map((property) => (
+                              <CommandItem
+                                key={property.id}
+                                value={`${property.propertyCode}-${property.propertyName}`}
+                                onSelect={() => {
+                                  form.setValue("propertyId", property.id)
+                                  setOpenProperty(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === property.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {property.propertyCode} - {property.propertyName}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>
                     Associate with a property
                   </FormDescription>
@@ -352,62 +409,166 @@ export function CreateDocumentForm({
               )}
             />
 
+            {/* Unit Combobox */}
             <FormField
               control={form.control}
               name="unitId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="flex items-center space-x-2">
                     <Home className="h-4 w-4" />
-                    <span>Unit (Optional)</span>
+                    <span>Space (Optional)</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select unit" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="no-spaces">No space</SelectItem>
-                      {units.map((unit) => (
-                        <SelectItem key={unit.id} value={unit.id}>
-                          {unit.unitNumber} - {unit.property.propertyName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openUnit} onOpenChange={setOpenUnit}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openUnit}
+                          className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value && field.value !== "no-spaces"
+                            ? units.find((unit) => unit.id === field.value)
+                                ? `${units.find((unit) => unit.id === field.value)?.unitNumber} - ${units.find((unit) => unit.id === field.value)?.property.propertyName}`
+                                : "Select unit"
+                            : "Select unit"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search space..." />
+                        <CommandList>
+                          <CommandEmpty>No space found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="no-spaces"
+                              onSelect={() => {
+                                form.setValue("unitId", "")
+                                setOpenUnit(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  !field.value || field.value === "no-spaces" ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              No space
+                            </CommandItem>
+                            {units.map((unit) => (
+                              <CommandItem
+                                key={unit.id}
+                                value={`${unit.unitNumber}-${unit.property.propertyName}`}
+                                onSelect={() => {
+                                  form.setValue("unitId", unit.id)
+                                  setOpenUnit(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === unit.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {unit.unitNumber} - {unit.property.propertyName}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>
-                    Associate with a specific unit
+                    Associate with a specific space
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Tenant Combobox */}
             <FormField
               control={form.control}
               name="tenantId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
                     <span>Tenant (Optional)</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select tenant" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="no-tenant">No tenant</SelectItem>
-                      {tenants.map((tenant) => (
-                        <SelectItem key={tenant.id} value={tenant.id}>
-                          {tenant.bpCode} - {tenant.firstName} {tenant.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openTenant} onOpenChange={setOpenTenant}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openTenant}
+                          className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value && field.value !== "no-tenant"
+                            ? tenants.find((tenant) => tenant.id === field.value)
+                                ? `${tenants.find((tenant) => tenant.id === field.value)?.bpCode} - ${tenants.find((tenant) => tenant.id === field.value)?.firstName} ${tenants.find((tenant) => tenant.id === field.value)?.lastName}`
+                                : "Select tenant"
+                            : "Select tenant"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search tenant..." />
+                        <CommandList>
+                          <CommandEmpty>No tenant found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="no-tenant"
+                              onSelect={() => {
+                                form.setValue("tenantId", "")
+                                setOpenTenant(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  !field.value || field.value === "no-tenant" ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              No tenant
+                            </CommandItem>
+                            {tenants.map((tenant) => (
+                              <CommandItem
+                                key={tenant.id}
+                                value={`${tenant.bpCode}-${tenant.firstName}-${tenant.lastName}`}
+                                onSelect={() => {
+                                  form.setValue("tenantId", tenant.id)
+                                  setOpenTenant(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === tenant.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {tenant.bpCode} - {tenant.firstName} {tenant.lastName}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>
                     Associate with a tenant
                   </FormDescription>

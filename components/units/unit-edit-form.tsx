@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Building2, Edit, Plus, Trash2, Ruler } from "lucide-react"
+import { Building2, Edit, Plus, Trash2, Ruler, Home, ArrowUp, ArrowUpRight, Layers, Warehouse } from "lucide-react"
 import { UnitWithDetails } from "@/lib/actions/unit-actions"
 import { UnitFormData } from "@/lib/validations/unit-schema"
 import { UseFormReturn } from "react-hook-form"
@@ -53,19 +53,11 @@ const unitStatusOptions = [
 ]
 
 const floorTypeOptions = [
-  "Ground Floor",
-  "Second Floor", 
-  "Third Floor",
-  "Fourth Floor",
-  "Fifth Floor",
-  "Basement",
-  "Mezzanine",
-  "Rooftop",
-  "Storage",
-  "Office Space",
-  "Retail Space",
-  "Warehouse",
-  "Other"
+  { value: "Ground Floor", label: "Ground Floor", icon: Home },
+  { value: "Second Floor", label: "Second Floor", icon: ArrowUp },
+  { value: "Third Floor", label: "Third Floor", icon: ArrowUpRight },
+  { value: "Mezzanine", label: "Mezzanine", icon: Layers },
+  { value: "Rooftop", label: "Rooftop", icon: Warehouse },
 ]
 
 export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditFormProps) {
@@ -148,6 +140,12 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
     form.setValue('totalRent', totalRent)
   }
 
+  // Get icon for floor type
+  const getFloorIcon = (floorType: string) => {
+    const option = floorTypeOptions.find(opt => opt.value === floorType)
+    return option ? option.icon : Home
+  }
+
   return (
     <div className="space-y-6">
       {/* Basic Information */}
@@ -157,7 +155,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
             <Edit className="h-5 w-5" />
             <span>Basic Information</span>
           </CardTitle>
-          <CardDescription>Update unit details and status</CardDescription>
+          <CardDescription>Update space details and status</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -169,7 +167,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                 name="unitNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Unit Number *</FormLabel>
+                    <FormLabel className="text-sm font-medium">Space Number *</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="e.g., 101, A-1, Ground Floor" 
@@ -179,7 +177,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Unique identifier for this unit
+                      Unique identifier for this space
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -195,7 +193,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                     <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
                       <FormControl>
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select unit status" />
+                          <SelectValue placeholder="Select space status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -232,7 +230,6 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="no-title">No specific title</SelectItem>
-                          {/* Note: We would need to fetch property titles here */}
                           {unit.propertyTitle && (
                             <SelectItem value={unit.propertyTitle.id}>
                               <div className="flex flex-col">
@@ -244,7 +241,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                         </SelectContent>
                       </Select>
                       <FormDescription className="text-xs">
-                        Link this unit to a specific property title
+                        Link this space to a specific property title
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -279,7 +276,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                       </div>
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Total floor area of the unit
+                      Total floor area of the space
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -310,7 +307,7 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
                       </div>
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Monthly rental amount for this unit
+                      Monthly rental amount for this space
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -348,114 +345,138 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {floors.map((floor, index) => (
-              <Card key={floor.id} className="relative">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">Floor {index + 1}</CardTitle>
-                    {floors.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFloor(floor.id)}
-                        disabled={isSaving}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Floor Type */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Floor Type *</label>
-                      <Select 
-                        value={floor.floorType} 
-                        onValueChange={(value) => updateFloor(floor.id, 'floorType', value)}
-                        disabled={isSaving}
-                      >
-                        <SelectTrigger className="h-10 w-full">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {floorTypeOptions.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Area */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Area (sqm) *</label>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={floor.area || ''}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0
-                            updateFloor(floor.id, 'area', value)
-                          }}
+            {floors.map((floor, index) => {
+              const FloorIcon = getFloorIcon(floor.floorType)
+              return (
+                <Card key={floor.id} className="relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FloorIcon className="h-4 w-4 text-muted-foreground" />
+                        Floor {index + 1}
+                        {floor.floorType && (
+                          <span className="text-xs text-muted-foreground font-normal">
+                            ({floor.floorType})
+                          </span>
+                        )}
+                      </CardTitle>
+                      {floors.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFloor(floor.id)}
                           disabled={isSaving}
-                          className="h-10 pr-12"
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          sqm
-                        </span>
-                      </div>
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-
-                    {/* Rate per sqm */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Rate (₱/sqm) *</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          ₱
-                        </span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={floor.ratePerSqm || ''}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0
-                            updateFloor(floor.id, 'ratePerSqm', value)
-                          }}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Floor Type */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Floor Type *</label>
+                        <Select 
+                          value={floor.floorType} 
+                          onValueChange={(value) => updateFloor(floor.id, 'floorType', value)}
                           disabled={isSaving}
-                          className="h-10 pl-8"
-                        />
+                        >
+                          <SelectTrigger className="h-10 w-full">
+                            <SelectValue placeholder="Select type">
+                              {floor.floorType && (
+                                <div className="flex items-center gap-2">
+                                  <FloorIcon className="h-4 w-4" />
+                                  <span>{floor.floorType}</span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {floorTypeOptions.map((option) => {
+                              const OptionIcon = option.icon
+                              return (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div className="flex items-center gap-2">
+                                    <OptionIcon className="h-4 w-4" />
+                                    <span>{option.label}</span>
+                                  </div>
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
 
-                    {/* Floor Rent (calculated) */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Floor Rent</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          ₱
-                        </span>
-                        <Input
-                          type="number"
-                          value={floor.floorRent.toFixed(2)}
-                          disabled
-                          className="h-10 pl-8 bg-muted"
-                        />
+                      {/* Area */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Area (sqm) *</label>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={floor.area || ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0
+                              updateFloor(floor.id, 'area', value)
+                            }}
+                            disabled={isSaving}
+                            className="h-10 pr-12"
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                            sqm
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">Auto-calculated</p>
+
+                      {/* Rate per sqm */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Rate (₱/sqm) *</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                            ₱
+                          </span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={floor.ratePerSqm || ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0
+                              updateFloor(floor.id, 'ratePerSqm', value)
+                            }}
+                            disabled={isSaving}
+                            className="h-10 pl-8"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Floor Rent (calculated) */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Floor Rent</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                            ₱
+                          </span>
+                          <Input
+                            type="number"
+                            value={floor.floorRent.toFixed(2)}
+                            disabled
+                            className="h-10 pl-8 bg-muted"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Auto-calculated</p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </CardContent>
       </Card>

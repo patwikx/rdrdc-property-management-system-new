@@ -1,11 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateDocumentForm } from "@/components/documents/create-document-form"
-import { ArrowLeft, FileText } from "lucide-react"
-import Link from "next/link"
+import { FileText } from "lucide-react"
+
 import { DocumentType } from "@prisma/client"
 
 interface Property {
@@ -64,11 +63,6 @@ export function CreateDocumentClient({
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/documents">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2">
               <FileText className="h-8 w-8" />

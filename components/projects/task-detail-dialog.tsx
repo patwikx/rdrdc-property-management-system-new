@@ -11,6 +11,7 @@ import {
   Trash2,
   Edit3,
   CalendarIcon,
+  UserX,
 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -72,6 +73,29 @@ interface TaskDetailDialogProps {
   projectMembers?: { id: string; name: string }[]
 }
 
+const priorityOptions = [
+  {
+    value: TaskPriority.LOW,
+    label: "Low",
+    color: "bg-gray-500"
+  },
+  {
+    value: TaskPriority.MEDIUM,
+    label: "Medium",
+    color: "bg-blue-500"
+  },
+  {
+    value: TaskPriority.HIGH,
+    label: "High",
+    color: "bg-orange-500"
+  },
+  {
+    value: TaskPriority.URGENT,
+    label: "Urgent",
+    color: "bg-red-500"
+  }
+]
+
 export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = [] }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("")
   const [comments, setComments] = useState<Comment[]>([])
@@ -88,6 +112,10 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  }
+
+  const getPriorityOption = (value: TaskPriority) => {
+    return priorityOptions.find(option => option.value === value)
   }
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date()
@@ -196,7 +224,7 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
             </div>
             <div className="flex items-center gap-1">
               <span>Created by</span>
-              <Avatar className="h-3 w-3">
+              <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs">
                   {getInitials(task.createdBy.firstName, task.createdBy.lastName)}
                 </AvatarFallback>
@@ -225,24 +253,27 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                 disabled={isUpdating}
               >
                 <SelectTrigger 
-                  className="h-5 text-xs border-none bg-transparent p-0 hover:bg-muted/50"
+                  className="w-full h-7 text-xs border-none bg-transparent px-1 hover:bg-muted/50"
                   data-testid="assignee-select"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">
-                    <span className="text-muted-foreground mr-1 ml-1">Unassigned</span>
+                <SelectContent className="w-full">
+                  <SelectItem value="unassigned" className="px-3">
+                    <div className="flex items-center gap-2">
+                      <UserX className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Unassigned</span>
+                    </div>
                   </SelectItem>
                   {projectMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      <div className="flex items-center gap-2 ml-2 mr-2">
-                        <Avatar className="h-5 w-5 mr-1 ml-1">
+                    <SelectItem key={member.id} value={member.id} className="px-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
                           <AvatarFallback className="text-xs">
                             {member.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="ml-1">{member.name}</span>
+                        <span>{member.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -261,7 +292,7 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                   <Button
                     variant="ghost"
                     className={cn(
-                      "h-9 text-xs p-0 font-normal justify-start hover:bg-muted/50",
+                      "h-7 text-xs p-0 font-normal justify-start hover:bg-muted/50",
                       !dueDate && "text-muted-foreground"
                     )}
                     disabled={isUpdating}
@@ -306,24 +337,27 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                 disabled={isUpdating}
               >
                 <SelectTrigger 
-                  className="h-6 text-xs border-none bg-transparent p-0 hover:bg-muted/50"
+                  className="w-full h-7 text-xs border-none bg-transparent px-1 hover:bg-muted/50"
                   data-testid="priority-select"
                 >
-                  <SelectValue />
+                  <SelectValue>
+                    {priority && getPriorityOption(priority) && (
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", getPriorityOption(priority)?.color)} />
+                        <span>{getPriorityOption(priority)?.label}</span>
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TaskPriority.LOW}>
-                    <Badge variant="outline" className="text-xs">LOW</Badge>
-                  </SelectItem>
-                  <SelectItem value={TaskPriority.MEDIUM}>
-                    <Badge variant="secondary" className="text-xs">MEDIUM</Badge>
-                  </SelectItem>
-                  <SelectItem value={TaskPriority.HIGH}>
-                    <Badge variant="default" className="text-xs">HIGH</Badge>
-                  </SelectItem>
-                  <SelectItem value={TaskPriority.URGENT}>
-                    <Badge variant="destructive" className="text-xs">URGENT</Badge>
-                  </SelectItem>
+                <SelectContent className="w-full">
+                  {priorityOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="px-3">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                        <span>{option.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -400,7 +434,7 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
             
             {/* Add Comment */}
             <div className="flex gap-2 mb-3">
-              <Avatar className="h-6 w-6">
+              <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-xs">
                   {getInitials(task.createdBy.firstName, task.createdBy.lastName)}
                 </AvatarFallback>

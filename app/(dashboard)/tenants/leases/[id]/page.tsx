@@ -317,7 +317,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="units">Units</TabsTrigger>
+          <TabsTrigger value="units">Spaces</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
@@ -359,7 +359,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Leased Units</CardTitle>
+                    <CardTitle className="text-sm font-medium">Leased Spaces</CardTitle>
                     <Building className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -367,7 +367,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                       {lease.leaseUnits.length}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Units included
+                      Spaces included
                     </p>
                   </CardContent>
                 </Card>
@@ -574,10 +574,10 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Building className="h-5 w-5" />
-                <span>Leased Units</span>
+                <span>Leased Spaces</span>
               </CardTitle>
               <CardDescription>
-                Units included in this lease agreement
+                Spaces included in this lease agreement
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -603,7 +603,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                       <p className="text-sm text-muted-foreground">per month</p>
                       <Link href={`/properties/${leaseUnit.unit.property.id}/units/${leaseUnit.unit.id}`}>
                         <Button variant="outline" size="sm" className="mt-2">
-                          View Unit
+                          View Space
                         </Button>
                       </Link>
                     </div>
@@ -696,7 +696,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
           <DialogHeader>
             <DialogTitle>Terminate Lease</DialogTitle>
             <DialogDescription>
-              Are you sure you want to terminate this lease? This action will mark the lease as terminated and make the units available.
+              Are you sure you want to terminate this lease? This action will mark the lease as terminated and make the spaces available.
             </DialogDescription>
           </DialogHeader>
           <Form {...terminationForm}>

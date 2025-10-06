@@ -45,6 +45,29 @@ interface CreateTaskDialogProps {
   projectMembers: ProjectMember[]
 }
 
+const priorityOptions = [
+  {
+    value: TaskPriority.LOW,
+    label: "Low",
+    color: "bg-gray-500"
+  },
+  {
+    value: TaskPriority.MEDIUM,
+    label: "Medium",
+    color: "bg-blue-500"
+  },
+  {
+    value: TaskPriority.HIGH,
+    label: "High",
+    color: "bg-orange-500"
+  },
+  {
+    value: TaskPriority.URGENT,
+    label: "Urgent",
+    color: "bg-red-500"
+  }
+]
+
 export function CreateTaskDialog({ 
   open, 
   onOpenChange, 
@@ -60,6 +83,10 @@ export function CreateTaskDialog({
       priority: TaskPriority.MEDIUM,
     },
   })
+
+  const getPriorityOption = (value: TaskPriority) => {
+    return priorityOptions.find(option => option.value === value)
+  }
 
   async function onSubmit(data: TaskFormData) {
     try {
@@ -138,14 +165,25 @@ export function CreateTaskDialog({
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
+                          <SelectValue placeholder="Select priority">
+                            {field.value && getPriorityOption(field.value) && (
+                              <div className="flex items-center gap-2">
+                                <div className={cn("w-2 h-2 rounded-full", getPriorityOption(field.value)?.color)} />
+                                <span>{getPriorityOption(field.value)?.label}</span>
+                              </div>
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={TaskPriority.LOW}>Low</SelectItem>
-                        <SelectItem value={TaskPriority.MEDIUM}>Medium</SelectItem>
-                        <SelectItem value={TaskPriority.HIGH}>High</SelectItem>
-                        <SelectItem value={TaskPriority.URGENT}>Urgent</SelectItem>
+                        {priorityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

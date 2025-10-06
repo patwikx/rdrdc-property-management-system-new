@@ -261,14 +261,17 @@ export default function TenantPage({ params }: TenantPageProps) {
           <div>
             <div className="flex items-center space-x-3">
               <h2 className="text-3xl font-bold tracking-tight">
-                {tenant.firstName} {tenant.lastName}
+                {tenant.company}
               </h2>
               <Badge className={getTenantStatusColor(tenant.status)}>
                 {tenant.status}
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              {tenant.bpCode} • {tenant.company}
+              {tenant.bpCode} •  {tenant.businessName} 
+            </p>
+             <p className="text-muted-foreground">
+              {tenant.firstName} {tenant.lastName} 
             </p>
           </div>
         </div>
