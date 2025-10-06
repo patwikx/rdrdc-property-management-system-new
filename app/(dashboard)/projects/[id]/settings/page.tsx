@@ -4,9 +4,9 @@ import { getProjectById } from "@/lib/actions/project-actions"
 import { ProjectSettings } from "@/components/projects/project-settings"
 
 interface ProjectSettingsPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
@@ -16,7 +16,8 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
     return notFound()
   }
 
-  const project = await getProjectById(params.id)
+  const { id } = await params
+  const project = await getProjectById(id)
   
   if (!project) {
     return notFound()
