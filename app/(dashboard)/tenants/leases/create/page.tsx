@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, X, Building, Users, Calendar, DollarSign, Check, ChevronsUpDown } from "lucide-react"
+import { Plus, X, Building, Users, Calendar, DollarSign, Check, ChevronsUpDown, Search } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -55,6 +55,7 @@ export default function CreateLeasePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [openTenantSelect, setOpenTenantSelect] = useState(false)
+  const [unitSearchQuery, setUnitSearchQuery] = useState("")
 
   const form = useForm<LeaseFormData>({
     resolver: zodResolver(LeaseSchema),
@@ -170,6 +171,15 @@ export default function CreateLeasePage() {
     const tenant = tenants.find(t => t.id === tenantId)
     return tenant ? getTenantName(tenant) : "Select a tenant"
   }
+
+  const filteredUnits = units.filter(unit => {
+    const searchLower = unitSearchQuery.toLowerCase()
+    return (
+      unit.unitNumber.toLowerCase().includes(searchLower) ||
+      unit.property.propertyName.toLowerCase().includes(searchLower) ||
+      unit.property.propertyCode.toLowerCase().includes(searchLower)
+    )
+  })
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -310,6 +320,7 @@ export default function CreateLeasePage() {
                 </CardContent>
               </Card>
 
+              {/* Unit Selection */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -331,39 +342,80 @@ export default function CreateLeasePage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {units.map((unit) => (
-                        <div key={unit.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                          <Checkbox
-                            checked={selectedUnits.includes(unit.id)}
-                            onCheckedChange={(checked) => handleUnitSelection(unit.id, checked as boolean)}
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">{unit.unitNumber}</span>
-                              <Badge variant="outline">{unit.property.propertyName}</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {unit.totalArea} sqm • Suggested: ₱{unit.totalRent.toLocaleString()}
-                            </p>
-                          </div>
-                          {selectedUnits.includes(unit.id) && (
-                            <div className="flex items-center space-x-2">
-                              <Label htmlFor={`rent-${unit.id}`} className="text-sm">
-                                Rent:
-                              </Label>
-                              <Input
-                                id={`rent-${unit.id}`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={unitRentAmounts[unit.id] || 0}
-                                onChange={(e) => handleRentAmountChange(unit.id, parseFloat(e.target.value) || 0)}
-                                className="w-32"
-                              />
-                            </div>
-                          )}
+                      {/* Search Bar */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search units by number or property..."
+                          value={unitSearchQuery}
+                          onChange={(e) => setUnitSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+
+                      {/* Units Grid */}
+                      {filteredUnits.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Building className="mx-auto h-8 w-8 text-muted-foreground" />
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            No units found matching &quot;{unitSearchQuery}&quot;
+                          </p>
                         </div>
-                      ))}
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                          {filteredUnits.map((unit) => (
+                            <div
+                              key={unit.id}
+                              className={cn(
+                                "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                                selectedUnits.includes(unit.id) && "ring-2 ring-primary"
+                              )}
+                              onClick={() => handleUnitSelection(unit.id, !selectedUnits.includes(unit.id))}
+                            >
+                              <div className="flex items-start justify-between mb-3">
+                                <span className="text-2xl font-bold">{unit.unitNumber}</span>
+                                <Checkbox
+                                  checked={selectedUnits.includes(unit.id)}
+                                  onCheckedChange={(checked) => {
+                                    handleUnitSelection(unit.id, checked as boolean)
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              
+                              <Badge variant="outline" className="text-xs w-fit mb-3">
+                                {unit.property.propertyName}
+                              </Badge>
+                              
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  Area: {unit.totalArea} sqm
+                                </p>
+                                <p className="text-base font-bold">
+                                  ₱{unit.totalRent.toLocaleString()}
+                                </p>
+                              </div>
+
+                              {selectedUnits.includes(unit.id) && (
+                                <div className="mt-3 pt-3 border-t space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                                  <Label htmlFor={`rent-${unit.id}`} className="text-xs">
+                                    Monthly Rent
+                                  </Label>
+                                  <Input
+                                    id={`rent-${unit.id}`}
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={unitRentAmounts[unit.id] || 0}
+                                    onChange={(e) => handleRentAmountChange(unit.id, parseFloat(e.target.value) || 0)}
+                                    className="h-9 text-sm"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
