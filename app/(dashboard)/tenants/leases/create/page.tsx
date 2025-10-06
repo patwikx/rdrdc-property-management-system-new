@@ -367,10 +367,9 @@ export default function CreateLeasePage() {
                             <div
                               key={unit.id}
                               className={cn(
-                                "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                                "flex flex-col p-4 border rounded-lg transition-all hover:shadow-md",
                                 selectedUnits.includes(unit.id) && "ring-2 ring-primary"
                               )}
-                              onClick={() => handleUnitSelection(unit.id, !selectedUnits.includes(unit.id))}
                             >
                               <div className="flex items-start justify-between mb-3">
                                 <span className="text-2xl font-bold">{unit.unitNumber}</span>
@@ -379,7 +378,6 @@ export default function CreateLeasePage() {
                                   onCheckedChange={(checked) => {
                                     handleUnitSelection(unit.id, checked as boolean)
                                   }}
-                                  onClick={(e) => e.stopPropagation()}
                                 />
                               </div>
                               
@@ -397,7 +395,7 @@ export default function CreateLeasePage() {
                               </div>
 
                               {selectedUnits.includes(unit.id) && (
-                                <div className="mt-3 pt-3 border-t space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                                <div className="mt-3 pt-3 border-t space-y-1.5">
                                   <Label htmlFor={`rent-${unit.id}`} className="text-xs">
                                     Monthly Rent
                                   </Label>
