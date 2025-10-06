@@ -146,7 +146,7 @@ export function PropertySidebar({
                     name="totalUnits"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Units</FormLabel>
+                        <FormLabel>Total Spaces</FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
@@ -192,7 +192,7 @@ export function PropertySidebar({
                   <p className="font-medium">{property.leasableArea.toLocaleString()} sqm</p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Total Units</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Total Spaces</Label>
                   <p className="font-medium">{property.totalUnits || 'Not specified'}</p>
                 </div>
               </div>
