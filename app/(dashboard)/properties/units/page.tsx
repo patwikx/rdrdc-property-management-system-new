@@ -477,7 +477,7 @@ function StatsCards() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.occupied}</div>
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.occupied}</div>
           <p className="text-xs text-muted-foreground">
             {stats.occupancyRate.toFixed(1)}% occupancy rate
           </p>
@@ -490,7 +490,7 @@ function StatsCards() {
           <Building2 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.vacant}</div>
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.vacant}</div>
           <p className="text-xs text-muted-foreground">
             Available for lease
           </p>
