@@ -178,7 +178,7 @@ export default function OccupancyReportsPage() {
       { key: "property.propertyCode", label: "Property Code" },
       { key: "property.propertyName", label: "Property Name" },
       { key: "property.propertyType", label: "Type" },
-      { key: "occupancy.totalUnits", label: "Total Units", type: "number" },
+      { key: "occupancy.totalUnits", label: "Total Spaces", type: "number" },
       { key: "occupancy.occupiedUnits", label: "Occupied", type: "number" },
       { key: "occupancy.vacantUnits", label: "Vacant", type: "number" },
       { key: "occupancy.occupancyRate", label: "Occupancy Rate", type: "percentage" },
@@ -356,7 +356,7 @@ export default function OccupancyReportsPage() {
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.overallOccupancyRate}%</div>
               <p className="text-xs text-muted-foreground">
-                {stats.occupiedUnits} of {stats.totalUnits} units
+                {stats.occupiedUnits} of {stats.totalUnits} spaces
               </p>
               <Progress value={stats.overallOccupancyRate} className="mt-2" />
             </CardContent>
@@ -583,10 +583,10 @@ export default function OccupancyReportsPage() {
                         <div className="grid gap-4 md:grid-cols-3">
                           {/* Unit Statistics */}
                           <div className="space-y-2">
-                            <h4 className="text-sm font-medium">Unit Distribution</h4>
+                            <h4 className="text-sm font-medium">Space Distribution</h4>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
-                                <span>Total Units</span>
+                                <span>Total Spaces</span>
                                 <span className="font-medium">{property.occupancy.totalUnits}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
@@ -784,20 +784,20 @@ export default function OccupancyReportsPage() {
 
                           {/* Unit Breakdown */}
                           <div className="space-y-2">
-                            <h4 className="text-sm font-medium">Unit Impact</h4>
+                            <h4 className="text-sm font-medium">Space Impact</h4>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
-                                <span>Total Units</span>
+                                <span>Total Spaces</span>
                                 <span className="font-medium">{property.units.length}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
-                                <span>Units with Loss</span>
+                                <span>Spaces with Loss</span>
                                 <span className="font-medium text-red-600">
                                   {property.units.filter(unit => unit.unitOpportunityLoss > 0).length}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
-                                <span>Avg Loss per Unit</span>
+                                <span>Avg Loss per Space</span>
                                 <span className="font-medium">
                                   {formatCurrency(property.loss.totalOpportunityLoss / property.units.length)}
                                 </span>

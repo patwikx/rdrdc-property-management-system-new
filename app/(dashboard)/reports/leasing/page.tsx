@@ -185,7 +185,7 @@ export default function LeasingReportsPage() {
       { key: "totalRentAmount", label: "Total Rent", type: "currency" },
       { key: "securityDeposit", label: "Security Deposit", type: "currency" },
       { key: "status", label: "Status" },
-      { key: "units.length", label: "Unit Count", type: "number" },
+      { key: "units.length", label: "Space Count", type: "number" },
     ]
 
     const exportData = leaseData.map(lease => ({
@@ -207,7 +207,7 @@ export default function LeasingReportsPage() {
       { key: "endDate", label: "Expiration Date", type: "date" },
       { key: "daysUntilExpiry", label: "Days Until Expiry", type: "number" },
       { key: "totalRentAmount", label: "Monthly Rent", type: "currency" },
-      { key: "units.length", label: "Unit Count", type: "number" },
+      { key: "units.length", label: "Space Count", type: "number" },
     ]
 
     const exportData = expirationData.map(lease => ({
@@ -226,7 +226,7 @@ export default function LeasingReportsPage() {
     const columns: ExportColumn[] = [
       { key: "tenant.bpCode", label: "BP Code" },
       { key: "tenant.businessName", label: "Business Name" },
-      { key: "unitCount", label: "Unit Count", type: "number" },
+      { key: "unitCount", label: "Space Count", type: "number" },
       { key: "totalArea", label: "Total Area (sqm)", type: "number" },
       { key: "totalRentAmount", label: "Total Rent", type: "currency" },
       { key: "averageRentPerSqm", label: "Rent per sqm", type: "currency" },
@@ -234,9 +234,9 @@ export default function LeasingReportsPage() {
     ]
 
     if (format === "csv") {
-      exportToCSV(multiUnitData, columns, "multi_unit_lease_report")
+      exportToCSV(multiUnitData, columns, "multi_space_lease_report")
     } else {
-      exportToPDF(multiUnitData, columns, "Multi-Unit Lease Report", "multi_unit_lease_report")
+      exportToPDF(multiUnitData, columns, "Multi-Space Lease Report", "space")
     }
   }
 
@@ -443,7 +443,7 @@ export default function LeasingReportsPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="management">Lease Management</TabsTrigger>
           <TabsTrigger value="expiration">Expiration Report</TabsTrigger>
-          <TabsTrigger value="multi-unit">Multi-Unit Leases</TabsTrigger>
+          <TabsTrigger value="multi-unit">Multi-Space Leases</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -500,7 +500,7 @@ export default function LeasingReportsPage() {
                 {stats && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Multi-Unit Leases</span>
+                      <span className="text-sm">Multi-Space Leases</span>
                       <span className="font-semibold">{stats.multiUnitLeases}</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -569,7 +569,7 @@ export default function LeasingReportsPage() {
                         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Period</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Rent Amount</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Units</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Spaces</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -734,10 +734,10 @@ export default function LeasingReportsPage() {
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <Building className="h-5 w-5" />
-                    <span>Multi-Unit Lease Report</span>
+                    <span>Multi-Space Lease Report</span>
                   </CardTitle>
                   <CardDescription>
-                    {multiUnitData.length} tenants with multiple units
+                    {multiUnitData.length} tenants with multiple spaces
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -764,9 +764,9 @@ export default function LeasingReportsPage() {
               {multiUnitData.length === 0 ? (
                 <div className="text-center py-12">
                   <Building className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-semibold">No multi-unit leases</h3>
+                  <h3 className="mt-4 text-lg font-semibold">No multi-space leases</h3>
                   <p className="mt-2 text-muted-foreground">
-                    All current leases are for single units only.
+                    All current leases are for single spaces only.
                   </p>
                 </div>
               ) : (
@@ -776,7 +776,7 @@ export default function LeasingReportsPage() {
                       <tr className="border-b">
                         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Tenant</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Units</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Spaces</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Total Area</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Total Rent</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Rent/sqm</th>
