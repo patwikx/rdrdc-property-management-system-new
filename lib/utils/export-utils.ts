@@ -13,8 +13,9 @@ export function formatCellValue(value: unknown, type: ExportColumn["type"] = "st
     case "date":
       return value instanceof Date ? format(value, "MMM dd, yyyy") : String(value)
     case "currency":
+case "currency":
       return typeof value === "number" 
-        ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value)
+        ? new Intl.NumberFormat("en-PH", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
         : String(value)
     case "percentage":
       return typeof value === "number" ? `${value.toFixed(2)}%` : String(value)
