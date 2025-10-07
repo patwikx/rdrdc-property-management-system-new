@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UnitSchema, UnitFormData } from "@/lib/validations/unit-schema"
 import { createUnit } from "@/lib/actions/unit-actions"
 import { UnitStatus } from "@prisma/client"
-import { Save, Home, Ruler, Plus, Trash2, Building, ArrowUp, ArrowUpRight, Layers, Warehouse } from "lucide-react"
+import { Save, Home, Ruler, Plus, Trash2, Building, ArrowUp, ArrowUpRight, Layers, Warehouse, Check, ChevronsUpDown } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 interface FloorConfig {
   id: string
@@ -39,13 +42,13 @@ const unitStatusOptions = [
     value: UnitStatus.VACANT, 
     label: "Vacant", 
     description: "Available for lease",
-    color: "bg-gray-600"
+    color: "bg-green-600"
   },
   { 
     value: UnitStatus.OCCUPIED, 
     label: "Occupied", 
     description: "Currently leased",
-    color: "bg-green-600"
+    color: "bg-red-600"
   },
   { 
     value: UnitStatus.MAINTENANCE, 
@@ -71,6 +74,7 @@ const floorTypeOptions = [
 
 export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel }: CreateUnitFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [open, setOpen] = useState(false)
   const [floors, setFloors] = useState<FloorConfig[]>([
     {
       id: crypto.randomUUID(),
@@ -89,7 +93,7 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
       totalArea: 0,
       totalRent: 0,
       status: UnitStatus.VACANT,
-      propertyTitleId: "",
+      propertyTitleId: undefined,
     },
   })
 
@@ -150,7 +154,15 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
     setIsLoading(true)
     
     try {
-      const result = await createUnit(data)
+      // Clean up the data before submission
+      const cleanedData = {
+        ...data,
+        propertyTitleId: data.propertyTitleId && data.propertyTitleId !== "no-title" 
+          ? data.propertyTitleId 
+          : undefined
+      }
+
+      const result = await createUnit(cleanedData)
       
       if (result.error) {
         toast.error(result.error)
@@ -249,26 +261,75 @@ export function CreateUnitForm({ propertyId, propertyTitles, onSuccess, onCancel
                     control={form.control}
                     name="propertyTitleId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel className="text-sm font-medium">Associated Property Title</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                          <FormControl>
-                            <SelectTrigger className="h-10">
-                              <SelectValue placeholder="Select a property title (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="no-title">No specific title</SelectItem>
-                            {propertyTitles.map((title) => (
-                              <SelectItem key={title.id} value={title.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{title.titleNo}</span>
-                                  <span className="text-xs text-muted-foreground">Lot {title.lotNo}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={open} onOpenChange={setOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={open}
+                                disabled={isLoading}
+                                className={cn(
+                                  "h-10 justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? propertyTitles.find((title) => title.id === field.value)?.titleNo
+                                  : "Select property title (optional)"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search property titles..." />
+                              <CommandList>
+                                <CommandEmpty>No property title found.</CommandEmpty>
+                                <CommandGroup>
+                                  <CommandItem
+                                    value="no-title"
+                                    onSelect={() => {
+                                      field.onChange(undefined)
+                                      setOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        !field.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <span className="text-muted-foreground">No specific title</span>
+                                  </CommandItem>
+                                  {propertyTitles.map((title) => (
+                                    <CommandItem
+                                      key={title.id}
+                                      value={`${title.titleNo}-${title.lotNo}`}
+                                      onSelect={() => {
+                                        field.onChange(title.id)
+                                        setOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === title.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{title.titleNo}</span>
+                                        <span className="text-xs text-muted-foreground">Lot {title.lotNo}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormDescription className="text-xs">
                           Link this space to a specific property title
                         </FormDescription>

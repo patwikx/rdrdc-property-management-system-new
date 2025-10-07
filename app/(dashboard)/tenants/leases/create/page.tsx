@@ -3,26 +3,28 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, X, Building, Users, Calendar as CalendarIcon, DollarSign, Check, ChevronsUpDown, Search } from "lucide-react"
+import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { LeaseSchema, LeaseFormData } from "@/lib/validations/lease-schema"
-import { createLease, getAvailableUnits } from "@/lib/actions/lease-actions"
+import { createLease, getAvailableUnits, AvailableUnit } from "@/lib/actions/lease-actions"
 import { getAllTenants } from "@/lib/actions/tenant-actions"
+import { UnitCard } from "@/components/lease-form/unit-card"
+import { UnitConfiguration } from "@/components/lease-form/unit-configuration"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { z } from "zod"
+import { Check, ChevronsUpDown } from "lucide-react"
 
+// Types
 interface Tenant {
   id: string
   bpCode: string
@@ -34,41 +36,47 @@ interface Tenant {
   status: string
 }
 
-interface Unit {
-  id: string
-  unitNumber: string
-  totalArea: number
-  totalRent: number
-  status: string
-  property: {
-    id: string
-    propertyName: string
-    propertyCode: string
-  }
+interface FloorOverride {
+  floorId: string
+  customRate: number
+  customRent: number
 }
+
+interface SelectedUnitData {
+  unit: AvailableUnit
+  customRentAmount: number
+  floorOverrides: FloorOverride[]
+}
+
+// Form Schema
+const LeaseFormSchema = z.object({
+  tenantId: z.string().min(1, "Please select a tenant"),
+  startDate: z.date({ message: "Start date is required" }),
+  endDate: z.date({ message: "End date is required" }),
+  securityDeposit: z.number().min(0, "Security deposit must be positive")
+}).refine((data) => data.endDate > data.startDate, {
+  message: "End date must be after start date",
+  path: ["endDate"]
+})
+
+type LeaseFormData = z.infer<typeof LeaseFormSchema>
 
 export default function CreateLeasePage() {
   const router = useRouter()
   const [tenants, setTenants] = useState<Tenant[]>([])
-  const [units, setUnits] = useState<Unit[]>([])
-  const [selectedUnits, setSelectedUnits] = useState<string[]>([])
-  const [unitRentAmounts, setUnitRentAmounts] = useState<Record<string, number>>({})
+  const [units, setUnits] = useState<AvailableUnit[]>([])
+  const [selectedUnitsData, setSelectedUnitsData] = useState<SelectedUnitData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [openTenantSelect, setOpenTenantSelect] = useState(false)
-  const [unitSearchQuery, setUnitSearchQuery] = useState("")
-  const [selectedProperty, setSelectedProperty] = useState<string>("all")
-  const [openPropertyFilter, setOpenPropertyFilter] = useState(false)
 
   const form = useForm<LeaseFormData>({
-    resolver: zodResolver(LeaseSchema),
+    resolver: zodResolver(LeaseFormSchema),
     defaultValues: {
       tenantId: "",
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      securityDeposit: 0,
-      unitIds: [],
-      unitRentAmounts: {}
+      securityDeposit: 0
     },
   })
 
@@ -93,45 +101,96 @@ export default function CreateLeasePage() {
     loadData()
   }, [])
 
-  const handleUnitSelection = (unitId: string, checked: boolean) => {
-    if (checked) {
-      const unit = units.find(u => u.id === unitId)
-      if (unit) {
-        setSelectedUnits(prev => [...prev, unitId])
-        setUnitRentAmounts(prev => ({
-          ...prev,
-          [unitId]: unit.totalRent
+  const toggleUnitSelection = (unit: AvailableUnit, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    
+    const isSelected = selectedUnitsData.some(u => u.unit.id === unit.id)
+    
+    if (isSelected) {
+      setSelectedUnitsData(prev => prev.filter(u => u.unit.id !== unit.id))
+    } else {
+      const newUnitData: SelectedUnitData = {
+        unit,
+        customRentAmount: unit.totalRent || 0,
+        floorOverrides: unit.unitFloors.map((floor) => ({
+          floorId: floor.id,
+          customRate: floor.rate || 0,
+          customRent: floor.rent || 0
         }))
       }
-    } else {
-      setSelectedUnits(prev => prev.filter(id => id !== unitId))
-      setUnitRentAmounts(prev => {
-        const newAmounts = { ...prev }
-        delete newAmounts[unitId]
-        return newAmounts
-      })
+      setSelectedUnitsData(prev => [...prev, newUnitData])
     }
   }
 
-  const handleRentAmountChange = (unitId: string, amount: number) => {
-    setUnitRentAmounts(prev => ({
-      ...prev,
-      [unitId]: amount
-    }))
+  const updateUnitRent = (unitId: string, newRent: number) => {
+    setSelectedUnitsData(prev => 
+      prev.map(unitData => 
+        unitData.unit.id === unitId 
+          ? { ...unitData, customRentAmount: newRent }
+          : unitData
+      )
+    )
+  }
+
+  const updateFloorRate = (unitId: string, floorId: string, newRate: number, area: number) => {
+    setSelectedUnitsData(prev => 
+      prev.map(unitData => {
+        if (unitData.unit.id === unitId) {
+          const updatedFloorOverrides = unitData.floorOverrides.map(floor => {
+            if (floor.floorId === floorId) {
+              return {
+                ...floor,
+                customRate: newRate,
+                customRent: newRate * area
+              }
+            }
+            return floor
+          })
+          
+          const newTotalRent = updatedFloorOverrides.reduce((sum, floor) => sum + floor.customRent, 0)
+          
+          return {
+            ...unitData,
+            floorOverrides: updatedFloorOverrides,
+            customRentAmount: newTotalRent
+          }
+        }
+        return unitData
+      })
+    )
+  }
+
+  const handleRemoveUnit = (unitId: string, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    
+    setSelectedUnitsData(prev => prev.filter(u => u.unit.id !== unitId))
   }
 
   const calculateTotalRent = () => {
-    return Object.values(unitRentAmounts).reduce((sum, amount) => sum + amount, 0)
+    return selectedUnitsData.reduce((sum, unitData) => sum + unitData.customRentAmount, 0)
   }
 
   async function onSubmit(data: LeaseFormData) {
+    if (selectedUnitsData.length === 0) {
+      toast.error("Please select at least one space")
+      return
+    }
+
     setIsSaving(true)
     
     try {
       const leaseData = {
-        ...data,
-        unitIds: selectedUnits,
-        unitRentAmounts
+        tenantId: data.tenantId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        securityDeposit: data.securityDeposit,
+        selectedUnits: selectedUnitsData.map(unitData => ({
+          unitId: unitData.unit.id,
+          customRentAmount: unitData.customRentAmount,
+          floorOverrides: unitData.floorOverrides
+        }))
       }
 
       const result = await createLease(leaseData)
@@ -142,8 +201,8 @@ export default function CreateLeasePage() {
         toast.success("Lease created successfully")
         router.push("/tenants/leases")
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      console.error("Error creating lease:", error)
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsSaving(false)
@@ -167,34 +226,12 @@ export default function CreateLeasePage() {
   }
 
   const getTenantName = (tenant: Tenant) => {
-    return tenant.businessName && tenant.company
+    return tenant.businessName || tenant.company
   }
 
   const getTenantDisplayText = (tenantId: string) => {
     const tenant = tenants.find(t => t.id === tenantId)
     return tenant ? getTenantName(tenant) : "Select a tenant"
-  }
-
-  const filteredUnits = units.filter(unit => {
-    const searchLower = unitSearchQuery.toLowerCase()
-    const matchesSearch = (
-      unit.unitNumber.toLowerCase().includes(searchLower) ||
-      unit.property.propertyName.toLowerCase().includes(searchLower) ||
-      unit.property.propertyCode.toLowerCase().includes(searchLower)
-    )
-    const matchesProperty = selectedProperty === "all" || unit.property.id === selectedProperty
-    
-    return matchesSearch && matchesProperty
-  })
-
-  const uniqueProperties = Array.from(
-    new Map(units.map(unit => [unit.property.id, unit.property])).values()
-  )
-
-  const getPropertyDisplayText = (propertyId: string) => {
-    if (propertyId === "all") return "All Properties"
-    const property = uniqueProperties.find(p => p.id === propertyId)
-    return property ? property.propertyName : "All Properties"
   }
 
   return (
@@ -367,7 +404,7 @@ export default function CreateLeasePage() {
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
-                                captionLayout="dropdown"
+                              captionLayout="dropdown"
                             />
                           </PopoverContent>
                         </Popover>
@@ -385,7 +422,7 @@ export default function CreateLeasePage() {
                     <span>Space Selection</span>
                   </CardTitle>
                   <CardDescription>
-                    Select spaces to include in this lease and set rent amounts
+                    Select spaces to include in this lease and configure rent amounts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -399,135 +436,23 @@ export default function CreateLeasePage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search spaces by number or property..."
-                            value={unitSearchQuery}
-                            onChange={(e) => setUnitSearchQuery(e.target.value)}
-                            className="pl-9"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {units.map((unit) => (
+                          <UnitCard
+                            key={unit.id}
+                            unit={unit}
+                            isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
+                            onToggle={toggleUnitSelection}
                           />
-                        </div>
-                        
-                        <Popover open={openPropertyFilter} onOpenChange={setOpenPropertyFilter}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openPropertyFilter}
-                              className="w-[250px] justify-between"
-                            >
-                              {getPropertyDisplayText(selectedProperty)}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[250px] p-0" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search property..." />
-                              <CommandList>
-                                <CommandEmpty>No property found.</CommandEmpty>
-                                <CommandGroup>
-                                  <CommandItem
-                                    value="all properties"
-                                    onSelect={() => {
-                                      setSelectedProperty("all")
-                                      setOpenPropertyFilter(false)
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedProperty === "all" ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    All Properties
-                                  </CommandItem>
-                                  {uniqueProperties.map((property) => (
-                                    <CommandItem
-                                      key={property.id}
-                                      value={property.propertyName}
-                                      onSelect={() => {
-                                        setSelectedProperty(property.id)
-                                        setOpenPropertyFilter(false)
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          selectedProperty === property.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {property.propertyName}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        ))}
                       </div>
 
-                      {filteredUnits.length === 0 ? (
-                        <div className="text-center py-8">
-                          <Building className="mx-auto h-8 w-8 text-muted-foreground" />
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            No spaces found matching &quote;{unitSearchQuery}&quote;
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                          {filteredUnits.map((unit) => (
-                            <div
-                              key={unit.id}
-                              className={cn(
-                                "flex flex-col p-4 border rounded-lg transition-all hover:shadow-md",
-                                selectedUnits.includes(unit.id) && "ring-2 ring-primary"
-                              )}
-                            >
-                              <div className="flex items-start justify-between mb-3">
-                                <span className="text-2xl font-bold">{unit.unitNumber}</span>
-                                <Checkbox
-                                  checked={selectedUnits.includes(unit.id)}
-                                  onCheckedChange={(checked) => {
-                                    handleUnitSelection(unit.id, checked as boolean)
-                                  }}
-                                />
-                              </div>
-                              
-                              <Badge variant="outline" className="text-xs w-fit mb-3">
-                                {unit.property.propertyName}
-                              </Badge>
-                              
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">
-                                  Area: {unit.totalArea} sqm
-                                </p>
-                                <p className="text-base font-bold">
-                                  ₱{unit.totalRent.toLocaleString()}
-                                </p>
-                              </div>
-
-                              {selectedUnits.includes(unit.id) && (
-                                <div className="mt-3 pt-3 border-t space-y-1.5">
-                                  <Label htmlFor={`rent-${unit.id}`} className="text-xs">
-                                    Monthly Rent
-                                  </Label>
-                                  <Input
-                                    id={`rent-${unit.id}`}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={unitRentAmounts[unit.id] || 0}
-                                    onChange={(e) => handleRentAmountChange(unit.id, parseFloat(e.target.value) || 0)}
-                                    className="h-9 text-sm"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <UnitConfiguration
+                        selectedUnitsData={selectedUnitsData}
+                        onUpdateUnitRent={updateUnitRent}
+                        onUpdateFloorRate={updateFloorRate}
+                        onRemoveUnit={handleRemoveUnit}
+                      />
                     </div>
                   )}
                 </CardContent>
@@ -550,14 +475,20 @@ export default function CreateLeasePage() {
                       <FormItem>
                         <FormLabel>Security Deposit</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                              ₱
+                            </span>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="pl-8"
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -567,7 +498,7 @@ export default function CreateLeasePage() {
                   <div className="space-y-2 pt-4 border-t">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Selected Spaces:</span>
-                      <span className="font-medium">{selectedUnits.length}</span>
+                      <span className="font-medium">{selectedUnitsData.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Total Monthly Rent:</span>
@@ -585,48 +516,11 @@ export default function CreateLeasePage() {
                 </CardContent>
               </Card>
 
-              {selectedUnits.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Selected Spaces</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {selectedUnits.map((unitId) => {
-                        const unit = units.find(u => u.id === unitId)
-                        if (!unit) return null
-                        
-                        return (
-                          <div key={unitId} className="flex items-center justify-between text-sm">
-                            <div>
-                              <p className="font-medium">{unit.unitNumber}</p>
-                              <p className="text-muted-foreground text-xs">{unit.property.propertyName}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">₱{(unitRentAmounts[unitId] || 0).toLocaleString()}</p>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive"
-                                onClick={() => handleUnitSelection(unitId, false)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               <div className="space-y-2">
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSaving || selectedUnits.length === 0}
+                  disabled={isSaving || selectedUnitsData.length === 0}
                 >
                   {isSaving ? (
                     <>

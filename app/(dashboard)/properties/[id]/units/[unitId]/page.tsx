@@ -30,11 +30,11 @@ interface UnitPageProps {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'OCCUPIED': return 'bg-green-600'
-    case 'VACANT': return 'bg-gray-600'
+    case 'OCCUPIED': return 'bg-red-600'
+    case 'VACANT': return 'bg-green-600'
     case 'MAINTENANCE': return 'bg-yellow-600'
     case 'RESERVED': return 'bg-blue-600'
-    default: return 'bg-gray-600'
+    default: return 'bg-green-600'
   }
 }
 

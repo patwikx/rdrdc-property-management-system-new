@@ -1,3 +1,5 @@
+"use server"
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { UnitSchema, UnitFormData } from "@/lib/validations/unit-schema"
@@ -278,21 +280,28 @@ async function getUnitByIdInternal(id: string): Promise<UnitWithDetails | null> 
 }
 
 export async function createUnit(data: UnitFormData) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" }
-  }
-
   try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" }
+    }
+
     // Validate the input data
     const validatedData = UnitSchema.parse(data)
+
+    // Prepare propertyTitleId - set to null if it's "no-title", empty string, or undefined
+    const propertyTitleId = validatedData.propertyTitleId && 
+                            validatedData.propertyTitleId !== "no-title" && 
+                            validatedData.propertyTitleId.trim() !== ""
+                            ? validatedData.propertyTitleId 
+                            : null
 
     // Create the unit
     const unit = await prisma.unit.create({
       data: {
         propertyId: validatedData.propertyId,
-        propertyTitleId: validatedData.propertyTitleId === "no-title" ? null : validatedData.propertyTitleId,
+        propertyTitleId,
         unitNumber: validatedData.unitNumber,
         totalArea: validatedData.totalArea,
         totalRent: validatedData.totalRent,
@@ -339,13 +348,13 @@ interface FloorConfigData {
 }
 
 export async function updateUnit(id: string, data: Partial<UnitFormData>) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" }
-  }
-
   try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" }
+    }
+
     // Validate the input data if it's a complete update
     if (data.unitNumber && data.totalArea !== undefined && data.totalRent !== undefined && data.status) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -400,13 +409,13 @@ export async function updateUnitWithFloors(
   unitData: Partial<UnitFormData>, 
   floorsData: FloorConfigData[]
 ) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" }
-  }
-
   try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" }
+    }
+
     // Validate the input data
     if (unitData.unitNumber && unitData.totalArea !== undefined && unitData.totalRent !== undefined && unitData.status) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -481,13 +490,13 @@ export async function updateUnitWithFloors(
 }
 
 export async function deleteUnit(id: string) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" }
-  }
-
   try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" }
+    }
+
     await prisma.unit.delete({
       where: { id },
     })

@@ -53,13 +53,46 @@ export interface LeaseWithDetails {
   }>
 }
 
+export interface UnitFloorData {
+  id: string
+  floorType: string
+  area: number
+  rate: number
+  rent: number
+}
+
+export interface AvailableUnit {
+  id: string
+  unitNumber: string
+  totalArea: number
+  totalRent: number
+  status: string
+  property: {
+    id: string
+    propertyName: string
+    propertyCode: string
+  }
+  unitFloors: UnitFloorData[]
+}
+
+interface FloorOverride {
+  floorId: string
+  customRate: number
+  customRent: number
+}
+
+interface UnitWithRent {
+  unitId: string
+  customRentAmount?: number
+  floorOverrides?: FloorOverride[]
+}
+
 export interface CreateLeaseData {
   tenantId: string
   startDate: Date
   endDate: Date
   securityDeposit: number
-  unitIds: string[]
-  unitRentAmounts: Record<string, number>
+  selectedUnits: UnitWithRent[]
 }
 
 export interface UpdateLeaseData {
@@ -219,8 +252,10 @@ export async function getLeaseById(id: string): Promise<LeaseWithDetails | null>
 // Create new lease
 export async function createLease(data: CreateLeaseData) {
   try {
-    // Calculate total rent amount
-    const totalRentAmount = Object.values(data.unitRentAmounts).reduce((sum, amount) => sum + amount, 0)
+    // Calculate total rent amount from selected units
+    const totalRentAmount = data.selectedUnits.reduce((sum, unit) => {
+      return sum + (unit.customRentAmount || 0)
+    }, 0)
 
     const lease = await prisma.$transaction(async (tx) => {
       // Create the lease
@@ -235,14 +270,14 @@ export async function createLease(data: CreateLeaseData) {
         }
       })
 
-      // Create lease units
+      // Create lease units with custom rent amounts
       const leaseUnits = await Promise.all(
-        data.unitIds.map(unitId =>
+        data.selectedUnits.map(unit =>
           tx.leaseUnit.create({
             data: {
               leaseId: newLease.id,
-              unitId,
-              rentAmount: data.unitRentAmounts[unitId]
+              unitId: unit.unitId,
+              rentAmount: unit.customRentAmount || 0
             }
           })
         )
@@ -250,7 +285,7 @@ export async function createLease(data: CreateLeaseData) {
 
       // Update unit statuses to RESERVED
       await tx.unit.updateMany({
-        where: { id: { in: data.unitIds } },
+        where: { id: { in: data.selectedUnits.map(u => u.unitId) } },
         data: { status: UnitStatus.RESERVED }
       })
 
@@ -368,9 +403,11 @@ export async function terminateLease(id: string, reason: string) {
 }
 
 // Delete lease
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function deleteLease(id: string) {
   try {
+    await prisma.lease.delete({
+      where: { id }
+    })
 
     revalidatePath('/tenants/leases')
     revalidatePath('/tenants')
@@ -383,8 +420,8 @@ export async function deleteLease(id: string) {
   }
 }
 
-// Get available units for lease
-export async function getAvailableUnits() {
+// Get available units for lease with floor details
+export async function getAvailableUnits(): Promise<AvailableUnit[]> {
   try {
     const units = await prisma.unit.findMany({
       where: {
@@ -397,6 +434,11 @@ export async function getAvailableUnits() {
             propertyName: true,
             propertyCode: true
           }
+        },
+        unitFloors: {
+          orderBy: {
+            floorType: 'asc'
+          }
         }
       },
       orderBy: [
@@ -405,7 +447,22 @@ export async function getAvailableUnits() {
       ]
     })
 
-    return units
+    // Transform to match the expected format
+    return units.map(unit => ({
+      id: unit.id,
+      unitNumber: unit.unitNumber,
+      totalArea: unit.totalArea,
+      totalRent: unit.totalRent,
+      status: unit.status,
+      property: unit.property,
+      unitFloors: unit.unitFloors.map(uf => ({
+        id: uf.id,
+        floorType: uf.floorType,
+        area: uf.area,
+        rate: uf.rate,
+        rent: uf.rent
+      }))
+    }))
   } catch (error) {
     console.error('Error fetching available units:', error)
     return []

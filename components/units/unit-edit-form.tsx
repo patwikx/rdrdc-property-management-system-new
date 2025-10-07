@@ -30,13 +30,13 @@ const unitStatusOptions = [
     value: UnitStatus.VACANT, 
     label: "Vacant", 
     description: "Available for lease",
-    color: "bg-gray-600"
+    color: "bg-green-600"
   },
   { 
     value: UnitStatus.OCCUPIED, 
     label: "Occupied", 
     description: "Currently leased",
-    color: "bg-green-600"
+    color: "bg-red-600"
   },
   { 
     value: UnitStatus.MAINTENANCE, 

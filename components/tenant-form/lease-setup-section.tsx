@@ -1,11 +1,12 @@
 // components/tenant-form/LeaseSetupSection.tsx
 import { useState } from "react"
-import { Calendar, Home, Search, Check, ChevronsUpDown } from "lucide-react"
+import { Calendar as CalendarIcon, Home, Search, Check, ChevronsUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
@@ -13,6 +14,7 @@ import { TenantFormData, UnitData, SelectedUnitData } from "@/types/tenant-form"
 import { UnitCard } from "./unit-card"
 import { UnitConfiguration } from "./unit-configuration"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
 
 interface PropertyWithDetails {
   id: string
@@ -80,7 +82,7 @@ export function LeaseSetupSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2 pb-2 border-b">
-        <Calendar className="h-5 w-5 text-primary" />
+        <CalendarIcon className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Lease Setup (Optional)</h3>
       </div>
       
@@ -313,18 +315,38 @@ export function LeaseSetupSection({
               control={form.control}
               name="startDate"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-sm font-medium">Start Date *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="date"
-                      {...field}
-                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                      onChange={(e) => field.onChange(new Date(e.target.value))}
-                      disabled={isLoading}
-                      className="h-10"
-                    />
-                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "h-10 w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        captionLayout="dropdown"
+                        disabled={isLoading}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription className="text-xs">
                     Lease start date
                   </FormDescription>
@@ -337,18 +359,38 @@ export function LeaseSetupSection({
               control={form.control}
               name="endDate"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-sm font-medium">End Date *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="date"
-                      {...field}
-                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                      onChange={(e) => field.onChange(new Date(e.target.value))}
-                      disabled={isLoading}
-                      className="h-10"
-                    />
-                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "h-10 w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        captionLayout="dropdown"
+                        disabled={isLoading}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription className="text-xs">
                     Lease end date
                   </FormDescription>
