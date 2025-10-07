@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign } from "lucide-react"
+import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, SlidersHorizontal, X } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { createLease, getAvailableUnits, AvailableUnit } from "@/lib/actions/lease-actions"
 import { getAllTenants } from "@/lib/actions/tenant-actions"
 import { UnitCard } from "@/components/lease-form/unit-card"
@@ -69,6 +71,15 @@ export default function CreateLeasePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [openTenantSelect, setOpenTenantSelect] = useState(false)
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedProperty, setSelectedProperty] = useState<string>("all")
+  const [minArea, setMinArea] = useState<string>("")
+  const [maxArea, setMaxArea] = useState<string>("")
+  const [minRent, setMinRent] = useState<string>("")
+  const [maxRent, setMaxRent] = useState<string>("")
+  const [openFilterSheet, setOpenFilterSheet] = useState(false)
 
   const form = useForm<LeaseFormData>({
     resolver: zodResolver(LeaseFormSchema),
@@ -100,6 +111,56 @@ export default function CreateLeasePage() {
 
     loadData()
   }, [])
+
+  // Get unique properties for filter dropdown
+  const properties = useMemo(() => {
+    const uniqueProps = new Map<string, string>()
+    units.forEach(unit => {
+      uniqueProps.set(unit.property.id, unit.property.propertyName)
+    })
+    return Array.from(uniqueProps.entries()).map(([id, name]) => ({ id, name }))
+  }, [units])
+
+  // Filter and search units
+  const filteredUnits = useMemo(() => {
+    return units.filter(unit => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        unit.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        unit.property.propertyName.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Property filter
+      const matchesProperty = selectedProperty === "all" || 
+        unit.property.id === selectedProperty
+
+      // Area filter
+      const matchesMinArea = minArea === "" || 
+        unit.totalArea >= parseFloat(minArea)
+      const matchesMaxArea = maxArea === "" || 
+        unit.totalArea <= parseFloat(maxArea)
+
+      // Rent filter
+      const matchesMinRent = minRent === "" || 
+        unit.totalRent >= parseFloat(minRent)
+      const matchesMaxRent = maxRent === "" || 
+        unit.totalRent <= parseFloat(maxRent)
+
+      return matchesSearch && matchesProperty && matchesMinArea && 
+             matchesMaxArea && matchesMinRent && matchesMaxRent
+    })
+  }, [units, searchQuery, selectedProperty, minArea, maxArea, minRent, maxRent])
+
+  const clearFilters = () => {
+    setSearchQuery("")
+    setSelectedProperty("all")
+    setMinArea("")
+    setMaxArea("")
+    setMinRent("")
+    setMaxRent("")
+  }
+
+  const hasActiveFilters = searchQuery !== "" || selectedProperty !== "all" || 
+    minArea !== "" || maxArea !== "" || minRent !== "" || maxRent !== ""
 
   const toggleUnitSelection = (unit: AvailableUnit, event: React.MouseEvent) => {
     event.preventDefault()
@@ -305,10 +366,10 @@ export default function CreateLeasePage() {
                                         )}
                                       />
                                       <div className="flex items-center space-x-2">
-                                        <span>{getTenantName(tenant)}</span>
-                                        <Badge variant="outline" className="text-xs">
+                                         <Badge variant="outline" className="text-xs">
                                           {tenant.bpCode}
                                         </Badge>
+                                        <span>{getTenantName(tenant)}</span>
                                       </div>
                                     </CommandItem>
                                   ))}
@@ -436,23 +497,237 @@ export default function CreateLeasePage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {units.map((unit) => (
-                          <UnitCard
-                            key={unit.id}
-                            unit={unit}
-                            isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
-                            onToggle={toggleUnitSelection}
+                      {/* Search and Filter Bar */}
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search by space number or property..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
                           />
-                        ))}
+                        </div>
+                        
+                        <Sheet open={openFilterSheet} onOpenChange={setOpenFilterSheet}>
+                          <SheetTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className={cn(hasActiveFilters && "border-primary")}
+                            >
+                              <SlidersHorizontal className="h-4 w-4" />
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent>
+                            <SheetHeader>
+                              <SheetTitle>Filters</SheetTitle>
+                              <SheetDescription>
+                                Refine your space search with filters
+                              </SheetDescription>
+                            </SheetHeader>
+                            
+                            <div className="mt-6 space-y-6">
+                              {hasActiveFilters && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={clearFilters}
+                                  className="w-full"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Clear all filters
+                                </Button>
+                              )}
+
+                              {/* Property Filter */}
+                              <div className="space-y-3 mr-4 ml-4">
+                                <div>
+                                  <h4 className="text-sm font-medium mb-1">Property</h4>
+                                  <p className="text-xs text-muted-foreground">Filter by property location</p>
+                                </div>
+                                <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="All properties" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="all">All properties</SelectItem>
+                                    {properties.map((prop) => (
+                                      <SelectItem key={prop.id} value={prop.id}>
+                                        {prop.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="border-t pt-6 ml-4 mr-4">
+                                <div className="space-y-3">
+                                  <div>
+                                    <h4 className="text-sm font-medium mb-1">Area Range</h4>
+                                    <p className="text-xs text-muted-foreground">Filter by square meters</p>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                      <label className="text-xs text-muted-foreground">Min (sqm)</label>
+                                      <Input
+                                        type="number"
+                                        placeholder="0"
+                                        value={minArea}
+                                        onChange={(e) => setMinArea(e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <label className="text-xs text-muted-foreground">Max (sqm)</label>
+                                      <Input
+                                        type="number"
+                                        placeholder="Any"
+                                        value={maxArea}
+                                        onChange={(e) => setMaxArea(e.target.value)}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="border-t pt-6 ml-4 mr-4">
+                                <div className="space-y-3">
+                                  <div>
+                                    <h4 className="text-sm font-medium mb-1">Rent Range</h4>
+                                    <p className="text-xs text-muted-foreground">Filter by monthly rent</p>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                      <label className="text-xs text-muted-foreground">Min (₱)</label>
+                                      <Input
+                                        type="number"
+                                        placeholder="0"
+                                        value={minRent}
+                                        onChange={(e) => setMinRent(e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <label className="text-xs text-muted-foreground">Max (₱)</label>
+                                      <Input
+                                        type="number"
+                                        placeholder="Any"
+                                        value={maxRent}
+                                        onChange={(e) => setMaxRent(e.target.value)}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="border-t pt-6 ml-4 mr-4">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">Showing results</span>
+                                  <span className="font-medium">{filteredUnits.length} of {units.length}</span>
+                                </div>
+                              </div>
+                                  <div className="ml-4 mr-4">
+           <Button
+                                type="button"
+                                className="w-full"
+                                onClick={() => setOpenFilterSheet(false)}
+                              >
+                                Show {filteredUnits.length} space{filteredUnits.length !== 1 ? 's' : ''}
+                              </Button>
+                                  </div>
+                   
+                            </div>
+                          </SheetContent>
+                        </Sheet>
                       </div>
 
-                      <UnitConfiguration
-                        selectedUnitsData={selectedUnitsData}
-                        onUpdateUnitRent={updateUnitRent}
-                        onUpdateFloorRate={updateFloorRate}
-                        onRemoveUnit={handleRemoveUnit}
-                      />
+                      {/* Active Filters Badges */}
+                      {hasActiveFilters && (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="text-xs text-muted-foreground">Active filters:</span>
+                          {selectedProperty !== "all" && (
+                            <Badge variant="secondary" className="gap-1">
+                              {properties.find(p => p.id === selectedProperty)?.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedProperty("all")}
+                              />
+                            </Badge>
+                          )}
+                          {minArea && (
+                            <Badge variant="secondary" className="gap-1">
+                              Min: {minArea} sqm
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setMinArea("")}
+                              />
+                            </Badge>
+                          )}
+                          {maxArea && (
+                            <Badge variant="secondary" className="gap-1">
+                              Max: {maxArea} sqm
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setMaxArea("")}
+                              />
+                            </Badge>
+                          )}
+                          {minRent && (
+                            <Badge variant="secondary" className="gap-1">
+                              Min: ₱{minRent}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setMinRent("")}
+                              />
+                            </Badge>
+                          )}
+                          {maxRent && (
+                            <Badge variant="secondary" className="gap-1">
+                              Max: ₱{maxRent}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setMaxRent("")}
+                              />
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Results */}
+                      {filteredUnits.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+                          <h3 className="mt-4 text-lg font-semibold">No spaces found</h3>
+                          <p className="mt-2 text-muted-foreground">
+                            Try adjusting your search or filters
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-sm text-muted-foreground">
+                            Showing {filteredUnits.length} of {units.length} spaces
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            {filteredUnits.map((unit) => (
+                              <UnitCard
+                                key={unit.id}
+                                unit={unit}
+                                isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
+                                onToggle={toggleUnitSelection}
+                              />
+                            ))}
+                          </div>
+
+                          <UnitConfiguration
+                            selectedUnitsData={selectedUnitsData}
+                            onUpdateUnitRent={updateUnitRent}
+                            onUpdateFloorRate={updateFloorRate}
+                            onRemoveUnit={handleRemoveUnit}
+                          />
+                        </>
+                      )}
                     </div>
                   )}
                 </CardContent>
