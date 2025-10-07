@@ -25,7 +25,7 @@ export function UnitCard({ unit, isSelected, onToggle }: UnitCardProps) {
         </div>
       )}
       
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-2">
             <Building className="h-4 w-4 text-muted-foreground flex-shrink-0" />

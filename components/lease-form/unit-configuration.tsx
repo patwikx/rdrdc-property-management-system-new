@@ -1,12 +1,10 @@
 // components/lease-form/unit-configuration.tsx
-import { useState } from "react"
-import { X, ChevronDown, ChevronUp, Building } from "lucide-react"
+import { X, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { AvailableUnit } from "@/lib/actions/lease-actions"
 
 interface FloorOverride {
@@ -34,22 +32,12 @@ export function UnitConfiguration({
   onUpdateFloorRate,
   onRemoveUnit,
 }: UnitConfigurationProps) {
-  const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({})
-
-  const toggleUnit = (unitId: string) => {
-    setExpandedUnits(prev => ({
-      ...prev,
-      [unitId]: !prev[unitId]
-    }))
-  }
-
   if (selectedUnitsData.length === 0) {
     return null
   }
 
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium">Selected Spaces Configuration</h4>
         <Badge variant="secondary">
@@ -57,14 +45,13 @@ export function UnitConfiguration({
         </Badge>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {selectedUnitsData.map((unitData) => {
           const hasFloors = unitData.unit.unitFloors && unitData.unit.unitFloors.length > 0
-          const isExpanded = expandedUnits[unitData.unit.id]
 
           return (
             <Card key={unitData.unit.id} className="overflow-hidden">
-              <CardHeader className="p-4 pb-3">
+              <CardHeader className="p-4 pb-2 mt-[-20px] mb-[-15px]">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
@@ -88,45 +75,18 @@ export function UnitConfiguration({
               </CardHeader>
 
               <CardContent className="p-4 pt-0 space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor={`total-rent-${unitData.unit.id}`} className="text-xs">
-                    Total Monthly Rent
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                      ₱
-                    </span>
-                    <Input
-                      id={`total-rent-${unitData.unit.id}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={unitData.customRentAmount || 0}
-                      onChange={(e) => onUpdateUnitRent(unitData.unit.id, parseFloat(e.target.value) || 0)}
-                      className="pl-8 h-9"
-                    />
-                  </div>
-                </div>
+
 
                 {hasFloors && (
-                  <Collapsible open={isExpanded} onOpenChange={() => toggleUnit(unitData.unit.id)}>
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-between h-8 text-xs"
-                      >
-                        <span>Floor-by-Floor Rates ({unitData.unit.unitFloors?.length} floors)</span>
-                        {isExpanded ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
+                  <div className="space-y-3 pt-3 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium">Floor-by-Floor Rates</Label>
+                      <Badge variant="outline" className="text-xs">
+                        {unitData.unit.unitFloors?.length} floor{unitData.unit.unitFloors?.length !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
 
-                    <CollapsibleContent className="space-y-3 mt-3">
+                    <div className="space-y-3">
                       {unitData.unit.unitFloors?.map((floor) => {
                         const floorOverride = unitData.floorOverrides.find(f => f.floorId === floor.id)
                         const currentRate = floorOverride?.customRate ?? floor.rate ?? 0
@@ -184,17 +144,30 @@ export function UnitConfiguration({
                           </div>
                         )
                       })}
+                    </div>
 
-                      <div className="pt-2 border-t">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Calculated Total:</span>
-                          <span className="font-medium">
-                            ₱{unitData.floorOverrides.reduce((sum, f) => sum + f.customRent, 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    <div className="pt-2 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor={`total-rent-${unitData.unit.id}`} className="text-xs">
+                    Total Monthly Rent
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                      ₱
+                    </span>
+                    <Input
+                      id={`total-rent-${unitData.unit.id}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={unitData.customRentAmount || 0}
+                      onChange={(e) => onUpdateUnitRent(unitData.unit.id, parseFloat(e.target.value) || 0)}
+                      className="pl-8 h-9"
+                    />
+                  </div>
+                </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
