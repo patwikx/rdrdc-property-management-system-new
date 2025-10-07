@@ -78,7 +78,7 @@ function LeaseStatsCards() {
           <Building className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.activeLeases}</div>
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.activeLeases}</div>
           <p className="text-xs text-muted-foreground">Currently active</p>
         </CardContent>
       </Card>
@@ -89,7 +89,7 @@ function LeaseStatsCards() {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-yellow-600">{stats.pendingLeases}</div>
+          <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pendingLeases}</div>
           <p className="text-xs text-muted-foreground">Awaiting activation</p>
         </CardContent>
       </Card>
@@ -100,7 +100,7 @@ function LeaseStatsCards() {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">₱{stats.totalRevenue.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">₱{stats.totalRevenue.toLocaleString()}</div>
           <p className="text-xs text-muted-foreground">From active leases</p>
         </CardContent>
       </Card>
@@ -350,14 +350,34 @@ function SearchAndFilter({
         onValueChange={(value) => onStatusChange(value === 'all' ? undefined : value as LeaseStatus)}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Lease status" />
+          <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Statuses</SelectItem>
-          <SelectItem value={LeaseStatus.ACTIVE}>Active</SelectItem>
-          <SelectItem value={LeaseStatus.PENDING}>Pending</SelectItem>
-          <SelectItem value={LeaseStatus.TERMINATED}>Terminated</SelectItem>
-          <SelectItem value={LeaseStatus.EXPIRED}>Expired</SelectItem>
+          <SelectItem value={LeaseStatus.ACTIVE}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-600" />
+              <span>Active</span>
+            </div>
+          </SelectItem>
+          <SelectItem value={LeaseStatus.PENDING}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-600" />
+              <span>Pending</span>
+            </div>
+          </SelectItem>
+          <SelectItem value={LeaseStatus.TERMINATED}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-600" />
+              <span>Terminated</span>
+            </div>
+          </SelectItem>
+          <SelectItem value={LeaseStatus.EXPIRED}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-gray-600" />
+              <span>Expired</span>
+            </div>
+          </SelectItem>
         </SelectContent>
       </Select>
 
@@ -407,6 +427,15 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-center space-x-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </Button>
+
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
         <Button
           key={pageNum}
@@ -417,6 +446,15 @@ function Pagination({
           {pageNum}
         </Button>
       ))}
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </Button>
     </div>
   )
 }
