@@ -61,6 +61,7 @@ async function checkAndCreateLeaseExpiryNotifications(
   try {
     const today = startOfDay(new Date())
     const ninetyDaysFromNow = addDays(today, 90)
+    const thirtyDaysAgo = addDays(today, -30) // Include expired leases from last 30 days
 
     // Only check for admins/managers or tenants
     const isAdmin = ["ADMIN", "MANAGER"].includes(userRole)
@@ -68,14 +69,26 @@ async function checkAndCreateLeaseExpiryNotifications(
     let expiringLeases
 
     if (isAdmin) {
-      // Get all expiring leases for admins
+      // Get all expiring leases AND recently expired leases for admins
       expiringLeases = await prisma.lease.findMany({
         where: {
           status: "ACTIVE",
-          endDate: {
-            gte: today,
-            lte: ninetyDaysFromNow,
-          },
+          OR: [
+            {
+              // Expiring soon
+              endDate: {
+                gte: today,
+                lte: ninetyDaysFromNow,
+              },
+            },
+            {
+              // Recently expired
+              endDate: {
+                gte: thirtyDaysAgo,
+                lt: today,
+              },
+            },
+          ],
         },
         include: {
           tenant: true,
@@ -91,7 +104,7 @@ async function checkAndCreateLeaseExpiryNotifications(
         },
       })
     } else {
-      // Get only user's own leases if they're a tenant
+      // Get only user's own leases if they're a tenant (expiring + expired)
       const tenant = await prisma.tenant.findUnique({
         where: { userId },
         select: { id: true },
@@ -103,10 +116,22 @@ async function checkAndCreateLeaseExpiryNotifications(
         where: {
           tenantId: tenant.id,
           status: "ACTIVE",
-          endDate: {
-            gte: today,
-            lte: ninetyDaysFromNow,
-          },
+          OR: [
+            {
+              // Expiring soon
+              endDate: {
+                gte: today,
+                lte: ninetyDaysFromNow,
+              },
+            },
+            {
+              // Recently expired
+              endDate: {
+                gte: thirtyDaysAgo,
+                lt: today,
+              },
+            },
+          ],
         },
         include: {
           tenant: true,
@@ -129,11 +154,19 @@ async function checkAndCreateLeaseExpiryNotifications(
         (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       )
 
+      // Check if lease is expired
+      const isExpired = daysUntilExpiry < 0
+      const daysExpired = Math.abs(daysUntilExpiry)
+
       // Determine priority
       let priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"
       let shouldNotify = false
 
-      if (daysUntilExpiry <= 30) {
+      if (isExpired) {
+        // Expired leases
+        priority = "URGENT"
+        shouldNotify = true
+      } else if (daysUntilExpiry <= 30) {
         priority = "URGENT"
         shouldNotify = true
       } else if (daysUntilExpiry <= 60) {
@@ -176,31 +209,45 @@ async function checkAndCreateLeaseExpiryNotifications(
 
       // Create notification
       if (isAdmin) {
+        const title = isExpired
+          ? `Lease EXPIRED - ${lease.tenant.businessName}`
+          : `Lease Expiring Soon - ${lease.tenant.businessName}`
+
+        const message = isExpired
+          ? `Lease for ${lease.tenant.businessName} EXPIRED ${daysExpired} day${daysExpired === 1 ? "" : "s"} ago. Units: ${unitNumbers} at ${propertyNames}. Immediate action required!`
+          : `Lease for ${lease.tenant.businessName} expires in ${daysUntilExpiry} days. Units: ${unitNumbers} at ${propertyNames}. ${daysUntilExpiry <= 7 ? "Immediate action required!" : "Please plan for renewal or termination."}`
+
         await prisma.notification.create({
           data: {
             userId,
-            title: `Lease Expiring Soon - ${lease.tenant.businessName}`,
-            message: `Lease for ${lease.tenant.businessName} expires in ${daysUntilExpiry} days. Units: ${unitNumbers} at ${propertyNames}. ${daysUntilExpiry <= 7 ? "Immediate action required!" : "Please plan for renewal or termination."}`,
+            title,
+            message,
             type: "LEASE",
             priority,
-            actionUrl: `/dashboard/tenants/leases/${lease.id}`,
+            actionUrl: `/tenants/leases/${lease.id}`,
             entityId: lease.id,
             entityType: "LEASE",
-            expiresAt: addDays(lease.endDate, 7),
+            expiresAt: isExpired ? addDays(today, 30) : addDays(lease.endDate, 7),
           },
         })
       } else {
+        const title = isExpired ? "Your Lease Has EXPIRED" : "Your Lease is Expiring Soon"
+
+        const message = isExpired
+          ? `Your lease for units ${unitNumbers} at ${propertyNames} EXPIRED ${daysExpired} day${daysExpired === 1 ? "" : "s"} ago. Please contact management immediately.`
+          : `Your lease for units ${unitNumbers} at ${propertyNames} will expire in ${daysUntilExpiry} days. Please contact management for renewal.`
+
         await prisma.notification.create({
           data: {
             userId,
-            title: "Your Lease is Expiring Soon",
-            message: `Your lease for units ${unitNumbers} at ${propertyNames} will expire in ${daysUntilExpiry} days. Please contact management for renewal.`,
+            title,
+            message,
             type: "LEASE",
             priority,
             actionUrl: `/dashboard/my-lease`,
             entityId: lease.id,
             entityType: "LEASE",
-            expiresAt: addDays(lease.endDate, 7),
+            expiresAt: isExpired ? addDays(today, 30) : addDays(lease.endDate, 7),
           },
         })
       }
