@@ -2,21 +2,10 @@
 
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
-import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { DocumentType, Prisma } from "@prisma/client"
-
-const DocumentSchema = z.object({
-  name: z.string().min(1, "Document name is required"),
-  description: z.string().optional(),
-  documentType: z.nativeEnum(DocumentType),
-  fileUrl: z.string().min(1, "File URL is required"),
-  propertyId: z.string().optional(),
-  unitId: z.string().optional(),
-  tenantId: z.string().optional(),
-})
-
-type DocumentFormData = z.infer<typeof DocumentSchema>
+// Import from your validation file instead of redefining
+import { DocumentSchema, DocumentFormData } from "@/lib/validations/document-schema"
 
 export interface DocumentWithDetails {
   id: string
@@ -529,7 +518,6 @@ export async function getDocumentsByTenant(tenantId: string): Promise<DocumentLi
 
   return documents
 }
-//
 
 export async function getPropertiesForSelect() {
   const session = await auth()

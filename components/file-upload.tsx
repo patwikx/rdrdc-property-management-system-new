@@ -187,7 +187,7 @@ export function FileUpload({
       {/* Upload Area */}
       <div
         className={cn(
-          "relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 cursor-pointer",
+          "relative border-2 border-dashed rounded-lg p-4 text-center transition-all duration-300 cursor-pointer",
           isDragOver && !disabled
             ? "border-primary bg-secondary/50"
             : "border-border hover:border-primary/50",
@@ -208,9 +208,9 @@ export function FileUpload({
           disabled={disabled}
         />
 
-        <div className="flex flex-col items-center gap-4">
-          <CloudUpload className="h-8 w-8 text-muted-foreground" />
-          <div className="space-y-2">
+        <div className="flex flex-col items-center gap-2">
+          <CloudUpload className="h-6 w-6 text-muted-foreground" />
+          <div className="space-y-1">
             <p className="text-sm font-medium">
               {multiple 
                 ? `Drop up to ${maxFiles} files here or click to browse`
@@ -291,7 +291,7 @@ export function UploadedFileDisplay({
   const renderPreview = () => {
     if (isImage && fileUrl) {
       return (
-        <div className="relative w-16 h-16 flex-shrink-0">
+        <div className="relative w-10 h-10 flex-shrink-0">
           <img 
             src={fileUrl} 
             alt={name} 
@@ -302,39 +302,35 @@ export function UploadedFileDisplay({
     }
     if (isVideo && fileUrl) {
       return (
-        <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center border rounded bg-secondary">
-          <Video className="h-8 w-8 text-primary" />
+        <div className="relative w-10 h-10 flex-shrink-0 flex items-center justify-center border rounded bg-secondary">
+          <Video className="h-5 w-5 text-primary" />
         </div>
       );
     }
     return (
-      <div className="flex items-center justify-center w-16 h-16 flex-shrink-0 border rounded bg-secondary">
-        <FileText className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-center w-10 h-10 flex-shrink-0 border rounded bg-secondary">
+        <FileText className="h-5 w-5 text-primary" />
       </div>
     );
   };
 
   return (
-    <Card className="border-green-500 bg-green-50 dark:bg-green-950/50">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            {renderPreview()}
-            <p className="text-sm font-medium truncate">
-              {name}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRemove}
-            disabled={disabled}
-            className="flex-shrink-0 h-8 w-8 p-0 hover:text-destructive"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-between gap-3 p-2 rounded-lg border border-green-500 bg-green-50 dark:bg-green-950/50">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {renderPreview()}
+        <p className="text-sm font-medium truncate">
+          {name}
+        </p>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onRemove}
+        disabled={disabled}
+        className="flex-shrink-0 h-7 w-7 p-0 hover:text-destructive"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
