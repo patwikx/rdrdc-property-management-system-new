@@ -327,7 +327,7 @@ export default function TenantPage({ params }: TenantPageProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="leases">Leases ({tenant.leases.length})</TabsTrigger>
+          <TabsTrigger value="leases">Lease History ({tenant.leases.length})</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance ({tenant.maintenanceRequests.length})</TabsTrigger>
           <TabsTrigger value="documents">Documents ({tenant.documents.length})</TabsTrigger>
           <TabsTrigger value="payments">Payments ({tenant.pdcs.length})</TabsTrigger>
