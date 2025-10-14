@@ -459,231 +459,239 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        {/* Edit Form */}
-        {isEditing && (
-          <div className="mb-6 print:hidden">
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Notice</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleUpdateSubmit} className="space-y-6">
-                  {/* Signatory Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold border-l-4 border-primary pl-4">Signatory Information</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="primarySignatory">Primary Signatory</Label>
-                        <Input
-                          id="primarySignatory"
-                          value={formData.primarySignatory}
-                          onChange={(e) => setFormData({...formData, primarySignatory: e.target.value})}
-                          placeholder="Enter primary signatory name"
-                        />
-                      </div>
-                      
-                      <div className="space-y-1.5">
-                        <Label htmlFor="primaryTitle">Primary Title</Label>
-                        <Input
-                          id="primaryTitle"
-                          value={formData.primaryTitle}
-                          onChange={(e) => setFormData({...formData, primaryTitle: e.target.value})}
-                          placeholder="Enter primary title"
-                        />
-                      </div>
-                      
-                      <div className="space-y-1.5">
-                        <Label htmlFor="primaryContact">Primary Contact</Label>
-                        <Input
-                          id="primaryContact"
-                          value={formData.primaryContact}
-                          onChange={(e) => setFormData({...formData, primaryContact: e.target.value})}
-                          placeholder="Enter primary contact"
-                        />
-                      </div>
-                      
-                      <div className="space-y-1.5">
-                        <Label htmlFor="secondarySignatory">Secondary Signatory</Label>
-                        <Input
-                          id="secondarySignatory"
-                          value={formData.secondarySignatory}
-                          onChange={(e) => setFormData({...formData, secondarySignatory: e.target.value})}
-                          placeholder="Enter secondary signatory name"
-                        />
-                      </div>
-                      
-                      <div className="space-y-1.5">
-                        <Label htmlFor="secondaryTitle">Secondary Title</Label>
-                        <Input
-                          id="secondaryTitle"
-                          value={formData.secondaryTitle}
-                          onChange={(e) => setFormData({...formData, secondaryTitle: e.target.value})}
-                          placeholder="Enter secondary title"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notice Items */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold border-l-4 border-primary pl-4">Notice Items</h3>
-                      <Button
-                        type="button"
-                        onClick={addItem}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Item
-                      </Button>
-                    </div>
-
+        <div className="flex gap-6">
+          {/* Form Section - Left Side */}
+          {isEditing && (
+            <div className="w-1/2 space-y-6 print:hidden">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Edit3 className="h-6 w-6" />
+                    Edit Notice
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleUpdateSubmit} className="space-y-6">
+                    {/* Signatory Information */}
                     <div className="space-y-4">
-                      {items.map((item, index) => (
-                        <div key={index} className="bg-muted/50 rounded-lg p-4 border">
-                          <div className="flex justify-between items-center mb-3">
-                            <h4 className="font-medium">Item {index + 1}</h4>
-                            {items.length > 1 && (
-                              <Button
-                                type="button"
-                                onClick={() => removeItem(index)}
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
+                      <div className="border-l-4 border-primary pl-4">
+                        <h3 className="text-lg font-semibold mb-3">Signatory Information</h3>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="primarySignatory">Primary Signatory</Label>
+                            <Input
+                              id="primarySignatory"
+                              value={formData.primarySignatory}
+                              onChange={(e) => setFormData({...formData, primarySignatory: e.target.value})}
+                              placeholder="Enter primary signatory name"
+                            />
                           </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="primaryTitle">Primary Title</Label>
+                            <Input
+                              id="primaryTitle"
+                              value={formData.primaryTitle}
+                              onChange={(e) => setFormData({...formData, primaryTitle: e.target.value})}
+                              placeholder="Enter primary title"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="primaryContact">Primary Contact</Label>
+                            <Input
+                              id="primaryContact"
+                              value={formData.primaryContact}
+                              onChange={(e) => setFormData({...formData, primaryContact: e.target.value})}
+                              placeholder="Enter primary contact"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="secondarySignatory">Secondary Signatory</Label>
+                            <Input
+                              id="secondarySignatory"
+                              value={formData.secondarySignatory}
+                              onChange={(e) => setFormData({...formData, secondarySignatory: e.target.value})}
+                              placeholder="Enter secondary signatory name"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="secondaryTitle">Secondary Title</Label>
+                            <Input
+                              id="secondaryTitle"
+                              value={formData.secondaryTitle}
+                              onChange={(e) => setFormData({...formData, secondaryTitle: e.target.value})}
+                              placeholder="Enter secondary title"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                          <div className="space-y-3">
-                            {/* First Row: Description */}
-                            <div className="space-y-1.5">
-                              <Label className="flex items-center gap-2 text-sm font-medium">
-                                <Edit3 className="h-4 w-4" />
-                                Description <span className="text-destructive">*</span>
-                              </Label>
-                              <Input
-                                className="h-11"
-                                value={item.description}
-                                onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                placeholder="Enter item description..."
-                              />
-                            </div>
+                    {/* Notice Items */}
+                    <div className="space-y-4">
+                      <div className="border-l-4 border-primary pl-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold">Notice Items</h3>
+                          <Button
+                            type="button"
+                            onClick={addItem}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add Item
+                          </Button>
+                        </div>
 
-                            {/* Second Row: Status and Custom Status */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <Label className="flex items-center gap-2 text-sm font-medium">
-                                  <FileText className="h-4 w-4" />
-                                  Status <span className="text-destructive">*</span>
-                                </Label>
-                                <Select
-                                  value={item.status}
-                                  onValueChange={(value) => updateItem(index, 'status', value)}
-                                >
-                                  <SelectTrigger className="h-11">
-                                    <SelectValue placeholder="Select status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {NOTICE_STATUSES.map((status) => (
-                                      <SelectItem key={status.value} value={status.value}>
-                                        {status.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                        <div className="space-y-4">
+                          {items.map((item, index) => (
+                            <div key={index} className="bg-muted/50 rounded-lg p-4 border">
+                              <div className="flex justify-between items-center mb-3">
+                                <h4 className="font-medium">Item {index + 1}</h4>
+                                {items.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    onClick={() => removeItem(index)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
 
-                              {item.status === "CUSTOM" && (
+                              <div className="space-y-3">
+                                {/* First Row: Description */}
                                 <div className="space-y-1.5">
                                   <Label className="flex items-center gap-2 text-sm font-medium">
                                     <Edit3 className="h-4 w-4" />
-                                    Custom Status <span className="text-destructive">*</span>
+                                    Description <span className="text-destructive">*</span>
                                   </Label>
                                   <Input
                                     className="h-11"
-                                    value={item.customStatus}
-                                    onChange={(e) => updateItem(index, 'customStatus', e.target.value)}
-                                    placeholder="Enter custom status..."
+                                    value={item.description}
+                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                    placeholder="Enter item description..."
                                   />
                                 </div>
-                              )}
+
+                                {/* Second Row: Status and Custom Status */}
+                                <div className="grid grid-cols-1 gap-3">
+                                  <div className="space-y-1.5">
+                                    <Label className="flex items-center gap-2 text-sm font-medium">
+                                      <FileText className="h-4 w-4" />
+                                      Status <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Select
+                                      value={item.status}
+                                      onValueChange={(value) => updateItem(index, 'status', value)}
+                                    >
+                                      <SelectTrigger className="h-11">
+                                        <SelectValue placeholder="Select status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {NOTICE_STATUSES.map((status) => (
+                                          <SelectItem key={status.value} value={status.value}>
+                                            {status.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  {item.status === "CUSTOM" && (
+                                    <div className="space-y-1.5">
+                                      <Label className="flex items-center gap-2 text-sm font-medium">
+                                        <Edit3 className="h-4 w-4" />
+                                        Custom Status <span className="text-destructive">*</span>
+                                      </Label>
+                                      <Input
+                                        className="h-11"
+                                        value={item.customStatus}
+                                        onChange={(e) => updateItem(index, 'customStatus', e.target.value)}
+                                        placeholder="Enter custom status..."
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Third Row: Months, Year, and Amount */}
+                                <div className="grid grid-cols-1 gap-3">
+                                  <div className="space-y-1.5">
+                                    <Label className="flex items-center gap-2 text-sm font-medium">
+                                      <Calendar className="h-4 w-4" />
+                                      Month(s) <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                      className="h-11"
+                                      value={item.months}
+                                      onChange={(e) => updateItem(index, 'months', e.target.value)}
+                                      placeholder="e.g., January - March"
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1.5">
+                                    <Label className="flex items-center gap-2 text-sm font-medium">
+                                      <Calendar className="h-4 w-4" />
+                                      Year <span className="text-destructive">*</span>
+                                      <span className="text-xs text-muted-foreground ml-2">Current: {item.year}</span>
+                                    </Label>
+                                    <Select
+                                      key={`year-${index}-${item.year}`}
+                                      value={item.year}
+                                      onValueChange={(value) => {
+                                        console.log('Year changing from', item.year, 'to', value);
+                                        updateItem(index, 'year', value);
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-11">
+                                        <SelectValue placeholder="Select year..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {YEARS.map((year) => (
+                                          <SelectItem key={year} value={year.toString()}>
+                                            {year}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="space-y-1.5">
+                                    <Label className="flex items-center gap-2 text-sm font-medium">
+                                      <FileText className="h-4 w-4" />
+                                      Amount <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                      className="h-11"
+                                      type="number"
+                                      step="0.01"
+                                      value={item.amount}
+                                      onChange={(e) => updateItem(index, 'amount', e.target.value)}
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-
-                            {/* Third Row: Months, Year, and Amount */}
-                            <div className="grid grid-cols-3 gap-3">
-                              <div className="space-y-1.5">
-                                <Label className="flex items-center gap-2 text-sm font-medium">
-                                  <Calendar className="h-4 w-4" />
-                                  Month(s) <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                  className="h-11"
-                                  value={item.months}
-                                  onChange={(e) => updateItem(index, 'months', e.target.value)}
-                                  placeholder="e.g., January - March"
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <Label className="flex items-center gap-2 text-sm font-medium">
-                                  <Calendar className="h-4 w-4" />
-                                  Year <span className="text-destructive">*</span>
-                                  <span className="text-xs text-muted-foreground ml-2">Current: {item.year}</span>
-                                </Label>
-                                <Select
-                                  key={`year-${index}-${item.year}`}
-                                  value={item.year}
-                                  onValueChange={(value) => {
-                                    console.log('Year changing from', item.year, 'to', value);
-                                    updateItem(index, 'year', value);
-                                  }}
-                                >
-                                  <SelectTrigger className="h-11">
-                                    <SelectValue placeholder="Select year..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {YEARS.map((year) => (
-                                      <SelectItem key={year} value={year.toString()}>
-                                        {year}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <Label className="flex items-center gap-2 text-sm font-medium">
-                                  <FileText className="h-4 w-4" />
-                                  Amount <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                  className="h-11"
-                                  type="number"
-                                  step="0.01"
-                                  value={item.amount}
-                                  onChange={(e) => updateItem(index, 'amount', e.target.value)}
-                                  placeholder="0.00"
-                                />
-                              </div>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-        {/* Notice Document */}
-        <div className="print-area max-w-4xl mx-auto print:shadow-none print:max-w-none print:mx-0">
+          {/* Preview Section - Right Side */}
+          <div className={`${isEditing ? 'w-1/2' : 'w-full'} print-area max-w-4xl mx-auto print:shadow-none print:max-w-none print:mx-0`}>
           <div className="p-8 print:p-1 print:pt-6">
             {/* Header with embedded content */}
             <div className="flex justify-between items-start">
@@ -904,6 +912,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </>
