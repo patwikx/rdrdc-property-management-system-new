@@ -721,11 +721,15 @@ export default function CreateNoticePage() {
                                     Year <span className="text-destructive">*</span>
                                   </Label>
                                   <Select
+                                    key={`year-${index}-${item.year}`}
                                     value={item.year}
-                                    onValueChange={(value) => updateItem(index, 'year', value)}
+                                    onValueChange={(value) => {
+                                      console.log('Year changing from', item.year, 'to', value);
+                                      updateItem(index, 'year', value);
+                                    }}
                                   >
                                     <SelectTrigger className="h-11">
-                                      <SelectValue />
+                                      <SelectValue placeholder="Select year..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {YEARS.map((year) => (

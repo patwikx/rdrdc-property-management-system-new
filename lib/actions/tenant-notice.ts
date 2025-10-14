@@ -266,6 +266,84 @@ export async function getTenantNoticeCount(tenantId: string) {
   }
 }
 
+export async function updateTenantNotice(noticeId: string, data: {
+  items: Array<{
+    id?: string;
+    description: string;
+    status: string;
+    amount: number;
+    months?: string;
+    year?: number;
+  }>;
+  primarySignatory: string;
+  primaryTitle: string;
+  primaryContact: string;
+  secondarySignatory: string;
+  secondaryTitle: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
+
+    // Calculate total amount
+    const totalAmount = data.items.reduce((sum, item) => sum + item.amount, 0);
+
+    // Get the year from the first item (assuming all items have the same year)
+    const forYear = data.items[0]?.year || new Date().getFullYear();
+
+    // Update the notice and replace all items
+    const notice = await prisma.tenantNotice.update({
+      where: { id: noticeId },
+      data: {
+        totalAmount,
+        forYear, // Update the year at the notice level
+        primarySignatory: data.primarySignatory,
+        primaryTitle: data.primaryTitle,
+        primaryContact: data.primaryContact,
+        secondarySignatory: data.secondarySignatory,
+        secondaryTitle: data.secondaryTitle,
+        items: {
+          deleteMany: {}, // Delete all existing items
+          create: data.items.map(item => {
+            // For custom status, we need to extract the actual custom text
+            const validStatuses: NoticeStatus[] = ['PAST_DUE', 'OVERDUE', 'CRITICAL', 'PENDING', 'UNPAID', 'CUSTOM'];
+            const isCustom = typeof item.status === 'string' && !validStatuses.includes(item.status as NoticeStatus);
+            
+            return {
+              description: item.description,
+              status: isCustom ? NoticeStatus.CUSTOM : item.status as NoticeStatus,
+              customStatus: isCustom ? item.status : null,
+              amount: item.amount,
+              months: item.months || new Date().toLocaleString('default', { month: 'long' }),
+            };
+          })
+        }
+      },
+      include: {
+        tenant: {
+          select: {
+            businessName: true,
+            bpCode: true
+          }
+        },
+        items: true
+      }
+    });
+
+    revalidatePath("/dashboard/tenant-notice");
+    revalidatePath(`/notices/${noticeId}`);
+    return notice;
+  } catch (error) {
+    console.error("Error updating tenant notice:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to update tenant notice: ${error.message}`);
+    }
+    throw new Error("Failed to update tenant notice");
+  }
+}
+
 export async function deleteNotice(noticeId: string) {
   try {
     const session = await auth();
