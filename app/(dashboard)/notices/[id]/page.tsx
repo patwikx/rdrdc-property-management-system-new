@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
 import { getTenantNoticeById } from "@/lib/actions/tenant-notice";
 
@@ -83,11 +83,41 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     window.print();
   };
 
+  const handleSaveAsPDF = () => {
+    try {
+      // Hide non-print elements temporarily
+      const nonPrintElements = document.querySelectorAll('.print\\:hidden');
+      nonPrintElements.forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      // Set document title for PDF filename
+      const originalTitle = document.title;
+      document.title = `Notice-${notice?.tenant.businessName}-${notice?.noticeNumber}`;
+
+      // Trigger print dialog (user can choose "Save as PDF")
+      window.print();
+
+      // Restore elements and title after print dialog
+      setTimeout(() => {
+        nonPrintElements.forEach(el => {
+          (el as HTMLElement).style.display = '';
+        });
+        document.title = originalTitle;
+      }, 1000);
+
+      toast.success("Print dialog opened - Choose 'Save as PDF' as your printer");
+    } catch (error) {
+      console.error("Error opening print dialog:", error);
+      toast.error("Failed to open print dialog");
+    }
+  };
+
   const getNoticeTitle = (type: string, number: number) => {
     if (number >= 3 || type === "FINAL_NOTICE") {
       return "FINAL NOTICE AND WARNING";
     }
-    return number === 1 ? "First Notice of Collection" : "Second Notice of Collection";
+    return number === 1 ? "FIRST NOTICE OF COLLECTION" : "SECOND NOTICE OF COLLECTION";
   };
 
   const getNoticeContent = (type: string, number: number) => {
@@ -256,6 +286,10 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
             Back to Notices
           </Button>
           <div className="space-x-2">
+            <Button variant="outline" onClick={handleSaveAsPDF}>
+              <Download className="mr-2 h-4 w-4" />
+              Save as PDF
+            </Button>
             <Button variant="outline" onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               Print
@@ -340,7 +374,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                     const displayStatus = item.status === "CUSTOM" && item.customStatus 
                       ? item.customStatus 
                       : item.status.replace('_', ' ');
-                    const displayMonths = item.months || `${notice.forMonth} ${notice.forYear}`;
+                    const displayMonths = item.months ? `${item.months} ${notice.forYear}` : `${notice.forMonth} ${notice.forYear}`;
                     
                     return (
                       <tr key={item.id} className="border-b border-black">

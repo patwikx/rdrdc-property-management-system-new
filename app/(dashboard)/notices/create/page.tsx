@@ -163,21 +163,21 @@ export default function CreateNoticePage() {
     switch (type) {
       case "FIRST_NOTICE":
         return {
-          label: "First Notice",
+          label: "FIRST NOTICE",
           color: "border-2",
           icon: <div className="w-2 h-2 bg-primary rounded-full"></div>,
           description: count === 0 ? "This will be the first notice for this tenant" : "No unsettled notices found"
         };
       case "SECOND_NOTICE":
         return {
-          label: "Second Notice",
+          label: "SECOND NOTICE",
           color: "border-2 border-orange-500 dark:border-orange-400",
           icon: <div className="w-2 h-2 bg-orange-500 dark:bg-orange-400 rounded-full"></div>,
           description: `Tenant has ${count} unsettled notice(s). This will be their second notice.`
         };
       case "FINAL_NOTICE":
         return {
-          label: "Final Notice",
+          label: "FINAL NOTICE",
           color: "border-2 border-destructive",
           icon: <AlertTriangle className="h-4 w-4 text-destructive" />,
           description: `Tenant has ${count} unsettled notice(s). This will be their final notice.`
@@ -335,9 +335,9 @@ export default function CreateNoticePage() {
       toast.success("Notice created successfully!");
 
       if (newNotice && newNotice.id) {
-        router.push(`/dashboard/tenant-notice/${newNotice.id}`);
+        router.push(`/notices/${newNotice.id}`);
       } else {
-        router.push("/dashboard/tenant-notice");
+        router.push("/notices");
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
