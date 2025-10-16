@@ -31,22 +31,26 @@ export async function getTenants() {
   }
 }
 
-export async function createTenantNotice(data: {
+interface CreateNoticeItem {
+  description: string;
+  status: string;
+  amount: number;
+  months?: string;
+}
+
+interface CreateNoticeData {
   tenantId: string;
   noticeType: string;
-  items: Array<{
-    description: string;
-    status: string;
-    amount: number;
-    months?: string;
-  }>;
+  items: CreateNoticeItem[];
   forYear: number;
   primarySignatory: string;
   primaryTitle: string;
   primaryContact: string;
   secondarySignatory: string;
   secondaryTitle: string;
-}) {
+}
+
+export async function createTenantNotice(data: CreateNoticeData) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -266,21 +270,25 @@ export async function getTenantNoticeCount(tenantId: string) {
   }
 }
 
-export async function updateTenantNotice(noticeId: string, data: {
-  items: Array<{
-    id?: string;
-    description: string;
-    status: string;
-    amount: number;
-    months?: string;
-    year?: number;
-  }>;
+interface UpdateNoticeItem {
+  id?: string;
+  description: string;
+  status: string;
+  amount: number;
+  months?: string;
+  year?: number;
+}
+
+interface UpdateNoticeData {
+  items: UpdateNoticeItem[];
   primarySignatory: string;
   primaryTitle: string;
   primaryContact: string;
   secondarySignatory: string;
   secondaryTitle: string;
-}) {
+}
+
+export async function updateTenantNotice(noticeId: string, data: UpdateNoticeData) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -293,8 +301,8 @@ export async function updateTenantNotice(noticeId: string, data: {
     // Get the year from the first item (assuming all items have the same year)
     const forYear = data.items[0]?.year || new Date().getFullYear();
 
-    // Update the notice and replace all items
-    const notice = await prisma.tenantNotice.update({
+    // First, update the notice itself
+    await prisma.tenantNotice.update({
       where: { id: noticeId },
       data: {
         totalAmount,
@@ -304,23 +312,60 @@ export async function updateTenantNotice(noticeId: string, data: {
         primaryContact: data.primaryContact,
         secondarySignatory: data.secondarySignatory,
         secondaryTitle: data.secondaryTitle,
-        items: {
-          deleteMany: {}, // Delete all existing items
-          create: data.items.map(item => {
-            // For custom status, we need to extract the actual custom text
-            const validStatuses: NoticeStatus[] = ['PAST_DUE', 'OVERDUE', 'CRITICAL', 'PENDING', 'UNPAID', 'CUSTOM'];
-            const isCustom = typeof item.status === 'string' && !validStatuses.includes(item.status as NoticeStatus);
-            
-            return {
-              description: item.description,
-              status: isCustom ? NoticeStatus.CUSTOM : item.status as NoticeStatus,
-              customStatus: isCustom ? item.status : null,
-              amount: item.amount,
-              months: item.months || new Date().toLocaleString('default', { month: 'long' }),
-            };
-          })
+      }
+    });
+
+    // Get existing items to determine which to update, create, or delete
+    const existingItems = await prisma.noticeItem.findMany({
+      where: { noticeId: noticeId }
+    });
+
+    const existingItemIds = existingItems.map((item) => item.id);
+    const incomingItemIds = data.items.filter((item) => item.id).map((item) => item.id!);
+    
+    // Delete items that are no longer present
+    const itemsToDelete = existingItemIds.filter((id) => !incomingItemIds.includes(id));
+    if (itemsToDelete.length > 0) {
+      await prisma.noticeItem.deleteMany({
+        where: {
+          id: { in: itemsToDelete }
         }
-      },
+      });
+    }
+
+    // Process each item individually
+    for (const item of data.items) {
+      const validStatuses: NoticeStatus[] = ['PAST_DUE', 'OVERDUE', 'CRITICAL', 'PENDING', 'UNPAID', 'CUSTOM'];
+      const isCustom = typeof item.status === 'string' && !validStatuses.includes(item.status as NoticeStatus);
+      
+      const itemData = {
+        description: item.description,
+        status: isCustom ? NoticeStatus.CUSTOM : item.status as NoticeStatus,
+        customStatus: isCustom ? item.status : null,
+        amount: item.amount,
+        months: item.months ? `${item.months} ${item.year || new Date().getFullYear()}` : `${new Date().toLocaleString('default', { month: 'long' })} ${item.year || new Date().getFullYear()}`,
+      };
+
+      if (item.id && existingItemIds.includes(item.id)) {
+        // Update existing item
+        await prisma.noticeItem.update({
+          where: { id: item.id },
+          data: itemData
+        });
+      } else {
+        // Create new item
+        await prisma.noticeItem.create({
+          data: {
+            ...itemData,
+            noticeId: noticeId
+          }
+        });
+      }
+    }
+
+    // Fetch the updated notice with all items
+    const notice = await prisma.tenantNotice.findUnique({
+      where: { id: noticeId },
       include: {
         tenant: {
           select: {
@@ -331,6 +376,10 @@ export async function updateTenantNotice(noticeId: string, data: {
         items: true
       }
     });
+
+    if (!notice) {
+      throw new Error("Notice not found after update");
+    }
 
     revalidatePath("/dashboard/tenant-notice");
     revalidatePath(`/notices/${noticeId}`);

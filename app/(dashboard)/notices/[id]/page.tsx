@@ -73,7 +73,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     status: string;
     customStatus: string;
     amount: string;
-    months: string;
+    months: string[];
     year: string;
   }>>([]);
 
@@ -114,15 +114,26 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
         secondaryTitle: notice.secondaryTitle
       });
 
-      setItems(notice.items.map(item => ({
-        id: item.id,
-        description: item.description,
-        status: item.customStatus || item.status,
-        customStatus: item.customStatus || "",
-        amount: item.amount.toString(),
-        months: item.months || "",
-        year: notice.forYear.toString()
-      })));
+      setItems(notice.items.map(item => {
+        // Extract year from the months string if it exists, otherwise use notice.forYear
+        let itemYear = notice.forYear.toString();
+        if (item.months) {
+          const yearMatch = item.months.match(/\b(\d{4})\b/);
+          if (yearMatch) {
+            itemYear = yearMatch[1];
+          }
+        }
+        
+        return {
+          id: item.id,
+          description: item.description,
+          status: item.customStatus || item.status,
+          customStatus: item.customStatus || "",
+          amount: item.amount.toString(),
+          months: item.months ? parseMonthsFromString(item.months) : [MONTHS[new Date().getMonth()]],
+          year: itemYear
+        };
+      }));
     }
   }, [notice]);
 
@@ -208,6 +219,11 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   };
 
   // Constants for edit form
+  const MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
   const YEARS = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
   
   const NOTICE_STATUSES = [
@@ -230,7 +246,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
       status: "PAST_DUE",
       customStatus: "",
       amount: "",
-      months: "",
+      months: [MONTHS[new Date().getMonth()]],
       year: notice?.forYear.toString() || new Date().getFullYear().toString()
     }]);
   };
@@ -241,13 +257,66 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  const updateItem = (index: number, field: string, value: string) => {
-    console.log('updateItem called:', { index, field, value });
-    const updatedItems = items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    );
-    console.log('Updated items:', updatedItems);
+  const updateItem = (index: number, field: string, value: string | string[]) => {
+    const updatedItems = items.map((item, i) => {
+      if (i === index) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
     setItems(updatedItems);
+  };
+
+  const parseMonthsFromString = (monthString: string): string[] => {
+    // Handle range format like "July — September" or "July - September"
+    if (monthString.includes('—') || monthString.includes(' - ')) {
+      const separator = monthString.includes('—') ? '—' : ' - ';
+      const [startMonth, endMonth] = monthString.split(separator).map(m => m.trim());
+      
+      const startIndex = MONTHS.indexOf(startMonth);
+      const endIndex = MONTHS.indexOf(endMonth);
+      
+      if (startIndex !== -1 && endIndex !== -1) {
+        const result = [];
+        for (let i = startIndex; i <= endIndex; i++) {
+          result.push(MONTHS[i]);
+        }
+        return result;
+      }
+    }
+    
+    // Handle comma-separated format like "January, March, May"
+    if (monthString.includes(',')) {
+      const result = monthString.split(',').map(m => m.trim()).filter(m => MONTHS.includes(m));
+      return result;
+    }
+    
+    // Handle single month
+    const trimmed = monthString.trim();
+    if (MONTHS.includes(trimmed)) {
+      return [trimmed];
+    }
+    
+    return [MONTHS[new Date().getMonth()]];
+  };
+
+  const formatMonthRange = (months: string[]) => {
+    if (months.length <= 1) return months[0] || MONTHS[new Date().getMonth()];
+
+    const sortedMonths = months.sort((a, b) => MONTHS.indexOf(a) - MONTHS.indexOf(b));
+
+    const monthIndices = sortedMonths.map(month => MONTHS.indexOf(month));
+    const isConsecutive = monthIndices.every((index, i) =>
+      i === 0 || index === monthIndices[i - 1] + 1
+    );
+
+    if (isConsecutive && months.length > 2) {
+      return `${sortedMonths[0]} — ${sortedMonths[sortedMonths.length - 1]}`;
+    } else if (months.length === 2) {
+      return `${sortedMonths[0]} — ${sortedMonths[1]}`;
+    } else {
+      return sortedMonths.join(', ');
+    }
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
@@ -283,7 +352,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
           description: item.description,
           status: item.status === "CUSTOM" ? item.customStatus : item.status,
           amount: parseFloat(item.amount),
-          months: item.months,
+          months: formatMonthRange(item.months),
           year: parseInt(item.year)
         }))
       });
@@ -622,31 +691,58 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                 </div>
 
                                 {/* Third Row: Months, Year, and Amount */}
-                                <div className="grid grid-cols-1 gap-3">
+                                <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-1.5">
                                     <Label className="flex items-center gap-2 text-sm font-medium">
                                       <Calendar className="h-4 w-4" />
                                       Month(s) <span className="text-destructive">*</span>
                                     </Label>
-                                    <Input
-                                      className="h-11"
-                                      value={item.months}
-                                      onChange={(e) => updateItem(index, 'months', e.target.value)}
-                                      placeholder="e.g., January - March"
-                                    />
+                                    <Select>
+                                      <SelectTrigger className="h-11">
+                                        <div className="flex-1 text-left">
+                                          {item.months.length === 0
+                                            ? <span className="text-muted-foreground">Select months...</span>
+                                            : <span>{formatMonthRange(item.months)}</span>
+                                          }
+                                        </div>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {MONTHS.map((month) => (
+                                          <div
+                                            key={month}
+                                            className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded-sm"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              const currentMonths = item.months || [];
+                                              if (currentMonths.includes(month)) {
+                                                updateItem(index, 'months', currentMonths.filter(m => m !== month));
+                                              } else {
+                                                updateItem(index, 'months', [...currentMonths, month]);
+                                              }
+                                            }}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={item.months.includes(month)}
+                                              onChange={() => {}}
+                                              className="rounded"
+                                            />
+                                            <span className="text-sm">{month}</span>
+                                          </div>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
 
                                   <div className="space-y-1.5">
                                     <Label className="flex items-center gap-2 text-sm font-medium">
                                       <Calendar className="h-4 w-4" />
                                       Year <span className="text-destructive">*</span>
-                                      <span className="text-xs text-muted-foreground ml-2">Current: {item.year}</span>
                                     </Label>
                                     <Select
-                                      key={`year-${index}-${item.year}`}
+                                      key={`year-${index}`}
                                       value={item.year}
                                       onValueChange={(value) => {
-                                        console.log('Year changing from', item.year, 'to', value);
                                         updateItem(index, 'year', value);
                                       }}
                                     >
@@ -769,7 +865,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                           ? item.customStatus 
                           : item.status.replace('_', ' ');
                         
-                        const displayMonths = item.months ? `${item.months} ${item.year}` : `${item.year}`;
+                        const displayMonths = item.months ? `${formatMonthRange(item.months)} ${item.year}` : `${item.year}`;
                         const itemAmount = parseFloat(item.amount) || 0;
                         
                         return (
@@ -786,7 +882,15 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                           ? item.customStatus 
                           : item.status.replace('_', ' ');
                         
-                        const displayMonths = item.months ? `${item.months} ${notice.forYear}` : `${notice.forMonth} ${notice.forYear}`;
+                        // For non-editing mode, check if the months string already contains a year
+                        // If not, append the notice.forYear
+                        let displayMonths = item.months || notice.forMonth;
+                        
+                        // Check if the months string already contains a 4-digit year
+                        const hasYear = /\b\d{4}\b/.test(displayMonths);
+                        if (!hasYear) {
+                          displayMonths = `${displayMonths} ${notice.forYear}`;
+                        }
                         
                         return (
                           <tr key={item.id} className="border-b border-black">
