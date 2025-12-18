@@ -42,7 +42,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as any,
   session: { 
     strategy: "jwt",
     maxAge: 60 * 60 * 8, // 8 hours
@@ -74,6 +74,27 @@ export const {
       
       // Allow OAuth without additional checks
       if (account?.provider !== "credentials") {
+        // Check if user exists, if not create with custom fields
+        const existingUser = await prisma.user.findUnique({ 
+          where: { email: user.email! },
+        });
+        
+        if (!existingUser) {
+          // Create user with custom fields for OAuth
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              emailVerified: user.emailVerified,
+              image: user.image,
+              firstName: user.name?.split(' ')[0] || 'User',
+              lastName: user.name?.split(' ').slice(1).join(' ') || '',
+              password: '', // OAuth users don't need passwords
+              contactNo: null,
+              role: UserRole.VIEWER, // Default role for OAuth users
+            },
+          });
+        }
+        
         await logUserActivity(
           user.id,
           AuditAction.LOGIN,
