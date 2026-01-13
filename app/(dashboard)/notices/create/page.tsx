@@ -329,7 +329,7 @@ export default function CreateNoticePage() {
           months: formatMonthRange(item.months),
           year: parseInt(item.year)
         })),
-        forYear: new Date().getFullYear()
+        forYear: parseInt(validItems[0]?.year || new Date().getFullYear().toString())
       });
 
       toast.success("Notice created successfully!");
