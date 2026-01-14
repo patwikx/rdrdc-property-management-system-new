@@ -14,6 +14,28 @@ const TenantSchema = z.object({
   company: z.string().min(1, "Company is required"),
   businessName: z.string().min(1, "Business name is required"),
   status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING']),
+  // Personal Information
+  homeAddress: z.string().optional(),
+  facebookName: z.string().optional(),
+  // Business Information
+  natureOfBusiness: z.string().optional(),
+  yearsInBusiness: z.string().optional(),
+  positionInCompany: z.string().optional(),
+  officeAddress: z.string().optional(),
+  facebookPage: z.string().optional(),
+  website: z.string().optional(),
+  authorizedSignatory: z.string().optional(),
+  isStore: z.boolean().optional(),
+  isOffice: z.boolean().optional(),
+  isFranchise: z.boolean().optional(),
+  // Bank Details
+  bankName1: z.string().optional(),
+  bankAddress1: z.string().optional(),
+  bankName2: z.string().optional(),
+  bankAddress2: z.string().optional(),
+  // Other Business
+  otherBusinessName: z.string().optional(),
+  otherBusinessAddress: z.string().optional(),
 })
 
 type TenantFormData = z.infer<typeof TenantSchema>
@@ -32,6 +54,29 @@ export interface TenantWithDetails {
   status: string
   createdAt: Date
   updatedAt: Date
+  // Personal Information
+  homeAddress: string | null
+  facebookName: string | null
+  // Business Information
+  natureOfBusiness: string | null
+  yearsInBusiness: string | null
+  positionInCompany: string | null
+  officeAddress: string | null
+  facebookPage: string | null
+  website: string | null
+  authorizedSignatory: string | null
+  isStore: boolean
+  isOffice: boolean
+  isFranchise: boolean
+  // Bank Details
+  bankName1: string | null
+  bankAddress1: string | null
+  bankName2: string | null
+  bankAddress2: string | null
+  // Other Business
+  otherBusinessName: string | null
+  otherBusinessAddress: string | null
+  // Relations
   leases: {
     id: string
     startDate: Date

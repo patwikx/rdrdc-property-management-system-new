@@ -35,12 +35,36 @@ export default function CreateTenantPage() {
       firstName: "",
       lastName: "",
       status: 'PENDING',
+      // Personal Information
+      homeAddress: "",
+      facebookName: "",
+      // Contact Info
       email: "",
       phone: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
+      // Business Info
       company: "",
       businessName: "",
+      natureOfBusiness: "",
+      yearsInBusiness: "",
+      positionInCompany: "",
+      officeAddress: "",
+      facebookPage: "",
+      website: "",
+      authorizedSignatory: "",
+      isStore: false,
+      isOffice: false,
+      isFranchise: false,
+      // Bank Details
+      bankName1: "",
+      bankAddress1: "",
+      bankName2: "",
+      bankAddress2: "",
+      // Other Business
+      otherBusinessName: "",
+      otherBusinessAddress: "",
+      // Lease Info
       createLease: false,
       propertyId: "",
       selectedUnits: [],
@@ -194,6 +218,28 @@ export default function CreateTenantPage() {
           company: data.company,
           businessName: data.businessName,
           status: data.status,
+          // Personal Information
+          homeAddress: data.homeAddress,
+          facebookName: data.facebookName,
+          // Business Information
+          natureOfBusiness: data.natureOfBusiness,
+          yearsInBusiness: data.yearsInBusiness,
+          positionInCompany: data.positionInCompany,
+          officeAddress: data.officeAddress,
+          facebookPage: data.facebookPage,
+          website: data.website,
+          authorizedSignatory: data.authorizedSignatory,
+          isStore: data.isStore,
+          isOffice: data.isOffice,
+          isFranchise: data.isFranchise,
+          // Bank Details
+          bankName1: data.bankName1,
+          bankAddress1: data.bankAddress1,
+          bankName2: data.bankName2,
+          bankAddress2: data.bankAddress2,
+          // Other Business
+          otherBusinessName: data.otherBusinessName,
+          otherBusinessAddress: data.otherBusinessAddress,
           createLease: true,
           leaseData: {
             selectedUnits: data.selectedUnits,
@@ -223,6 +269,28 @@ export default function CreateTenantPage() {
           company: data.company,
           businessName: data.businessName,
           status: data.status,
+          // Personal Information
+          homeAddress: data.homeAddress,
+          facebookName: data.facebookName,
+          // Business Information
+          natureOfBusiness: data.natureOfBusiness,
+          yearsInBusiness: data.yearsInBusiness,
+          positionInCompany: data.positionInCompany,
+          officeAddress: data.officeAddress,
+          facebookPage: data.facebookPage,
+          website: data.website,
+          authorizedSignatory: data.authorizedSignatory,
+          isStore: data.isStore,
+          isOffice: data.isOffice,
+          isFranchise: data.isFranchise,
+          // Bank Details
+          bankName1: data.bankName1,
+          bankAddress1: data.bankAddress1,
+          bankName2: data.bankName2,
+          bankAddress2: data.bankAddress2,
+          // Other Business
+          otherBusinessName: data.otherBusinessName,
+          otherBusinessAddress: data.otherBusinessAddress,
         })
         
         if (tenantResult.error) {

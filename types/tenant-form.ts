@@ -8,6 +8,10 @@ export const TenantSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING']),
   
+  // Personal Information
+  homeAddress: z.string().optional(),
+  facebookName: z.string().optional(),
+  
   // Contact Info
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
@@ -17,6 +21,26 @@ export const TenantSchema = z.object({
   // Business Info
   company: z.string().min(1, "Company is required"),
   businessName: z.string().min(1, "Business name is required"),
+  natureOfBusiness: z.string().optional(),
+  yearsInBusiness: z.string().optional(),
+  positionInCompany: z.string().optional(),
+  officeAddress: z.string().optional(),
+  facebookPage: z.string().optional(),
+  website: z.string().optional(),
+  authorizedSignatory: z.string().optional(),
+  isStore: z.boolean().optional(),
+  isOffice: z.boolean().optional(),
+  isFranchise: z.boolean().optional(),
+  
+  // Bank Details
+  bankName1: z.string().optional(),
+  bankAddress1: z.string().optional(),
+  bankName2: z.string().optional(),
+  bankAddress2: z.string().optional(),
+  
+  // Other Business Declaration
+  otherBusinessName: z.string().optional(),
+  otherBusinessAddress: z.string().optional(),
   
   // Optional Lease Info
   createLease: z.boolean(),

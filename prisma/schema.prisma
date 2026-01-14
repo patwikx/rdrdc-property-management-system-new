@@ -453,25 +453,51 @@ model UtilityBill {
 }
 
 model Tenant {
-  id                    String       @id @default(cuid())
-  userId                String?      @unique
-  bpCode                String       @unique
+  id          String       @id @default(cuid())
+  userId      String?      @unique
+  bpCode      String       @unique
+  status      TenantStatus
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String?
+
+  // Personal Information
   firstName             String?
   lastName              String?
   email                 String
   phone                 String
+  homeAddress           String?
+  facebookName          String?
   emergencyContactName  String?
   emergencyContactPhone String?
-  company               String
-  businessName          String
-  status                TenantStatus
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  createdById           String?
+
+  // Business Information
+  company             String
+  businessName        String
+  natureOfBusiness    String?
+  yearsInBusiness     String?
+  positionInCompany   String?
+  officeAddress       String?
+  facebookPage        String?
+  website             String?
+  authorizedSignatory String?
+  isStore             Boolean @default(false)
+  isOffice            Boolean @default(false)
+  isFranchise         Boolean @default(false)
+
+  // Bank Details
+  bankName1    String?
+  bankAddress1 String?
+  bankName2    String?
+  bankAddress2 String?
+
+  // Other Business Declaration
+  otherBusinessName    String?
+  otherBusinessAddress String?
 
   // Relations
   user                User?                @relation(fields: [userId], references: [id])
-  leases              Lease[]              @relation("TenantLeases") // Updated relation name
+  leases              Lease[]              @relation("TenantLeases")
   maintenanceRequests MaintenanceRequest[]
   documents           Document[]
   pdcs                PDC[]
