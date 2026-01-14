@@ -21,6 +21,8 @@ export const UserUpdateSchema = z.object({
   ], {
     message: "Please select a valid role",
   }),
+  isRecommendingApprover: z.boolean().optional(),
+  isFinalApprover: z.boolean().optional(),
 })
 
 export const CreateUserSchema = z.object({
@@ -45,6 +47,8 @@ export const CreateUserSchema = z.object({
   ], {
     message: "Please select a valid role",
   }),
+  isRecommendingApprover: z.boolean().optional(),
+  isFinalApprover: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

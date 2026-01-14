@@ -17,6 +17,8 @@ export interface UserWithDetails {
   image: string | null
   createdAt: Date
   updatedAt: Date
+  isRecommendingApprover: boolean
+  isFinalApprover: boolean
   _count: {
     createdProperties: number
     assignedMaintenance: number
@@ -117,6 +119,8 @@ export async function getUsers(
         image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        isRecommendingApprover: user.isRecommendingApprover,
+        isFinalApprover: user.isFinalApprover,
         _count: user._count,
         tenant: user.tenant
       })),
@@ -211,6 +215,8 @@ export async function createUser(data: {
   password: string
   contactNo?: string
   role: UserRole
+  isRecommendingApprover?: boolean
+  isFinalApprover?: boolean
 }): Promise<{
   success: boolean
   user?: UserWithDetails
@@ -241,7 +247,9 @@ export async function createUser(data: {
         email: data.email,
         password: hashedPassword,
         contactNo: data.contactNo || null,
-        role: data.role
+        role: data.role,
+        isRecommendingApprover: data.isRecommendingApprover ?? false,
+        isFinalApprover: data.isFinalApprover ?? false
       },
       include: {
         _count: {
@@ -283,6 +291,8 @@ export async function createUser(data: {
         image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        isRecommendingApprover: user.isRecommendingApprover,
+        isFinalApprover: user.isFinalApprover,
         _count: user._count,
         tenant: user.tenant
       }
@@ -300,6 +310,8 @@ export async function updateUser(data: {
   email?: string
   contactNo?: string
   role?: UserRole
+  isRecommendingApprover?: boolean
+  isFinalApprover?: boolean
 }): Promise<{
   success: boolean
   user?: UserWithDetails
@@ -337,6 +349,8 @@ export async function updateUser(data: {
       email?: string
       contactNo?: string | null
       role?: UserRole
+      isRecommendingApprover?: boolean
+      isFinalApprover?: boolean
     } = {}
 
     if (data.firstName !== undefined) updateData.firstName = data.firstName
@@ -344,6 +358,8 @@ export async function updateUser(data: {
     if (data.email !== undefined) updateData.email = data.email
     if (data.contactNo !== undefined) updateData.contactNo = data.contactNo || null
     if (data.role !== undefined) updateData.role = data.role
+    if (data.isRecommendingApprover !== undefined) updateData.isRecommendingApprover = data.isRecommendingApprover
+    if (data.isFinalApprover !== undefined) updateData.isFinalApprover = data.isFinalApprover
 
     const user = await prisma.user.update({
       where: { id: data.id },
@@ -388,6 +404,8 @@ export async function updateUser(data: {
         image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        isRecommendingApprover: user.isRecommendingApprover,
+        isFinalApprover: user.isFinalApprover,
         _count: user._count,
         tenant: user.tenant
       }
@@ -493,6 +511,8 @@ export async function getUserById(id: string): Promise<{
         image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        isRecommendingApprover: user.isRecommendingApprover,
+        isFinalApprover: user.isFinalApprover,
         _count: user._count,
         tenant: user.tenant
       }

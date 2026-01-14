@@ -76,6 +76,10 @@ const getNavigationItems = (userRole: string) => {
           title: "Leases",
           url: "/tenants/leases",
         },
+        {
+          title: "Rate Approvals",
+          url: "/tenants/leases/approvals",
+        },
       ],
     },
     {
