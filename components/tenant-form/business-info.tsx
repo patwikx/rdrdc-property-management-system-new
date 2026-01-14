@@ -1,8 +1,7 @@
 // components/tenant-form/BusinessInfoSection.tsx
-import { Building, Globe, Landmark, Store } from "lucide-react"
+import { Building, Globe, Landmark, Store, CheckIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Checkbox } from "@/components/ui/checkbox"
 import { UseFormReturn } from "react-hook-form"
 import { TenantFormData } from "@/types/tenant-form"
 
@@ -248,23 +247,26 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             control={form.control}
             name="isStore"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium">
-                    Store
-                  </FormLabel>
-                  <FormDescription className="text-xs">
-                    Space is used as a store
-                  </FormDescription>
+              <div 
+                className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => {
+                  if (!isLoading) {
+                    field.onChange(!field.value)
+                  }
+                }}
+              >
+                <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
+                  {field.value && <CheckIcon className="size-3.5 text-white" />}
                 </div>
-              </FormItem>
+                <div className="space-y-1 leading-none">
+                  <span className="text-sm font-medium">
+                    Store
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    Space is used as a store
+                  </p>
+                </div>
+              </div>
             )}
           />
 
@@ -272,23 +274,26 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             control={form.control}
             name="isOffice"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium">
-                    Office
-                  </FormLabel>
-                  <FormDescription className="text-xs">
-                    Space is used as an office
-                  </FormDescription>
+              <div 
+                className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => {
+                  if (!isLoading) {
+                    field.onChange(!field.value)
+                  }
+                }}
+              >
+                <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
+                  {field.value && <CheckIcon className="size-3.5 text-white" />}
                 </div>
-              </FormItem>
+                <div className="space-y-1 leading-none">
+                  <span className="text-sm font-medium">
+                    Office
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    Space is used as an office
+                  </p>
+                </div>
+              </div>
             )}
           />
 
@@ -296,23 +301,26 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             control={form.control}
             name="isFranchise"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium">
-                    Franchise Business
-                  </FormLabel>
-                  <FormDescription className="text-xs">
-                    This is a franchise business
-                  </FormDescription>
+              <div 
+                className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => {
+                  if (!isLoading) {
+                    field.onChange(!field.value)
+                  }
+                }}
+              >
+                <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
+                  {field.value && <CheckIcon className="size-3.5 text-white" />}
                 </div>
-              </FormItem>
+                <div className="space-y-1 leading-none">
+                  <span className="text-sm font-medium">
+                    Franchise Business
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    This is a franchise business
+                  </p>
+                </div>
+              </div>
             )}
           />
         </div>
