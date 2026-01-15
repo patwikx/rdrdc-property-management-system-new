@@ -23,6 +23,10 @@ const TenantSchema = z.object({
   company: z.string().min(1, "Company is required"),
   businessName: z.string().min(1, "Business name is required"),
   status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING']),
+  // Business type flags (required by server action)
+  isStore: z.boolean(),
+  isOffice: z.boolean(),
+  isFranchise: z.boolean(),
 })
 
 type TenantFormData = z.infer<typeof TenantSchema>
@@ -69,6 +73,9 @@ export function CreateTenantForm({ onSuccess, onCancel }: CreateTenantFormProps)
       company: "",
       businessName: "",
       status: 'PENDING',
+      isStore: false,
+      isOffice: false,
+      isFranchise: false,
     },
   })
 

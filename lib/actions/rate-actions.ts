@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 import { 
   RateChangeType, 
   RateOverrideType, 
@@ -132,6 +133,12 @@ export async function createRateChangeRequest(
   data: CreateRateChangeRequestData
 ): Promise<{ success: boolean; request?: RateChangeRequest; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Validate lease unit exists and get current rate
     const leaseUnit = await prisma.leaseUnit.findUnique({
       where: { id: data.leaseUnitId },
@@ -185,6 +192,12 @@ export async function createRateOverride(
   data: CreateRateOverrideData
 ): Promise<{ success: boolean; override?: RateOverride; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Validate lease unit exists
     const leaseUnit = await prisma.leaseUnit.findUnique({
       where: { id: data.leaseUnitId }
@@ -263,6 +276,12 @@ export async function createRateHistory(
   data: CreateRateHistoryData
 ): Promise<{ success: boolean; history?: RateHistory; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Validate lease unit exists
     const leaseUnit = await prisma.leaseUnit.findUnique({
       where: { id: data.leaseUnitId }
@@ -720,6 +739,12 @@ export async function recommendRateChange(
   remarks?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Verify user has recommending approver permission
     const user = await prisma.user.findUnique({
       where: { id: recommendedById },
@@ -785,6 +810,12 @@ export async function approveRateChange(
   remarks?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Verify user has final approver permission
     const user = await prisma.user.findUnique({
       where: { id: approvedById },
@@ -851,6 +882,12 @@ export async function rejectRateChange(
   step: ApprovalStep
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Validate reason is provided
     if (!reason || reason.trim() === '') {
       return { success: false, error: "Rejection reason is required" }
@@ -1039,6 +1076,12 @@ export async function recommendRateOverride(
   remarks?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Verify user has recommending approver permission
     const user = await prisma.user.findUnique({
       where: { id: recommendedById },
@@ -1102,6 +1145,12 @@ export async function approveRateOverride(
   remarks?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Verify user has final approver permission
     const user = await prisma.user.findUnique({
       where: { id: approvedById },
@@ -1166,6 +1215,12 @@ export async function rejectRateOverride(
   step: ApprovalStep
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Validate reason is provided
     if (!reason || reason.trim() === '') {
       return { success: false, error: "Rejection reason is required" }
@@ -1298,6 +1353,12 @@ export async function applyRateChange(
   requestId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     // Get the rate change request
     const request = await prisma.rateChangeRequest.findUnique({
       where: { id: requestId },
@@ -1512,6 +1573,15 @@ export async function processScheduledRateIncreases(): Promise<ProcessScheduledR
   }
 
   try {
+    // Verify authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return {
+        ...result,
+        errors: ['Unauthorized']
+      }
+    }
+
     const now = new Date()
 
     // 1. Find all active leases where nextScheduledIncrease <= today and autoIncreaseEnabled = true
@@ -1548,39 +1618,51 @@ export async function processScheduledRateIncreases(): Promise<ProcessScheduledR
     for (const lease of dueLeases) {
       const standardIncreasePercentage = lease.standardIncreasePercentage ?? 10
       const increaseIntervalYears = lease.increaseIntervalYears ?? 3
+      const leaseDetails: ProcessScheduledRateIncreasesResult['details'] = []
 
-      // Process each lease unit
-      for (const leaseUnit of lease.leaseUnits) {
-        const detail: ProcessScheduledRateIncreasesResult['details'][0] = {
-          leaseId: lease.id,
-          leaseUnitId: leaseUnit.id,
-          previousRate: leaseUnit.rentAmount,
-          newRate: 0,
-          success: false
-        }
+      try {
+        // Wrap all lease unit processing AND nextScheduledIncrease update in a single transaction
+        await prisma.$transaction(async (tx) => {
+          // Process each lease unit within the transaction
+          for (const leaseUnit of lease.leaseUnits) {
+            const detail: ProcessScheduledRateIncreasesResult['details'][0] = {
+              leaseId: lease.id,
+              leaseUnitId: leaseUnit.id,
+              previousRate: leaseUnit.rentAmount,
+              newRate: 0,
+              success: false
+            }
 
-        try {
-          // 2. Check for active override
-          const override = await getActiveOverrideInternal(leaseUnit.id)
+            // 2. Check for active override (using internal query within transaction)
+            const override = await tx.rateOverride.findFirst({
+              where: {
+                leaseUnitId: leaseUnit.id,
+                status: RateApprovalStatus.APPROVED,
+                effectiveFrom: { lte: now },
+                OR: [
+                  { effectiveTo: null },
+                  { effectiveTo: { gte: now } }
+                ]
+              },
+              orderBy: { effectiveFrom: 'desc' }
+            })
 
-          // 3. Calculate new rate based on override or standard increase
-          const newRate = await calculateNewRate(
-            leaseUnit.rentAmount,
-            standardIncreasePercentage,
-            override
-          )
+            // 3. Calculate new rate based on override or standard increase
+            const newRate = await calculateNewRate(
+              leaseUnit.rentAmount,
+              standardIncreasePercentage,
+              override
+            )
 
-          detail.newRate = newRate
+            detail.newRate = newRate
 
-          // Skip if rate doesn't change (e.g., NO_INCREASE override)
-          if (newRate === leaseUnit.rentAmount) {
-            detail.success = true
-            result.details.push(detail)
-            continue
-          }
+            // Skip if rate doesn't change (e.g., NO_INCREASE override)
+            if (newRate === leaseUnit.rentAmount) {
+              detail.success = true
+              leaseDetails.push(detail)
+              continue
+            }
 
-          // Use a transaction to ensure atomicity
-          await prisma.$transaction(async (tx) => {
             // 4. Create flagged RateChangeRequest with AUTO_APPLIED status (Requirement 1.5)
             const rateChangeRequest = await tx.rateChangeRequest.create({
               data: {
@@ -1619,47 +1701,49 @@ export async function processScheduledRateIncreases(): Promise<ProcessScheduledR
               }
             })
 
-            // 7. Update the lease's total rent amount
-            const allLeaseUnits = await tx.leaseUnit.findMany({
-              where: { leaseId: lease.id }
-            })
+            detail.success = true
+            result.processed++
+            leaseDetails.push(detail)
+          }
 
-            const totalRent = allLeaseUnits.reduce((sum, lu) => {
-              if (lu.id === leaseUnit.id) {
-                return sum + newRate
-              }
-              return sum + lu.rentAmount
-            }, 0)
-
-            await tx.lease.update({
-              where: { id: lease.id },
-              data: { totalRentAmount: totalRent }
-            })
+          // 7. Update the lease's total rent amount
+          const allLeaseUnits = await tx.leaseUnit.findMany({
+            where: { leaseId: lease.id }
           })
 
-          detail.success = true
-          result.processed++
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-          detail.error = errorMessage
-          result.errors.push(`Failed to process lease unit ${leaseUnit.id}: ${errorMessage}`)
-        }
+          const totalRent = allLeaseUnits.reduce((sum, lu) => sum + lu.rentAmount, 0)
 
-        result.details.push(detail)
-      }
+          // 8. Update nextScheduledIncrease for the lease (inside transaction for atomicity)
+          const nextIncrease = new Date(now)
+          nextIncrease.setFullYear(nextIncrease.getFullYear() + increaseIntervalYears)
 
-      // 8. Update nextScheduledIncrease for the lease (after processing all units)
-      try {
-        const nextIncrease = new Date(now)
-        nextIncrease.setFullYear(nextIncrease.getFullYear() + increaseIntervalYears)
-
-        await prisma.lease.update({
-          where: { id: lease.id },
-          data: { nextScheduledIncrease: nextIncrease }
+          await tx.lease.update({
+            where: { id: lease.id },
+            data: { 
+              totalRentAmount: totalRent,
+              nextScheduledIncrease: nextIncrease 
+            }
+          })
         })
+
+        // Add all details from this lease to the result
+        result.details.push(...leaseDetails)
       } catch (error) {
+        // Transaction failed - record lease-specific failure
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        result.errors.push(`Failed to update nextScheduledIncrease for lease ${lease.id}: ${errorMessage}`)
+        result.errors.push(`Failed to process lease ${lease.id}: ${errorMessage}`)
+        
+        // Mark all units in this lease as failed
+        for (const leaseUnit of lease.leaseUnits) {
+          result.details.push({
+            leaseId: lease.id,
+            leaseUnitId: leaseUnit.id,
+            previousRate: leaseUnit.rentAmount,
+            newRate: 0,
+            success: false,
+            error: errorMessage
+          })
+        }
       }
     }
 
