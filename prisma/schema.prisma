@@ -24,6 +24,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Approval Permissions
+  isRecommendingApprover Boolean @default(false)
+  isFinalApprover        Boolean @default(false)
+
   // Relations
   createdProperties   Property[]           @relation("CreatedBy")
   assignedMaintenance MaintenanceRequest[] @relation("AssignedTo")
@@ -48,6 +52,16 @@ model User {
   // Notice Relations
   createdNotices TenantNotice[] @relation("CreatedNotices")
   TenantNotice   TenantNotice[]
+
+  // Rate Change Approval Relations
+  requestedRateChanges     RateChangeRequest[] @relation("RateChangeRequester")
+  recommendedRateChanges   RateChangeRequest[] @relation("RateChangeRecommender")
+  approvedRateChanges      RateChangeRequest[] @relation("RateChangeApprover")
+  rejectedRateChanges      RateChangeRequest[] @relation("RateChangeRejecter")
+  requestedRateOverrides   RateOverride[]      @relation("OverrideRequester")
+  recommendedRateOverrides RateOverride[]      @relation("OverrideRecommender")
+  approvedRateOverrides    RateOverride[]      @relation("OverrideApprover")
+  rejectedRateOverrides    RateOverride[]      @relation("OverrideRejecter")
 }
 
 model PDC {
@@ -453,25 +467,51 @@ model UtilityBill {
 }
 
 model Tenant {
-  id                    String       @id @default(cuid())
-  userId                String?      @unique
-  bpCode                String       @unique
+  id          String       @id @default(cuid())
+  userId      String?      @unique
+  bpCode      String       @unique
+  status      TenantStatus
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String?
+
+  // Personal Information
   firstName             String?
   lastName              String?
   email                 String
   phone                 String
+  homeAddress           String?
+  facebookName          String?
   emergencyContactName  String?
   emergencyContactPhone String?
-  company               String
-  businessName          String
-  status                TenantStatus
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  createdById           String?
+
+  // Business Information
+  company             String
+  businessName        String
+  natureOfBusiness    String?
+  yearsInBusiness     String?
+  positionInCompany   String?
+  officeAddress       String?
+  facebookPage        String?
+  website             String?
+  authorizedSignatory String?
+  isStore             Boolean @default(false)
+  isOffice            Boolean @default(false)
+  isFranchise         Boolean @default(false)
+
+  // Bank Details
+  bankName1    String?
+  bankAddress1 String?
+  bankName2    String?
+  bankAddress2 String?
+
+  // Other Business Declaration
+  otherBusinessName    String?
+  otherBusinessAddress String?
 
   // Relations
   user                User?                @relation(fields: [userId], references: [id])
-  leases              Lease[]              @relation("TenantLeases") // Updated relation name
+  leases              Lease[]              @relation("TenantLeases")
   maintenanceRequests MaintenanceRequest[]
   documents           Document[]
   pdcs                PDC[]
@@ -492,6 +532,12 @@ model Lease {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
+  // Rate Increase Settings
+  standardIncreasePercentage Float?    @default(10) // Default 10% increase
+  increaseIntervalYears      Int?      @default(3) // Every 3 years
+  nextScheduledIncrease      DateTime? // When next auto-increase is due
+  autoIncreaseEnabled        Boolean   @default(true) // Enable/disable auto-increase
+
   // Relations
   tenant     Tenant      @relation("TenantLeases", fields: [tenantId], references: [id])
   leaseUnits LeaseUnit[] @relation("LeaseUnits") // Many-to-many with units
@@ -500,20 +546,142 @@ model Lease {
 
 // Junction table for Lease-Unit many-to-many relationship
 model LeaseUnit {
-  id         String   @id @default(cuid())
-  leaseId    String
-  unitId     String
-  rentAmount Float // Individual rent for this unit
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id               String    @id @default(cuid())
+  leaseId          String
+  unitId           String
+  rentAmount       Float // Individual rent for this unit (current)
+  baseRentAmount   Float? // Original rent when lease started
+  lastIncreaseDate DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  lease Lease @relation("LeaseUnits", fields: [leaseId], references: [id], onDelete: Cascade)
-  unit  Unit  @relation("UnitLeases", fields: [unitId], references: [id], onDelete: Cascade)
+  lease              Lease               @relation("LeaseUnits", fields: [leaseId], references: [id], onDelete: Cascade)
+  unit               Unit                @relation("UnitLeases", fields: [unitId], references: [id], onDelete: Cascade)
+  rateOverrides      RateOverride[]
+  rateChangeRequests RateChangeRequest[]
+  rateHistory        RateHistory[]
 
   @@unique([leaseId, unitId]) // Prevent duplicate unit assignments to same lease
   @@index([leaseId])
   @@index([unitId])
+}
+
+// Rate History - tracks all rate changes
+model RateHistory {
+  id            String         @id @default(cuid())
+  leaseUnitId   String
+  previousRate  Float
+  newRate       Float
+  changeType    RateChangeType
+  effectiveDate DateTime
+  reason        String?
+  requestId     String? // Link to RateChangeRequest if applicable
+  isAutoApplied Boolean        @default(false) // True if auto-increase
+  createdAt     DateTime       @default(now())
+
+  leaseUnit   LeaseUnit          @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  rateRequest RateChangeRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@index([leaseUnitId])
+  @@index([requestId])
+}
+
+// Rate Override - for long-term agreements that override standard increases
+model RateOverride {
+  id            String           @id @default(cuid())
+  leaseUnitId   String
+  overrideType  RateOverrideType
+  fixedRate     Float? // If FIXED_RATE
+  percentageCap Float? // If PERCENTAGE_CAP (max % increase allowed)
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  reason        String
+
+  // Two-step approval workflow
+  status RateApprovalStatus @default(PENDING)
+
+  // Requestee
+  requestedById String
+  requestedAt   DateTime @default(now())
+
+  // Recommending Approval
+  recommendedById    String?
+  recommendedAt      DateTime?
+  recommendedRemarks String?
+
+  // Final Approval
+  approvedById    String?
+  approvedAt      DateTime?
+  approvalRemarks String?
+
+  // Rejection (can happen at any step)
+  rejectedById   String?
+  rejectedAt     DateTime?
+  rejectedReason String?
+  rejectedAtStep ApprovalStep?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  leaseUnit     LeaseUnit @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  requestedBy   User      @relation("OverrideRequester", fields: [requestedById], references: [id])
+  recommendedBy User?     @relation("OverrideRecommender", fields: [recommendedById], references: [id])
+  approvedBy    User?     @relation("OverrideApprover", fields: [approvedById], references: [id])
+  rejectedBy    User?     @relation("OverrideRejecter", fields: [rejectedById], references: [id])
+
+  @@index([leaseUnitId])
+  @@index([status])
+}
+
+// Rate Change Request - for manual rate changes with approval workflow
+model RateChangeRequest {
+  id            String         @id @default(cuid())
+  leaseUnitId   String
+  currentRate   Float
+  proposedRate  Float
+  changeType    RateChangeType
+  effectiveDate DateTime
+  reason        String
+  isFlagged     Boolean        @default(false) // Flagged for review (auto-increase)
+
+  // Two-step approval workflow
+  status RateApprovalStatus @default(PENDING)
+
+  // Requestee
+  requestedById String
+  requestedAt   DateTime @default(now())
+
+  // Recommending Approval
+  recommendedById    String?
+  recommendedAt      DateTime?
+  recommendedRemarks String?
+
+  // Final Approval
+  approvedById    String?
+  approvedAt      DateTime?
+  approvalRemarks String?
+
+  // Rejection (can happen at any step)
+  rejectedById   String?
+  rejectedAt     DateTime?
+  rejectedReason String?
+  rejectedAtStep ApprovalStep?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  leaseUnit     LeaseUnit     @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  requestedBy   User          @relation("RateChangeRequester", fields: [requestedById], references: [id])
+  recommendedBy User?         @relation("RateChangeRecommender", fields: [recommendedById], references: [id])
+  approvedBy    User?         @relation("RateChangeApprover", fields: [approvedById], references: [id])
+  rejectedBy    User?         @relation("RateChangeRejecter", fields: [rejectedById], references: [id])
+  rateHistories RateHistory[]
+
+  @@index([leaseUnitId])
+  @@index([status])
 }
 
 model MaintenanceRequest {
@@ -646,6 +814,33 @@ enum LeaseStatus {
   PENDING
   TERMINATED
   EXPIRED
+}
+
+// Rate Management Enums
+enum RateApprovalStatus {
+  PENDING // Waiting for recommending approval
+  RECOMMENDED // Recommended, waiting for final approval
+  APPROVED // Fully approved
+  REJECTED // Rejected at any step
+  AUTO_APPLIED // Auto-increase applied (flagged but proceeded)
+}
+
+enum ApprovalStep {
+  RECOMMENDING
+  FINAL
+}
+
+enum RateOverrideType {
+  FIXED_RATE // Lock rate at specific amount
+  PERCENTAGE_CAP // Cap increases at X%
+  NO_INCREASE // No increases for duration
+}
+
+enum RateChangeType {
+  STANDARD_INCREASE // Auto 3-year increase
+  MANUAL_ADJUSTMENT // Manual rate change
+  RENEWAL_INCREASE // Increase on lease renewal
+  OVERRIDE_REQUEST // Request to override standard
 }
 
 enum MaintenanceCategory {

@@ -2,14 +2,15 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Save, User, Mail, Phone, Shield, Eye, EyeOff } from "lucide-react"
+import { Save, User, Mail, Phone, Shield, Eye, EyeOff, CheckCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { createUser } from "@/lib/actions/user-actions"
 import { CreateUserSchema, type CreateUserData } from "@/lib/validations/user-schema"
 import { UserRole } from "@prisma/client"
@@ -49,6 +50,8 @@ export default function CreateUserPage() {
       confirmPassword: "",
       contactNo: "",
       role: UserRole.VIEWER,
+      isRecommendingApprover: false,
+      isFinalApprover: false,
     },
   })
 
@@ -61,7 +64,9 @@ export default function CreateUserPage() {
         email: data.email,
         password: data.password,
         contactNo: data.contactNo || undefined,
-        role: data.role
+        role: data.role,
+        isRecommendingApprover: data.isRecommendingApprover,
+        isFinalApprover: data.isFinalApprover
       })
 
       if (result.success && result.user) {
@@ -292,6 +297,56 @@ export default function CreateUserPage() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Rate Change Approval Permissions */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                        <h4 className="text-sm font-medium">Rate Change Approval Permissions</h4>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="isRecommendingApprover"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Recommending Approver</FormLabel>
+                              <FormDescription>
+                                Can recommend rate changes for final approval
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="isFinalApprover"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Final Approver</FormLabel>
+                              <FormDescription>
+                                Can give final approval for rate changes
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
                   {/* Action Buttons */}

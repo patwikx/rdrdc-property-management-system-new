@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Edit, Save, Trash2, FileCheck, Building, Users, Calendar, DollarSign, AlertTriangle } from "lucide-react"
+import { Edit, Save, Trash2, FileCheck, Building, Users, Calendar, DollarSign, AlertTriangle, History, TrendingUp, Shield } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getLeaseById, updateLease, terminateLease, deleteLease, LeaseWithDetails } from "@/lib/actions/lease-actions"
+import { getRateHistory, type RateHistoryWithDetails } from "@/lib/actions/rate-actions"
+import { RateHistory, RateHistoryCompact } from "@/components/rate-management/rate-history"
+import { RateChangeForm } from "@/components/rate-management/rate-change-form"
+import { RateOverrideForm } from "@/components/rate-management/rate-override-form"
 import { LeaseUpdateSchema, LeaseUpdateFormData, LeaseTerminationSchema, LeaseTerminationFormData } from "@/lib/validations/lease-schema"
 import { LeaseStatus } from "@prisma/client"
 import { toast } from "sonner"
@@ -49,6 +54,7 @@ function getPaymentStatusColor(status: string) {
 
 export default function LeaseDetailPage({ params }: LeasePageProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const [lease, setLease] = useState<LeaseWithDetails | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -57,6 +63,11 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
   const [leaseId, setLeaseId] = useState<string>("")
   const [activeTab, setActiveTab] = useState("overview")
   const [showTerminateDialog, setShowTerminateDialog] = useState(false)
+  const [rateHistoryByUnit, setRateHistoryByUnit] = useState<Record<string, RateHistoryWithDetails[]>>({})
+  const [selectedUnitForHistory, setSelectedUnitForHistory] = useState<string | null>(null)
+
+  // Get current user ID for rate change requests
+  const currentUserId = session?.user?.id
 
   const updateForm = useForm<LeaseUpdateFormData>({
     resolver: zodResolver(LeaseUpdateSchema),
@@ -76,6 +87,18 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
       reason: ""
     }
   })
+
+  // Function to load rate history for all lease units
+  const loadRateHistory = useCallback(async (leaseUnits: { id: string }[]) => {
+    const historyMap: Record<string, RateHistoryWithDetails[]> = {}
+    await Promise.all(
+      leaseUnits.map(async (leaseUnit) => {
+        const history = await getRateHistory(leaseUnit.id)
+        historyMap[leaseUnit.id] = history
+      })
+    )
+    setRateHistoryByUnit(historyMap)
+  }, [])
 
   useEffect(() => {
     async function initializeParams() {
@@ -110,6 +133,11 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
           id: leaseData.id,
           reason: ""
         })
+        
+        // Load rate history for all lease units
+        if (leaseData.leaseUnits.length > 0) {
+          loadRateHistory(leaseData.leaseUnits)
+        }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast.error("Failed to load lease")
@@ -120,7 +148,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
     }
 
     loadLease()
-  }, [leaseId, router, updateForm, terminationForm])
+  }, [leaseId, router, updateForm, terminationForm, loadRateHistory])
 
   async function onUpdate(data: LeaseUpdateFormData) {
     if (!lease) return
@@ -315,9 +343,10 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="units">Spaces</TabsTrigger>
+          <TabsTrigger value="rate-history">Rate History</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
@@ -577,32 +606,79 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                 <span>Leased Spaces</span>
               </CardTitle>
               <CardDescription>
-                Spaces included in this lease agreement
+                Spaces included in this lease agreement. You can request rate changes or overrides for each space.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {lease.leaseUnits.map((leaseUnit) => (
-                  <div key={leaseUnit.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-primary/10 p-3 rounded">
-                        <Building className="h-5 w-5 text-primary" />
+                  <div key={leaseUnit.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-primary/10 p-3 rounded">
+                          <Building className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{leaseUnit.unit.unitNumber}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {leaseUnit.unit.property.propertyName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {leaseUnit.unit.totalArea} sqm • {leaseUnit.unit.status}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium">{leaseUnit.unit.unitNumber}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {leaseUnit.unit.property.propertyName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {leaseUnit.unit.totalArea} sqm • {leaseUnit.unit.status}
-                        </p>
+                      <div className="text-right">
+                        <p className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">per month</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">per month</p>
+                    
+                    {/* Rate Management Actions */}
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="flex items-center gap-2">
+                        {currentUserId && lease.status === 'ACTIVE' ? (
+                          <>
+                            <RateChangeForm
+                              leaseUnitId={leaseUnit.id}
+                              currentRate={leaseUnit.rentAmount}
+                              requestedById={currentUserId}
+                              onSuccess={() => {
+                                loadRateHistory(lease.leaseUnits)
+                              }}
+                              trigger={
+                                <Button variant="outline" size="sm">
+                                  <TrendingUp className="h-4 w-4 mr-2" />
+                                  Request Rate Change
+                                </Button>
+                              }
+                            />
+                            <RateOverrideForm
+                              leaseUnitId={leaseUnit.id}
+                              requestedById={currentUserId}
+                              onSuccess={() => {
+                                loadRateHistory(lease.leaseUnits)
+                              }}
+                              trigger={
+                                <Button variant="outline" size="sm">
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  Request Override
+                                </Button>
+                              }
+                            />
+                          </>
+                        ) : !currentUserId && lease.status === 'ACTIVE' ? (
+                          <span className="text-sm text-muted-foreground">
+                            Loading user session...
+                          </span>
+                        ) : lease.status !== 'ACTIVE' ? (
+                          <span className="text-sm text-muted-foreground">
+                            Rate changes only available for active leases
+                          </span>
+                        ) : null}
+                      </div>
                       <Link href={`/properties/${leaseUnit.unit.property.id}/units/${leaseUnit.unit.id}`}>
-                        <Button variant="outline" size="sm" className="mt-2">
+                        <Button variant="outline" size="sm">
                           View Space
                         </Button>
                       </Link>
@@ -612,6 +688,119 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="rate-history" className="space-y-6">
+          {lease.leaseUnits.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <History className="h-5 w-5" />
+                  <span>Rate History</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <History className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-4 text-lg font-semibold">No spaces in this lease</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Rate history will appear here once spaces are added to the lease.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {/* Unit selector for rate history */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <History className="h-5 w-5" />
+                    <span>Rate History by Space</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Select a space to view its rate change history
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {lease.leaseUnits.map((leaseUnit) => {
+                      const historyCount = rateHistoryByUnit[leaseUnit.id]?.length || 0
+                      return (
+                        <Button
+                          key={leaseUnit.id}
+                          variant={selectedUnitForHistory === leaseUnit.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedUnitForHistory(
+                            selectedUnitForHistory === leaseUnit.id ? null : leaseUnit.id
+                          )}
+                        >
+                          <Building className="h-4 w-4 mr-2" />
+                          {leaseUnit.unit.unitNumber}
+                          {historyCount > 0 && (
+                            <Badge variant="secondary" className="ml-2">
+                              {historyCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rate history display */}
+              {selectedUnitForHistory ? (
+                <RateHistory
+                  leaseUnitId={selectedUnitForHistory}
+                  history={rateHistoryByUnit[selectedUnitForHistory] || []}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="py-8">
+                    <div className="text-center text-muted-foreground">
+                      <History className="mx-auto h-12 w-12 mb-4" />
+                      <p>Select a space above to view its rate history</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Summary of all rate changes */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Rate Changes Summary</CardTitle>
+                  <CardDescription>
+                    Quick overview of recent rate changes across all spaces
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {lease.leaseUnits.map((leaseUnit) => {
+                      const history = rateHistoryByUnit[leaseUnit.id] || []
+                      return (
+                        <div key={leaseUnit.id} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{leaseUnit.unit.unitNumber}</span>
+                              <span className="text-sm text-muted-foreground">
+                                ({leaseUnit.unit.property.propertyName})
+                              </span>
+                            </div>
+                            <div className="text-sm">
+                              Current: <span className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <RateHistoryCompact history={history} maxItems={3} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-6">

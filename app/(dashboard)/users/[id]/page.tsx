@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Save, Trash2, User, Shield, Calendar, Building, FileText, Wrench, Settings, Key, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Edit, Save, Trash2, User, Shield, Calendar, Building, FileText, Wrench, Settings, Key, Eye, EyeOff, CheckCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { updateUser, deleteUser, getUserById, changeUserPassword, type UserWithDetails } from "@/lib/actions/user-actions"
@@ -64,6 +65,8 @@ export default function UserPage({ params }: UserPageProps) {
       email: "",
       contactNo: "",
       role: UserRole.VIEWER,
+      isRecommendingApprover: false,
+      isFinalApprover: false,
     },
   })
 
@@ -99,6 +102,8 @@ export default function UserPage({ params }: UserPageProps) {
             email: result.user.email,
             contactNo: result.user.contactNo || "",
             role: result.user.role,
+            isRecommendingApprover: result.user.isRecommendingApprover,
+            isFinalApprover: result.user.isFinalApprover,
           })
         } else {
           toast.error(result.error || "Failed to load user")
@@ -571,42 +576,118 @@ export default function UserPage({ params }: UserPageProps) {
                       </FormItem>
                     )}
                   />
+
+                  {/* Rate Change Approval Permissions */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium">Rate Change Approval Permissions</h4>
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="isRecommendingApprover"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Recommending Approver</FormLabel>
+                            <FormDescription>
+                              Can recommend rate changes for final approval
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="isFinalApprover"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Final Approver</FormLabel>
+                            <FormDescription>
+                              Can give final approval for rate changes
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </Form>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">First Name</label>
-                    <p className="text-sm">{user.firstName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Last Name</label>
-                    <p className="text-sm">{user.lastName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm">{user.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Contact Number</label>
-                    <p className="text-sm">{user.contactNo || "Not provided"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Role</label>
-                    <div className="mt-1">
-                      <Badge className={getUserRoleColor(user.role)}>
-                        {user.role}
-                      </Badge>
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">First Name</label>
+                      <p className="text-sm">{user.firstName}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Last Name</label>
+                      <p className="text-sm">{user.lastName}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Email</label>
+                      <p className="text-sm">{user.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Contact Number</label>
+                      <p className="text-sm">{user.contactNo || "Not provided"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Role</label>
+                      <div className="mt-1">
+                        <Badge className={getUserRoleColor(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Email Status</label>
+                      <div className="mt-1">
+                        <Badge variant={user.emailVerified ? "default" : "secondary"}>
+                          {user.emailVerified ? "Verified" : "Unverified"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email Status</label>
-                    <div className="mt-1">
-                      <Badge variant={user.emailVerified ? "default" : "secondary"}>
-                        {user.emailVerified ? "Verified" : "Unverified"}
-                      </Badge>
+
+                  {/* Rate Change Approval Permissions - View Mode */}
+                  <div className="space-y-3 pt-4 border-t mt-4">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium">Rate Change Approval Permissions</h4>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="flex items-center space-x-2 p-3 rounded-md border">
+                        <Checkbox checked={user.isRecommendingApprover} disabled />
+                        <div>
+                          <p className="text-sm font-medium">Recommending Approver</p>
+                          <p className="text-xs text-muted-foreground">Can recommend rate changes</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 rounded-md border">
+                        <Checkbox checked={user.isFinalApprover} disabled />
+                        <div>
+                          <p className="text-sm font-medium">Final Approver</p>
+                          <p className="text-xs text-muted-foreground">Can give final approval</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>

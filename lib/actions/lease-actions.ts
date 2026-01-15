@@ -93,6 +93,10 @@ export interface CreateLeaseData {
   endDate: Date
   securityDeposit: number
   selectedUnits: UnitWithRent[]
+  // Rate increase settings - required for full control
+  standardIncreasePercentage: number
+  increaseIntervalYears: number
+  autoIncreaseEnabled: boolean
 }
 
 export interface UpdateLeaseData {
@@ -257,8 +261,12 @@ export async function createLease(data: CreateLeaseData) {
       return sum + (unit.customRentAmount || 0)
     }, 0)
 
+    // Calculate next scheduled increase date (startDate + increaseIntervalYears)
+    const nextScheduledIncrease = new Date(data.startDate)
+    nextScheduledIncrease.setFullYear(nextScheduledIncrease.getFullYear() + data.increaseIntervalYears)
+
     const lease = await prisma.$transaction(async (tx) => {
-      // Create the lease
+      // Create the lease with rate increase settings
       const newLease = await tx.lease.create({
         data: {
           tenantId: data.tenantId,
@@ -266,21 +274,28 @@ export async function createLease(data: CreateLeaseData) {
           endDate: data.endDate,
           totalRentAmount,
           securityDeposit: data.securityDeposit,
-          status: 'PENDING'
+          status: 'PENDING',
+          // Rate increase settings from input (Requirements 1.2, 1.3)
+          standardIncreasePercentage: data.standardIncreasePercentage,
+          increaseIntervalYears: data.increaseIntervalYears,
+          nextScheduledIncrease,
+          autoIncreaseEnabled: data.autoIncreaseEnabled
         }
       })
 
-      // Create lease units with custom rent amounts
+      // Create lease units with custom rent amounts and base rent (Requirement 1.1)
       const leaseUnits = await Promise.all(
-        data.selectedUnits.map(unit =>
-          tx.leaseUnit.create({
+        data.selectedUnits.map(unit => {
+          const rentAmount = unit.customRentAmount || 0
+          return tx.leaseUnit.create({
             data: {
               leaseId: newLease.id,
               unitId: unit.unitId,
-              rentAmount: unit.customRentAmount || 0
+              rentAmount,
+              baseRentAmount: rentAmount // Set baseRentAmount equal to initial rentAmount
             }
           })
-        )
+        })
       )
 
       // Update unit statuses to RESERVED

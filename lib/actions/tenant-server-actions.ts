@@ -22,6 +22,28 @@ interface TenantFormData {
   company: string
   businessName: string
   status: "ACTIVE" | "INACTIVE" | "PENDING"
+  // Personal Information
+  homeAddress?: string
+  facebookName?: string
+  // Business Information
+  natureOfBusiness?: string
+  yearsInBusiness?: string
+  positionInCompany?: string
+  officeAddress?: string
+  facebookPage?: string
+  website?: string
+  authorizedSignatory?: string
+  isStore?: boolean
+  isOffice?: boolean
+  isFranchise?: boolean
+  // Bank Details
+  bankName1?: string
+  bankAddress1?: string
+  bankName2?: string
+  bankAddress2?: string
+  // Other Business
+  otherBusinessName?: string
+  otherBusinessAddress?: string
 }
 
 interface FloorOverride {

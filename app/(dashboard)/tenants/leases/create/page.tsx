@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, X } from "lucide-react"
+import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, X, TrendingUp } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -11,9 +11,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Checkbox } from "@/components/ui/checkbox"
 import { createLease, getAvailableUnits, AvailableUnit } from "@/lib/actions/lease-actions"
 import { getAllTenants } from "@/lib/actions/tenant-actions"
 import { UnitCard } from "@/components/lease-form/unit-card"
@@ -53,7 +54,11 @@ const LeaseFormSchema = z.object({
   tenantId: z.string().min(1, "Please select a tenant"),
   startDate: z.date({ message: "Start date is required" }),
   endDate: z.date({ message: "End date is required" }),
-  securityDeposit: z.number().min(0, "Security deposit must be positive")
+  securityDeposit: z.number().min(0, "Security deposit must be positive"),
+  // Rate increase settings - required fields (Requirements 1.2, 1.3)
+  standardIncreasePercentage: z.number().min(0, "Percentage must be positive").max(100, "Percentage cannot exceed 100"),
+  increaseIntervalYears: z.number().min(1, "Interval must be at least 1 year").max(10, "Interval cannot exceed 10 years"),
+  autoIncreaseEnabled: z.boolean()
 }).refine((data) => data.endDate > data.startDate, {
   message: "End date must be after start date",
   path: ["endDate"]
@@ -85,7 +90,11 @@ export default function CreateLeasePage() {
       tenantId: "",
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      securityDeposit: 0
+      securityDeposit: 0,
+      // Rate increase settings - sensible defaults provided; user may override
+      standardIncreasePercentage: 10,
+      increaseIntervalYears: 3,
+      autoIncreaseEnabled: true
     },
   })
 
@@ -249,7 +258,11 @@ export default function CreateLeasePage() {
           unitId: unitData.unit.id,
           customRentAmount: unitData.customRentAmount,
           floorOverrides: unitData.floorOverrides
-        }))
+        })),
+        // Rate increase settings (Requirements 1.2, 1.3)
+        standardIncreasePercentage: data.standardIncreasePercentage,
+        increaseIntervalYears: data.increaseIntervalYears,
+        autoIncreaseEnabled: data.autoIncreaseEnabled
       }
 
       const result = await createLease(leaseData)
@@ -746,6 +759,105 @@ export default function CreateLeasePage() {
                       <span>₱{(calculateTotalRent() + (form.watch('securityDeposit') || 0)).toLocaleString()}</span>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Rate Increase Settings Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5" />
+                    <span>Rate Increase Settings</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Configure automatic rate increase parameters for this lease
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="standardIncreasePercentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Standard Increase Percentage *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              placeholder="10"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                              %
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Percentage increase applied at each interval
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="increaseIntervalYears"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Increase Interval *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="1"
+                              placeholder="3"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              className="pr-12"
+                            />
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                              years
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Number of years between rate increases
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="autoIncreaseEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            Enable Automatic Rate Increases
+                          </FormLabel>
+                          <FormDescription>
+                            When enabled, the system will automatically flag this lease for rate increases at the specified interval
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
