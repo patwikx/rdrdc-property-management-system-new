@@ -8,7 +8,7 @@ This design implements a comprehensive rate management system for leases, featur
 
 The rate management system follows a layered architecture:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      UI Components                          │
 │  (Rate Forms, Approval Lists, Rate History Display)         │

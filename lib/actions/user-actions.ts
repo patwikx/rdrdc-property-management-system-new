@@ -237,6 +237,14 @@ export async function createUser(data: {
       return { success: false, error: "User with this email already exists" }
     }
 
+    // Check if requesting user is admin for approver permissions
+    const requestingUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    })
+
+    const isAdmin = requestingUser?.role === 'ADMIN'
+
     // Hash password
     const hashedPassword = await hash(data.password, 12)
 
@@ -248,8 +256,9 @@ export async function createUser(data: {
         password: hashedPassword,
         contactNo: data.contactNo || null,
         role: data.role,
-        isRecommendingApprover: data.isRecommendingApprover ?? false,
-        isFinalApprover: data.isFinalApprover ?? false
+        // Only admins can set approver permissions, otherwise default to false
+        isRecommendingApprover: isAdmin ? (data.isRecommendingApprover ?? false) : false,
+        isFinalApprover: isAdmin ? (data.isFinalApprover ?? false) : false
       },
       include: {
         _count: {
@@ -343,6 +352,14 @@ export async function updateUser(data: {
       }
     }
 
+    // Check if requesting user is admin for approver permissions
+    const requestingUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    })
+
+    const isAdmin = requestingUser?.role === 'ADMIN'
+
     const updateData: {
       firstName?: string
       lastName?: string
@@ -358,8 +375,11 @@ export async function updateUser(data: {
     if (data.email !== undefined) updateData.email = data.email
     if (data.contactNo !== undefined) updateData.contactNo = data.contactNo || null
     if (data.role !== undefined) updateData.role = data.role
-    if (data.isRecommendingApprover !== undefined) updateData.isRecommendingApprover = data.isRecommendingApprover
-    if (data.isFinalApprover !== undefined) updateData.isFinalApprover = data.isFinalApprover
+    // Only admins can update approver permissions
+    if (isAdmin) {
+      if (data.isRecommendingApprover !== undefined) updateData.isRecommendingApprover = data.isRecommendingApprover
+      if (data.isFinalApprover !== undefined) updateData.isFinalApprover = data.isFinalApprover
+    }
 
     const user = await prisma.user.update({
       where: { id: data.id },

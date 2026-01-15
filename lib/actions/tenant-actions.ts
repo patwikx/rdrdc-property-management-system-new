@@ -25,9 +25,9 @@ const TenantSchema = z.object({
   facebookPage: z.string().optional(),
   website: z.string().optional(),
   authorizedSignatory: z.string().optional(),
-  isStore: z.boolean().optional(),
-  isOffice: z.boolean().optional(),
-  isFranchise: z.boolean().optional(),
+  isStore: z.boolean().default(false),
+  isOffice: z.boolean().default(false),
+  isFranchise: z.boolean().default(false),
   // Bank Details
   bankName1: z.string().optional(),
   bankAddress1: z.string().optional(),

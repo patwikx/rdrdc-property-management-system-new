@@ -67,7 +67,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
   const [selectedUnitForHistory, setSelectedUnitForHistory] = useState<string | null>(null)
 
   // Get current user ID for rate change requests
-  const currentUserId = session?.user?.id || ""
+  const currentUserId = session?.user?.id
 
   const updateForm = useForm<LeaseUpdateFormData>({
     resolver: zodResolver(LeaseUpdateSchema),
@@ -637,7 +637,7 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                     {/* Rate Management Actions */}
                     <div className="flex items-center justify-between mt-4 pt-4 border-t">
                       <div className="flex items-center gap-2">
-                        {currentUserId && lease.status === 'ACTIVE' && (
+                        {currentUserId && lease.status === 'ACTIVE' ? (
                           <>
                             <RateChangeForm
                               leaseUnitId={leaseUnit.id}
@@ -667,12 +667,15 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                               }
                             />
                           </>
-                        )}
-                        {lease.status !== 'ACTIVE' && (
+                        ) : !currentUserId && lease.status === 'ACTIVE' ? (
+                          <span className="text-sm text-muted-foreground">
+                            Loading user session...
+                          </span>
+                        ) : lease.status !== 'ACTIVE' ? (
                           <span className="text-sm text-muted-foreground">
                             Rate changes only available for active leases
                           </span>
-                        )}
+                        ) : null}
                       </div>
                       <Link href={`/properties/${leaseUnit.unit.property.id}/units/${leaseUnit.unit.id}`}>
                         <Button variant="outline" size="sm">

@@ -1,4 +1,4 @@
- # Implementation Plan: Lease Rate Management
+# Implementation Plan: Lease Rate Management
 
 ## Overview
 

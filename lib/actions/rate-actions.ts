@@ -1264,7 +1264,7 @@ export async function calculateNewRate(
       // Requirement 4.2: Lock rate at the specified fixed rate
       return override.fixedRate ?? currentRate
     
-    case RateOverrideType.PERCENTAGE_CAP:
+    case RateOverrideType.PERCENTAGE_CAP: {
       // Requirement 4.3: Limit increase to the percentage cap
       const cappedPercentage = Math.min(
         standardIncreasePercentage,
@@ -1272,15 +1272,17 @@ export async function calculateNewRate(
       )
       const cappedIncrease = currentRate * (cappedPercentage / 100)
       return currentRate + cappedIncrease
+    }
     
     case RateOverrideType.NO_INCREASE:
       // Requirement 4.4: No rate increase during override period
       return currentRate
     
-    default:
+    default: {
       // Fallback: apply standard increase
       const defaultIncrease = currentRate * (standardIncreasePercentage / 100)
       return currentRate + defaultIncrease
+    }
   }
 }
 

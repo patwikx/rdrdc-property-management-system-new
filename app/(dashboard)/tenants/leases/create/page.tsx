@@ -91,7 +91,7 @@ export default function CreateLeasePage() {
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       securityDeposit: 0,
-      // Rate increase settings - no defaults, user must set these
+      // Rate increase settings - sensible defaults provided; user may override
       standardIncreasePercentage: 10,
       increaseIntervalYears: 3,
       autoIncreaseEnabled: true

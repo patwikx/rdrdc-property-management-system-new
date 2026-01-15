@@ -580,9 +580,11 @@ model RateHistory {
   isAutoApplied Boolean        @default(false) // True if auto-increase
   createdAt     DateTime       @default(now())
 
-  leaseUnit LeaseUnit @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  leaseUnit   LeaseUnit          @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  rateRequest RateChangeRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
 
   @@index([leaseUnitId])
+  @@index([requestId])
 }
 
 // Rate Override - for long-term agreements that override standard increases
@@ -671,11 +673,12 @@ model RateChangeRequest {
   updatedAt DateTime @updatedAt
 
   // Relations
-  leaseUnit     LeaseUnit @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
-  requestedBy   User      @relation("RateChangeRequester", fields: [requestedById], references: [id])
-  recommendedBy User?     @relation("RateChangeRecommender", fields: [recommendedById], references: [id])
-  approvedBy    User?     @relation("RateChangeApprover", fields: [approvedById], references: [id])
-  rejectedBy    User?     @relation("RateChangeRejecter", fields: [rejectedById], references: [id])
+  leaseUnit     LeaseUnit     @relation(fields: [leaseUnitId], references: [id], onDelete: Cascade)
+  requestedBy   User          @relation("RateChangeRequester", fields: [requestedById], references: [id])
+  recommendedBy User?         @relation("RateChangeRecommender", fields: [recommendedById], references: [id])
+  approvedBy    User?         @relation("RateChangeApprover", fields: [approvedById], references: [id])
+  rejectedBy    User?         @relation("RateChangeRejecter", fields: [rejectedById], references: [id])
+  rateHistories RateHistory[]
 
   @@index([leaseUnitId])
   @@index([status])
