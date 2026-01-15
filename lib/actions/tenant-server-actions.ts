@@ -133,7 +133,12 @@ export async function getTenantByIdAction(id: string): Promise<TenantWithDetails
 }
 
 export async function createTenantAction(data: TenantFormData) {
-  return await createTenant(data)
+  return await createTenant({
+    ...data,
+    isStore: data.isStore ?? false,
+    isOffice: data.isOffice ?? false,
+    isFranchise: data.isFranchise ?? false,
+  })
 }
 
 export async function createTenantWithLeaseAction(data: TenantWithLeaseData): Promise<CreateTenantWithLeaseResult> {
@@ -158,6 +163,9 @@ export async function createTenantWithLeaseAction(data: TenantWithLeaseData): Pr
         company: data.company,
         businessName: data.businessName,
         status: data.status,
+        isStore: data.isStore ?? false,
+        isOffice: data.isOffice ?? false,
+        isFranchise: data.isFranchise ?? false,
       })
 
       if (tenantResult.error) {
