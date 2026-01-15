@@ -6,9 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Save, X, User, Building, Phone, Mail, AlertCircle } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Save, X, User, Building, Phone, Mail, AlertCircle, Store, Briefcase, Award } from "lucide-react"
 import { toast } from "sonner"
 import { createTenant } from "@/lib/actions/tenant-actions"
 
@@ -368,6 +370,88 @@ export function CreateTenantForm({ onSuccess, onCancel }: CreateTenantFormProps)
                 </FormItem>
               )}
             />
+          </div>
+
+          {/* Business Type Flags */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Business Type</Label>
+            <p className="text-sm text-muted-foreground">Select all that apply to this tenant</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="isStore"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center space-x-2 cursor-pointer">
+                        <Store className="h-4 w-4" />
+                        <span>Store</span>
+                      </FormLabel>
+                      <FormDescription>
+                        Retail or merchandise store
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isOffice"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center space-x-2 cursor-pointer">
+                        <Briefcase className="h-4 w-4" />
+                        <span>Office</span>
+                      </FormLabel>
+                      <FormDescription>
+                        Office or workspace tenant
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isFranchise"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center space-x-2 cursor-pointer">
+                        <Award className="h-4 w-4" />
+                        <span>Franchise</span>
+                      </FormLabel>
+                      <FormDescription>
+                        Franchise business operation
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           {/* Tenant Preview */}
