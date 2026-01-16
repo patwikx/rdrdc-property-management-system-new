@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -72,7 +72,7 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Title Number and Lot Number */}
@@ -82,20 +82,18 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
                 name="titleNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <Hash className="h-4 w-4" />
+                    <FormLabel className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                      <Hash className="h-3 w-3" />
                       <span>Title Number</span>
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., TCT-12345, OCT-67890" 
+                        placeholder="E.G. TCT-12345" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Official title certificate number
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -106,20 +104,18 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
                 name="lotNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4" />
+                    <FormLabel className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                      <MapPin className="h-3 w-3" />
                       <span>Lot Number</span>
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., Lot 1, Block 2" 
+                        placeholder="E.G. LOT 1, BLOCK 2" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Lot identification number
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -133,8 +129,8 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
                 name="lotArea"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <Ruler className="h-4 w-4" />
+                    <FormLabel className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                      <Ruler className="h-3 w-3" />
                       <span>Lot Area (sqm)</span>
                     </FormLabel>
                     <FormControl>
@@ -146,11 +142,9 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
                         {...field}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Total area covered by this title
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,20 +155,18 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
                 name="registeredOwner"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
+                    <FormLabel className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                      <User className="h-3 w-3" />
                       <span>Registered Owner</span>
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Full name of the registered owner" 
+                        placeholder="FULL NAME OF OWNER" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Legal owner as registered in the title
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -182,26 +174,27 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
             </div>
 
             {/* Encumbrance Status */}
-            <div className="space-y-4">
+            <div className="space-y-4 border border-dashed border-border p-4 bg-muted/5">
               <FormField
                 control={form.control}
                 name="isEncumbered"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isLoading}
+                        className="rounded-none h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center space-x-2">
-                        <AlertTriangle className="h-4 w-4" />
+                      <FormLabel className="flex items-center space-x-2 text-sm font-medium">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
                         <span>Property is Encumbered</span>
                       </FormLabel>
-                      <FormDescription>
-                        Check if this property has liens, mortgages, or other encumbrances
+                      <FormDescription className="text-xs">
+                        Check if this property has active liens or mortgages
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -209,74 +202,41 @@ export function CreateTitleForm({ propertyId, onSuccess, onCancel }: CreateTitle
               />
 
               {isEncumbered && (
-                <FormField
-                  control={form.control}
-                  name="encumbranceDetails"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Encumbrance Details</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the encumbrance (mortgage, lien, etc.)"
-                          {...field}
-                          disabled={isLoading}
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Provide details about the encumbrance
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="animate-in fade-in slide-in-from-top-2">
+                  <FormField
+                    control={form.control}
+                    name="encumbranceDetails"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Encumbrance Details</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="DESCRIBE THE ENCUMBRANCE..."
+                            {...field}
+                            disabled={isLoading}
+                            rows={3}
+                            className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary resize-none"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Status Preview */}
-            <div className="bg-muted/50 rounded-lg p-4">
-              <h4 className="font-medium mb-2">Title Status Preview</h4>
-              <div className="flex items-center space-x-2">
-                {isEncumbered ? (
-                  <Badge variant="destructive">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Encumbered
-                  </Badge>
-                ) : (
-                  <Badge className="bg-green-600">
-                    Clear Title
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {isEncumbered 
-                  ? "This title has encumbrances that may affect ownership or transfer"
-                  : "This title is free and clear of encumbrances"
-                }
-              </p>
-            </div>
-
             {/* Submit Buttons */}
-            <div className="flex items-center space-x-4 pt-6 border-t">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create Title
-                  </>
-                )}
-              </Button>
+            <div className="flex items-center justify-end space-x-4 pt-6 border-t border-border">
               {onCancel && (
-                <Button variant="outline" onClick={onCancel} disabled={isLoading}>
+                <Button variant="outline" onClick={onCancel} disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide border-border">
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
               )}
+              <Button type="submit" disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide bg-primary text-primary-foreground hover:bg-primary/90">
+                {isLoading ? "SAVING..." : <><Save className="h-4 w-4 mr-2" /> CREATE_RECORD</>}
+              </Button>
             </div>
           </form>
         </Form>

@@ -135,6 +135,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
         };
       }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notice]);
 
   const handlePrint = () => {

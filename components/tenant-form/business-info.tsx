@@ -1,7 +1,7 @@
 // components/tenant-form/BusinessInfoSection.tsx
-import { Building, Globe, Landmark, Store, CheckIcon } from "lucide-react"
+import { Building, Globe, Landmark, Store, CheckIcon, Briefcase } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
 import { TenantFormData } from "@/types/tenant-form"
 
@@ -12,200 +12,182 @@ interface BusinessInfoSectionProps {
 
 export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Basic Business Info */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Building className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Business Information</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Building className="h-3 w-3" />
+            Business Details
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="company"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Company *</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Legal company name" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Legal company name
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Company Name *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Acme Corp Inc." 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="businessName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Business Name *</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Business or trade name" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Business or trade name
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Trade Name *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Acme Solutions" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <FormField
-            control={form.control}
-            name="natureOfBusiness"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Nature of Business</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Retail, Wholesale, Services" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Type of business operations
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormField
+              control={form.control}
+              name="natureOfBusiness"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Nature of Business</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Retail" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="yearsInBusiness"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Years in Business</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., 5 years, Just started" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Number of years in operation
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="yearsInBusiness"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Years Operational</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. 5" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="positionInCompany"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Position in Company</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Owner, Manager" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Role in the business
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <FormField
+              control={form.control}
+              name="positionInCompany"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Role / Position</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. CEO" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="officeAddress"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Office/Business Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Business address" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Main office or business address
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="officeAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Office Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. 123 Business Rd" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="authorizedSignatory"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Authorized Signatory</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Name of authorized signatory" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Person authorized to sign documents
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="authorizedSignatory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Authorized Signatory</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. John Doe" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       </div>
 
       {/* Online Presence */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Globe className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Online Presence</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Globe className="h-3 w-3" />
+            Digital Presence
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="facebookPage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Facebook Page</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Facebook Page</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Business Facebook page" 
+                    placeholder="e.g. facebook.com/acme" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Business Facebook page name or URL
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -216,18 +198,15 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             name="website"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Website</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Website</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="https://www.example.com" 
+                    placeholder="e.g. acme.com" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Business website URL
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -236,48 +215,34 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
       </div>
 
       {/* Space Type & Franchise */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Store className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Space & Franchise Details</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Store className="h-3 w-3" />
+            Operations
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <FormField
             control={form.control}
             name="isStore"
             render={({ field }) => (
               <FormItem>
                 <div 
-                  className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  role="checkbox"
-                  aria-checked={!!field.value}
-                  tabIndex={0}
+                  className={`flex flex-row items-start space-x-3 border p-4 cursor-pointer transition-all ${field.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
                   onClick={() => {
-                    if (!isLoading) {
-                      field.onChange(!field.value)
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (!isLoading && (e.key === ' ' || e.key === 'Enter')) {
-                      e.preventDefault()
-                      field.onChange(!field.value)
-                    }
+                    if (!isLoading) field.onChange(!field.value)
                   }}
                 >
-                  <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                    {field.value && <CheckIcon className="size-3.5 text-white" />}
+                  <div className={`size-4 shrink-0 border flex items-center justify-center rounded-none ${field.value ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'}`}>
+                    {field.value && <CheckIcon className="size-3" />}
                   </div>
                   <div className="space-y-1 leading-none">
-                    <span className="text-sm font-medium">
-                      Store
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      Space is used as a store
-                    </p>
+                    <span className="text-xs font-bold uppercase tracking-wide">Store</span>
+                    <p className="text-[10px] font-mono text-muted-foreground">Retail Space</p>
                   </div>
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -288,35 +253,19 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             render={({ field }) => (
               <FormItem>
                 <div 
-                  className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  role="checkbox"
-                  aria-checked={!!field.value}
-                  tabIndex={0}
+                  className={`flex flex-row items-start space-x-3 border p-4 cursor-pointer transition-all ${field.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
                   onClick={() => {
-                    if (!isLoading) {
-                      field.onChange(!field.value)
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (!isLoading && (e.key === ' ' || e.key === 'Enter')) {
-                      e.preventDefault()
-                      field.onChange(!field.value)
-                    }
+                    if (!isLoading) field.onChange(!field.value)
                   }}
                 >
-                  <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                    {field.value && <CheckIcon className="size-3.5 text-white" />}
+                  <div className={`size-4 shrink-0 border flex items-center justify-center rounded-none ${field.value ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'}`}>
+                    {field.value && <CheckIcon className="size-3" />}
                   </div>
                   <div className="space-y-1 leading-none">
-                    <span className="text-sm font-medium">
-                      Office
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      Space is used as an office
-                    </p>
+                    <span className="text-xs font-bold uppercase tracking-wide">Office</span>
+                    <p className="text-[10px] font-mono text-muted-foreground">Corporate Space</p>
                   </div>
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -327,35 +276,19 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             render={({ field }) => (
               <FormItem>
                 <div 
-                  className="flex flex-row items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  role="checkbox"
-                  aria-checked={!!field.value}
-                  tabIndex={0}
+                  className={`flex flex-row items-start space-x-3 border p-4 cursor-pointer transition-all ${field.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
                   onClick={() => {
-                    if (!isLoading) {
-                      field.onChange(!field.value)
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (!isLoading && (e.key === ' ' || e.key === 'Enter')) {
-                      e.preventDefault()
-                      field.onChange(!field.value)
-                    }
+                    if (!isLoading) field.onChange(!field.value)
                   }}
                 >
-                  <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                    {field.value && <CheckIcon className="size-3.5 text-white" />}
+                  <div className={`size-4 shrink-0 border flex items-center justify-center rounded-none ${field.value ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'}`}>
+                    {field.value && <CheckIcon className="size-3" />}
                   </div>
                   <div className="space-y-1 leading-none">
-                    <span className="text-sm font-medium">
-                      Franchise Business
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      This is a franchise business
-                    </p>
+                    <span className="text-xs font-bold uppercase tracking-wide">Franchise</span>
+                    <p className="text-[10px] font-mono text-muted-foreground">Franchise Model</p>
                   </div>
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -363,130 +296,121 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
       </div>
 
       {/* Bank Details */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Landmark className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Bank Details</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Landmark className="h-3 w-3" />
+            Financial Info
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="bankName1"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Primary Bank Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Bank name" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Primary bank name
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="bankName1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Primary Bank</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. BDO" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="bankAddress1"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Primary Bank Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Bank branch address" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Primary bank branch address
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <FormField
+              control={form.control}
+              name="bankAddress1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Primary Branch</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Makati Branch" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="bankName2"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Secondary Bank Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Bank name (optional)" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Secondary bank name
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed border-border">
+            <FormField
+              control={form.control}
+              name="bankName2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Secondary Bank</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. BPI (Optional)" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="bankAddress2"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Secondary Bank Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Bank branch address (optional)" 
-                    {...field}
-                    disabled={isLoading}
-                    className="h-10"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  Secondary bank branch address
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="bankAddress2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Secondary Branch</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Ortigas Branch (Optional)" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       </div>
 
       {/* Other Business Declaration */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Building className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Other Business Declaration</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Briefcase className="h-3 w-3" />
+            Affiliated Business
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="otherBusinessName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Other Business Name</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Affiliate Name</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Name of other business (if any)" 
+                    placeholder="e.g. Sister Company" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Declare any other business owned
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -497,18 +421,15 @@ export function BusinessInfoSection({ form, isLoading }: BusinessInfoSectionProp
             name="otherBusinessAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Other Business Address</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Affiliate Address</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Address of other business" 
+                    placeholder="e.g. Address" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Address of other business
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -2,25 +2,23 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Edit, Save, Trash2, User, Building, Phone, Mail, FileText, Wrench, Home, Landmark, Store, CheckIcon } from "lucide-react"
+import { Edit, Save, Trash2, User, FileText, Wrench, Home, CreditCard, AlertCircle, X, Activity } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenantByIdAction, updateTenantAction, deleteTenantAction } from "@/lib/actions/tenant-server-actions"
 import { TenantWithDetails } from "@/lib/actions/tenant-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { z } from "zod"
 import { TenantPDCSection } from "@/components/tenants/tenant-pdc-section"
+import { TenantPDC } from "@/lib/actions/tenant-pdc-actions"
 import { TenantNoticesSection } from "@/components/tenants/tenant-notices-section"
 import { UploadDocumentForm } from "@/components/properties/upload-document-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils"
 
 const TenantUpdateSchema = z.object({
   bpCode: z.string().min(1, "BP Code is required"),
@@ -59,43 +57,32 @@ interface TenantPageProps {
   params: Promise<{ id: string }>
 }
 
-function getTenantStatusColor(status: string) {
+function getTenantStatusStyle(status: string) {
   switch (status) {
-    case 'ACTIVE': return 'bg-green-600 text-white border-green-600'
-    case 'PENDING': return 'border-yellow-200 text-yellow-700 bg-yellow-50'
-    case 'INACTIVE': return 'border-gray-200 text-gray-700 bg-gray-50'
-    default: return 'border-gray-200 text-gray-700 bg-gray-50'
+    case 'ACTIVE': return { border: 'border-l-emerald-500', badge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' }
+    case 'PENDING': return { border: 'border-l-amber-500', badge: 'bg-amber-500/10 text-amber-600 border-amber-500/20' }
+    case 'INACTIVE': return { border: 'border-l-slate-500', badge: 'bg-slate-500/10 text-slate-600 border-slate-500/20' }
+    default: return { border: 'border-l-muted', badge: 'bg-muted/10 text-muted-foreground border-border' }
   }
 }
 
 function getLeaseStatusColor(status: string) {
   switch (status) {
-    case 'ACTIVE': return 'bg-green-600 text-white border-green-600'
-    case 'PENDING': return 'border-yellow-200 text-yellow-700 bg-yellow-50'
-    case 'TERMINATED': return 'border-red-200 text-red-700 bg-red-50'
-    case 'EXPIRED': return 'border-gray-200 text-gray-700 bg-gray-50'
-    default: return 'border-gray-200 text-gray-700 bg-gray-50'
+    case 'ACTIVE': return 'bg-emerald-600'
+    case 'PENDING': return 'bg-amber-600'
+    case 'TERMINATED': return 'bg-rose-600'
+    case 'EXPIRED': return 'bg-slate-600'
+    default: return 'bg-slate-600'
   }
 }
 
-function getMaintenanceStatusVariant(status: string) {
-  switch (status) {
-    case 'PENDING': return 'secondary' as const
-    case 'ASSIGNED': return 'outline' as const
-    case 'IN_PROGRESS': return 'secondary' as const
-    case 'COMPLETED': return 'default' as const
-    case 'CANCELLED': return 'outline' as const
-    default: return 'outline' as const
-  }
-}
-
-function getPriorityVariant(priority: string) {
+function getPriorityVariant(priority: string): "default" | "secondary" | "destructive" | "outline" {
   switch (priority) {
-    case 'EMERGENCY': return 'destructive' as const
-    case 'HIGH': return 'destructive' as const
-    case 'MEDIUM': return 'secondary' as const
-    case 'LOW': return 'outline' as const
-    default: return 'outline' as const
+    case 'URGENT': return 'destructive'
+    case 'HIGH': return 'destructive'
+    case 'MEDIUM': return 'secondary'
+    case 'LOW': return 'outline'
+    default: return 'outline'
   }
 }
 
@@ -200,7 +187,6 @@ export default function TenantPage({ params }: TenantPageProps) {
 
   async function handleDelete() {
     if (!tenant) return
-    if (!confirm("Are you sure you want to delete this tenant? This action cannot be undone.")) return
     setIsDeleting(true)
     try {
       const result = await deleteTenantAction(tenant.id)
@@ -226,11 +212,9 @@ export default function TenantPage({ params }: TenantPageProps) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (<div key={i} className="h-24 bg-muted rounded" />))}
-          </div>
+          <div className="h-8 bg-muted/20 w-1/3" />
+          <div className="h-4 bg-muted/20 w-1/2" />
+          <div className="grid gap-4 md:grid-cols-4 h-24 bg-muted/10 border border-border" />
         </div>
       </div>
     )
@@ -239,471 +223,451 @@ export default function TenantPage({ params }: TenantPageProps) {
   if (!tenant) return null
 
   const activeLease = tenant.leases.find(lease => lease.status === 'ACTIVE')
-  const totalUnits = activeLease?.leaseUnits.length || 0
+  const statusStyle = getTenantStatusStyle(tenant.status)
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: User },
+    { id: 'leases', label: `Lease History (${tenant.leases.length})`, icon: Home },
+    { id: 'maintenance', label: `Repair Work Orders (${tenant.maintenanceRequests.length})`, icon: Wrench },
+    { id: 'documents', label: `Documents (${tenant.documents.length})`, icon: FileText },
+    { id: 'payments', label: `Payments (${tenant.pdcs.length})`, icon: CreditCard },
+    { id: 'notices', label: 'Notices', icon: AlertCircle },
+  ]
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8 pt-6 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-3">
-            <h2 className="text-3xl font-bold tracking-tight">{tenant.company}</h2>
-            <Badge className={getTenantStatusColor(tenant.status)}>{tenant.status}</Badge>
+      <div className="flex flex-col space-y-6">
+        <div className="flex items-center justify-between border-b border-border pb-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight font-mono uppercase flex items-center gap-3">
+              {tenant.businessName}
+              <Badge variant="outline" className={`rounded-none text-xs uppercase tracking-widest border-0 ${statusStyle.badge} px-2 py-0.5`}>
+                {tenant.status}
+              </Badge>
+            </h2>
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground font-mono">
+              <span className="uppercase tracking-wide">{tenant.bpCode}</span>
+              <span className="text-border">|</span>
+              <span>{tenant.company}</span>
+            </div>
           </div>
-          <p className="text-muted-foreground">{tenant.bpCode} • {tenant.businessName}</p>
-          <p className="text-muted-foreground">{tenant.firstName} {tenant.lastName}</p>
+          <div className="flex items-center space-x-2">
+            {!isEditing ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted"
+                >
+                  <Edit className="h-3 w-3 mr-2" />
+                  Edit Profile
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive"
+                      className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-rose-600 hover:bg-rose-700"
+                    >
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-none border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="font-mono uppercase tracking-wide">Confirm Deletion</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this tenant profile? This action cannot be undone and will remove all associated records.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-none border-border">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="rounded-none bg-rose-600 hover:bg-rose-700" disabled={isDeleting}>
+                        {isDeleting ? "Deleting..." : "Delete Tenant"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border"
+                >
+                  <X className="h-3 w-3 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={form.handleSubmit(onSubmit)} 
+                  disabled={isSaving}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isSaving ? "Saving..." : <><Save className="h-3 w-3 mr-2" /> Save Changes</>}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {!isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />Edit
-              </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Deleting...</>) : (<><Trash2 className="h-4 w-4 mr-2" />Delete</>)}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-              <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-                {isSaving ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Saving...</>) : (<><Save className="h-4 w-4 mr-2" />Save Changes</>)}
-              </Button>
-            </>
-          )}
+
+        {/* Stats Strip */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Leases</span>
+              <CreditCard className="h-4 w-4 text-muted-foreground/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter">
+                {tenant.leases.filter(l => l.status === 'ACTIVE').length}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">Active</span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Monthly Rent</span>
+              <Activity className="h-4 w-4 text-emerald-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-600">
+                ₱{activeLease?.totalRentAmount.toLocaleString() || '0'}
+              </span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Work Orders</span>
+              <Wrench className="h-4 w-4 text-amber-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-amber-600">
+                {tenant.maintenanceRequests.length}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">Requests</span>
+            </div>
+          </div>
+          <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Documents</span>
+              <FileText className="h-4 w-4 text-blue-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-blue-600">
+                {tenant.documents.length}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">Files</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="leases">Lease History ({tenant.leases.length})</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance ({tenant.maintenanceRequests.length})</TabsTrigger>
-          <TabsTrigger value="documents">Documents ({tenant.documents.length})</TabsTrigger>
-          <TabsTrigger value="payments">Payments ({tenant.pdcs.length})</TabsTrigger>
-          <TabsTrigger value="notices">Notices</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <div className="border-b border-border w-full overflow-x-auto">
+          <nav className="flex space-x-8">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </nav>
+        </div>
 
-        {/* OVERVIEW TAB - Clean flat layout */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Quick Stats Row */}
-          <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{tenant.leases.filter(l => l.status === 'ACTIVE').length}</div>
-              <p className="text-xs text-muted-foreground">Active Leases</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">₱{activeLease?.totalRentAmount.toLocaleString() || '0'}</div>
-              <p className="text-xs text-muted-foreground">Monthly Rent</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{tenant.maintenanceRequests.length}</div>
-              <p className="text-xs text-muted-foreground">Maintenance</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{tenant.documents.length}</div>
-              <p className="text-xs text-muted-foreground">Documents</p>
-            </div>
-          </div>
-
-          {/* Tenant Profile - With containers */}
-          <div>
-              {isEditing ? (
-                <Form {...form}>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {/* Basic Info */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Basic Information</h4>
-                      <FormField control={form.control} name="bpCode" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">BP Code</FormLabel><FormControl><Input {...field} className="h-8 font-mono" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <div className="grid grid-cols-2 gap-2">
-                        <FormField control={form.control} name="firstName" render={({ field }) => (
-                          <FormItem><FormLabel className="text-xs">First Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="lastName" render={({ field }) => (
-                          <FormItem><FormLabel className="text-xs">Last Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                      </div>
-                      <FormField control={form.control} name="status" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger className="h-8"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              <SelectItem value="ACTIVE">Active</SelectItem>
-                              <SelectItem value="PENDING">Pending</SelectItem>
-                              <SelectItem value="INACTIVE">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select><FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                    {/* Contact Info */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Contact Information</h4>
-                      <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Email</FormLabel><FormControl><Input {...field} type="email" className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="phone" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Phone</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="homeAddress" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Home Address</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="facebookName" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Facebook Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    {/* Emergency Contact */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Emergency Contact</h4>
-                      <FormField control={form.control} name="emergencyContactName" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Contact Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="emergencyContactPhone" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Contact Phone</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    {/* Business Info */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Business Information</h4>
-                      <FormField control={form.control} name="company" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Company</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="businessName" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Business Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="natureOfBusiness" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Nature of Business</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="yearsInBusiness" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Years in Business</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    {/* Business Details */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Business Details</h4>
-                      <FormField control={form.control} name="positionInCompany" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Position</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="officeAddress" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Office Address</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="authorizedSignatory" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Authorized Signatory</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    {/* Online & Space Type */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Online & Space Type</h4>
-                      <FormField control={form.control} name="facebookPage" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Facebook Page</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="website" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Website</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <div className="space-y-2 pt-2">
-                        <FormField control={form.control} name="isStore" render={({ field }) => (
-                          <div className="flex items-center space-x-3 rounded-md border p-2 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => field.onChange(!field.value)}>
-                            <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                              {field.value && <CheckIcon className="size-3.5 text-white" />}
-                            </div>
-                            <span className="text-sm">Store</span>
-                          </div>
-                        )} />
-                        <FormField control={form.control} name="isOffice" render={({ field }) => (
-                          <div className="flex items-center space-x-3 rounded-md border p-2 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => field.onChange(!field.value)}>
-                            <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                              {field.value && <CheckIcon className="size-3.5 text-white" />}
-                            </div>
-                            <span className="text-sm">Office</span>
-                          </div>
-                        )} />
-                        <FormField control={form.control} name="isFranchise" render={({ field }) => (
-                          <div className="flex items-center space-x-3 rounded-md border p-2 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => field.onChange(!field.value)}>
-                            <div className="size-4 shrink-0 rounded-[4px] border shadow-xs flex items-center justify-center data-[checked=true]:bg-primary data-[checked=true]:text-primary-foreground data-[checked=true]:border-primary" data-checked={!!field.value}>
-                              {field.value && <CheckIcon className="size-3.5 text-white" />}
-                            </div>
-                            <span className="text-sm">Franchise</span>
-                          </div>
-                        )} />
-                      </div>
-                    </div>
-                    {/* Bank Details */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Primary Bank</h4>
-                      <FormField control={form.control} name="bankName1" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Bank Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="bankAddress1" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Bank Address</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h4 className="font-medium text-sm">Secondary Bank</h4>
-                      <FormField control={form.control} name="bankName2" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Bank Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="bankAddress2" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Bank Address</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    {/* Other Business */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-sm border-b pb-2">Other Business</h4>
-                      <FormField control={form.control} name="otherBusinessName" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Business Name</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="otherBusinessAddress" render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs">Business Address</FormLabel><FormControl><Input {...field} className="h-8" /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 mt-6">
+            <div className="border border-border bg-background">
+              <div className="border-b border-border bg-muted/10 p-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                  <User className="h-3 w-3" />
+                  Tenant Profile
+                </span>
+              </div>
+              
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* ID Card */}
+                <div className="col-span-1 space-y-4 border border-border p-4 bg-muted/5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2 block mb-3">Identification</span>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Tenant Name</label>
+                    <div className="font-medium text-sm">{tenant.firstName} {tenant.lastName}</div>
                   </div>
-                </Form>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Basic Info - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><User className="h-4 w-4" /> Basic Information</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-xs font-medium text-muted-foreground">BP Code</label><p className="text-sm font-mono">{tenant.bpCode}</p></div>
-                      <div><label className="text-xs font-medium text-muted-foreground">Status</label><div className="mt-1"><Badge className={getTenantStatusColor(tenant.status)}>{tenant.status}</Badge></div></div>
-                    </div>
-                    <div><label className="text-xs font-medium text-muted-foreground">Full Name</label><p className="text-sm">{tenant.firstName} {tenant.lastName}</p></div>
-                    <div><label className="text-xs font-medium text-muted-foreground">Member Since</label><p className="text-sm">{format(new Date(tenant.createdAt), 'MMM dd, yyyy')}</p></div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Company</label>
+                    <div className="text-sm truncate">{tenant.company}</div>
                   </div>
-                  {/* Contact Info - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Phone className="h-4 w-4" /> Contact Information</h4>
-                    <div className="flex items-center space-x-2"><Mail className="h-4 w-4 text-muted-foreground" /><span className="text-sm">{tenant.email}</span></div>
-                    <div className="flex items-center space-x-2"><Phone className="h-4 w-4 text-muted-foreground" /><span className="text-sm">{tenant.phone}</span></div>
-                    {tenant.homeAddress && <div><label className="text-xs font-medium text-muted-foreground">Home Address</label><p className="text-sm">{tenant.homeAddress}</p></div>}
-                    {tenant.facebookName && <div><label className="text-xs font-medium text-muted-foreground">Facebook</label><p className="text-sm">{tenant.facebookName}</p></div>}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Trade Name</label>
+                    <div className="text-sm truncate">{tenant.businessName}</div>
                   </div>
-                  {/* Emergency Contact - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Phone className="h-4 w-4" /> Emergency Contact</h4>
-                    {tenant.emergencyContactName ? (
-                      <><div><label className="text-xs font-medium text-muted-foreground">Name</label><p className="text-sm">{tenant.emergencyContactName}</p></div>
-                      {tenant.emergencyContactPhone && <div><label className="text-xs font-medium text-muted-foreground">Phone</label><p className="text-sm">{tenant.emergencyContactPhone}</p></div>}</>
-                    ) : (<p className="text-sm text-muted-foreground">No emergency contact</p>)}
-                  </div>
-                  {/* Business Info - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Building className="h-4 w-4" /> Business Information</h4>
-                    <div><label className="text-xs font-medium text-muted-foreground">Company</label><p className="text-sm">{tenant.company}</p></div>
-                    <div><label className="text-xs font-medium text-muted-foreground">Business Name</label><p className="text-sm">{tenant.businessName}</p></div>
-                    {tenant.natureOfBusiness && <div><label className="text-xs font-medium text-muted-foreground">Nature of Business</label><p className="text-sm">{tenant.natureOfBusiness}</p></div>}
-                    {tenant.yearsInBusiness && <div><label className="text-xs font-medium text-muted-foreground">Years in Business</label><p className="text-sm">{tenant.yearsInBusiness}</p></div>}
-                  </div>
-                  {/* Business Details - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Building className="h-4 w-4" /> Business Details</h4>
-                    {tenant.positionInCompany && <div><label className="text-xs font-medium text-muted-foreground">Position</label><p className="text-sm">{tenant.positionInCompany}</p></div>}
-                    {tenant.officeAddress && <div><label className="text-xs font-medium text-muted-foreground">Office Address</label><p className="text-sm">{tenant.officeAddress}</p></div>}
-                    {tenant.authorizedSignatory && <div><label className="text-xs font-medium text-muted-foreground">Authorized Signatory</label><p className="text-sm">{tenant.authorizedSignatory}</p></div>}
-                    {!tenant.positionInCompany && !tenant.officeAddress && !tenant.authorizedSignatory && <p className="text-sm text-muted-foreground">No additional details</p>}
-                  </div>
-                  {/* Space Type & Online - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Store className="h-4 w-4" /> Space Type & Online</h4>
-                    <div><label className="text-xs font-medium text-muted-foreground">Space Type</label>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {tenant.isStore && <Badge variant="secondary">Store</Badge>}
-                        {tenant.isOffice && <Badge variant="secondary">Office</Badge>}
-                        {tenant.isFranchise && <Badge variant="secondary">Franchise</Badge>}
-                        {!tenant.isStore && !tenant.isOffice && !tenant.isFranchise && <span className="text-sm text-muted-foreground">Not specified</span>}
-                      </div>
-                    </div>
-                    {tenant.facebookPage && <div><label className="text-xs font-medium text-muted-foreground">Facebook Page</label><p className="text-sm">{tenant.facebookPage}</p></div>}
-                    {tenant.website && <div><label className="text-xs font-medium text-muted-foreground">Website</label><p className="text-sm">{tenant.website}</p></div>}
-                  </div>
-                  {/* Bank Details - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Landmark className="h-4 w-4" /> Bank Details</h4>
-                    {(tenant.bankName1 || tenant.bankAddress1) && <div><label className="text-xs font-medium text-muted-foreground">Primary Bank</label>{tenant.bankName1 && <p className="text-sm font-medium">{tenant.bankName1}</p>}{tenant.bankAddress1 && <p className="text-sm text-muted-foreground">{tenant.bankAddress1}</p>}</div>}
-                    {(tenant.bankName2 || tenant.bankAddress2) && <div><label className="text-xs font-medium text-muted-foreground">Secondary Bank</label>{tenant.bankName2 && <p className="text-sm font-medium">{tenant.bankName2}</p>}{tenant.bankAddress2 && <p className="text-sm text-muted-foreground">{tenant.bankAddress2}</p>}</div>}
-                    {!tenant.bankName1 && !tenant.bankAddress1 && !tenant.bankName2 && !tenant.bankAddress2 && <p className="text-sm text-muted-foreground">No bank details</p>}
-                  </div>
-                  {/* Other Business - View Mode */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm border-b pb-2 flex items-center gap-2"><Building className="h-4 w-4" /> Other Business</h4>
-                    {tenant.otherBusinessName || tenant.otherBusinessAddress ? (
-                      <>{tenant.otherBusinessName && <div><label className="text-xs font-medium text-muted-foreground">Business Name</label><p className="text-sm">{tenant.otherBusinessName}</p></div>}
-                      {tenant.otherBusinessAddress && <div><label className="text-xs font-medium text-muted-foreground">Address</label><p className="text-sm">{tenant.otherBusinessAddress}</p></div>}</>
-                    ) : (<p className="text-sm text-muted-foreground">No other business declared</p>)}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">BP Code</label>
+                    <div className="text-sm font-mono">{tenant.bpCode}</div>
                   </div>
                 </div>
-              )}
-          </div>
 
-          {/* Active Lease Details - Flat */}
-          {activeLease && (
-            <div className="border-t pt-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Home className="h-5 w-5" />
-                <h3 className="font-semibold">Active Lease</h3>
-                <Badge className={getLeaseStatusColor(activeLease.status)}>{activeLease.status}</Badge>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 mb-4">
-                <div><label className="text-sm font-medium text-muted-foreground">Lease Period</label><p className="text-sm">{format(new Date(activeLease.startDate), 'MMM dd, yyyy')} - {format(new Date(activeLease.endDate), 'MMM dd, yyyy')}</p></div>
-                <div><label className="text-sm font-medium text-muted-foreground">Security Deposit</label><p className="text-sm">₱{activeLease.securityDeposit.toLocaleString()}</p></div>
-              </div>
-              {activeLease.leaseUnits.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Leased Spaces</label>
-                  <div className="mt-2 space-y-2">
-                    {activeLease.leaseUnits.map((leaseUnit) => (
-                      <div key={leaseUnit.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Building className="h-4 w-4 text-muted-foreground" />
-                          <div><p className="font-medium">{leaseUnit.unit.unitNumber}</p><p className="text-sm text-muted-foreground">{leaseUnit.unit.property.propertyName}</p></div>
-                        </div>
-                        <div className="text-right"><p className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</p><p className="text-sm text-muted-foreground">per month</p></div>
-                      </div>
-                    ))}
+                {/* Business Details */}
+                <div className="col-span-1 space-y-4 border border-border p-4 bg-muted/5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2 block mb-3">Business Info</span>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Nature of Business</label>
+                    <div className="text-sm">{tenant.natureOfBusiness || "N/A"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Years Active</label>
+                    <div className="text-sm">{tenant.yearsInBusiness || "N/A"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Position</label>
+                    <div className="text-sm">{tenant.positionInCompany || "N/A"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Signatory</label>
+                    <div className="text-sm truncate">{tenant.authorizedSignatory || "N/A"}</div>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Recent Maintenance Requests - Flat */}
-          {tenant.maintenanceRequests.length > 0 && (
-            <div className="border-t pt-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Wrench className="h-5 w-5" />
-                <h3 className="font-semibold">Recent Maintenance Requests</h3>
-              </div>
-              <div className="space-y-3">
-                {tenant.maintenanceRequests.slice(0, 5).map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex space-x-2">
-                        <Badge variant={getMaintenanceStatusVariant(request.status)}>{request.status}</Badge>
-                        <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-                      </div>
-                      <div><p className="font-medium">{request.category}</p><p className="text-sm text-muted-foreground line-clamp-1">{request.description}</p></div>
-                    </div>
-                    <div className="text-right"><p className="text-sm text-muted-foreground">{format(new Date(request.createdAt), 'MMM dd, yyyy')}</p></div>
+                {/* Contact Info */}
+                <div className="col-span-1 space-y-4 border border-border p-4 bg-muted/5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2 block mb-3">Contact Details</span>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Email</label>
+                    <a href={`mailto:${tenant.email}`} className="text-sm hover:underline truncate block">{tenant.email}</a>
                   </div>
-                ))}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Phone</label>
+                    <div className="text-sm font-mono">{tenant.phone}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Home Address</label>
+                    <div className="text-sm line-clamp-2">{tenant.homeAddress || "N/A"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Office Address</label>
+                    <div className="text-sm line-clamp-2">{tenant.officeAddress || "N/A"}</div>
+                  </div>
+                </div>
+
+                {/* Operations & Bank */}
+                <div className="col-span-1 space-y-4 border border-border p-4 bg-muted/5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2 block mb-3">Operations & Bank</span>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Bank</label>
+                    <div className="text-sm">{tenant.bankName1 || "N/A"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{tenant.bankAddress1}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Facebook</label>
+                    <div className="text-sm truncate">{tenant.facebookPage || "N/A"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Emergency Contact</label>
+                    <div className="text-sm truncate">{tenant.emergencyContactName || "N/A"}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{tenant.emergencyContactPhone}</div>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </TabsContent>
+
+            {/* Active Lease (Compact View) */}
+            {activeLease && (
+              <div className="border border-border bg-background p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 border border-border bg-muted/10">
+                    <CreditCard className="h-4 w-4 text-foreground" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground block">Active Lease Period</span>
+                    <span className="text-sm font-mono font-bold">
+                      {format(new Date(activeLease.startDate), 'MMM yyyy')} - {format(new Date(activeLease.endDate), 'MMM yyyy')}
+                    </span>
+                  </div>
+                </div>
+                <Badge className="rounded-none h-6 bg-emerald-600 hover:bg-emerald-700">ACTIVE LEASE</Badge>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* LEASES TAB */}
-        <TabsContent value="leases" className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle>Lease History</CardTitle><CardDescription>All lease agreements for this tenant</CardDescription></CardHeader>
-            <CardContent>
+        {activeTab === 'leases' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Lease History</h3>
               {tenant.leases.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {tenant.leases.map((lease) => (
-                    <div key={lease.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2"><h3 className="font-medium">Lease #{lease.id.slice(-8)}</h3><Badge className={(lease.status)}>{lease.status}</Badge></div>
-                        <div className="text-sm text-muted-foreground">{format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}</div>
+                    <div key={lease.id} className="border border-border bg-muted/5 p-4 flex flex-col gap-4 hover:border-primary/50 transition-colors group relative">
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs truncate" title={lease.id}>LEASE-{lease.id.slice(0, 8)}</span>
+                        <Badge className={cn("rounded-none text-[10px] px-1.5 py-0.5", getLeaseStatusColor(lease.status))}>
+                          {lease.status}
+                        </Badge>
                       </div>
-                      <div className="grid gap-4 md:grid-cols-3 mb-4">
-                        <div><label className="text-xs font-medium text-muted-foreground">Total Rent</label><p className="text-sm">₱{lease.totalRentAmount.toLocaleString()}/month</p></div>
-                        <div><label className="text-xs font-medium text-muted-foreground">Security Deposit</label><p className="text-sm">₱{lease.securityDeposit.toLocaleString()}</p></div>
-                        <div><label className="text-xs font-medium text-muted-foreground">Spaces</label><p className="text-sm">{lease.leaseUnits.length} space{lease.leaseUnits.length !== 1 ? 's' : ''}</p></div>
-                      </div>
-                      {lease.leaseUnits.length > 0 && (
-                        <div><label className="text-xs font-medium text-muted-foreground">Leased Spaces</label>
-                          <div className="mt-2 grid gap-2 md:grid-cols-2">
-                            {lease.leaseUnits.map((leaseUnit) => (
-                              <div key={leaseUnit.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                                <div><p className="text-sm font-medium">{leaseUnit.unit.unitNumber}</p><p className="text-xs text-muted-foreground">{leaseUnit.unit.property.propertyName}</p></div>
-                                <p className="text-sm">₱{leaseUnit.rentAmount.toLocaleString()}</p>
-                              </div>
-                            ))}
+
+                      {/* Dates */}
+                      <div className="space-y-1.5">
+                        <span className="text-[9px] uppercase text-muted-foreground tracking-widest block">Duration</span>
+                        <div className="text-xs font-mono bg-background border border-border p-2">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">START</span>
+                            <span>{format(new Date(lease.startDate), 'MMM dd, yyyy')}</span>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-muted-foreground">END</span>
+                            <span>{format(new Date(lease.endDate), 'MMM dd, yyyy')}</span>
                           </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Financials */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[9px] uppercase text-muted-foreground tracking-widest block mb-1">Total Rent</span>
+                          <span className="font-mono text-sm font-bold block">₱{lease.totalRentAmount.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] uppercase text-muted-foreground tracking-widest block mb-1">Deposit</span>
+                          <span className="font-mono text-sm text-muted-foreground block">₱{lease.securityDeposit.toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Spaces */}
+                      <div className="space-y-2 pt-3 border-t border-dashed border-border/50 mt-auto">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase text-muted-foreground tracking-widest">Leased Spaces</span>
+                          <span className="text-[9px] font-mono bg-muted/20 px-1">{lease.leaseUnits.length} UNITS</span>
+                        </div>
+                        <div className="space-y-1 max-h-[120px] overflow-y-auto pr-1 scrollbar-none">
+                          {lease.leaseUnits.map((lu) => (
+                            <div key={lu.id} className="flex justify-between items-center text-[10px] bg-background border border-border p-1.5 hover:bg-muted/10 transition-colors">
+                              <span className="font-mono font-bold text-primary">{lu.unit.unitNumber}</span>
+                              <span className="font-mono text-muted-foreground">₱{lu.rentAmount.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8"><Home className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No leases found</h3><p className="mt-2 text-muted-foreground">This tenant doesn&apos;t have any lease agreements yet.</p></div>
+                <div className="text-center py-12 text-muted-foreground text-sm">No lease history found</div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
         {/* MAINTENANCE TAB */}
-        <TabsContent value="maintenance" className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle>Maintenance Requests</CardTitle><CardDescription>All maintenance requests from this tenant</CardDescription></CardHeader>
-            <CardContent>
+        {activeTab === 'maintenance' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Repair Work Orders</h3>
               {tenant.maintenanceRequests.length > 0 ? (
                 <div className="space-y-4">
                   {tenant.maintenanceRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2"><h3 className="font-medium">{request.category}</h3><Badge variant={getMaintenanceStatusVariant(request.status)}>{request.status}</Badge><Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge></div>
-                        <div className="text-sm text-muted-foreground">{format(new Date(request.createdAt), 'MMM dd, yyyy')}</div>
+                    <div key={request.id} className="border border-border p-4 flex justify-between items-start gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="rounded-none border-foreground text-foreground font-mono text-[10px]">{request.category}</Badge>
+                          <span className="text-xs text-muted-foreground font-mono">{format(new Date(request.createdAt), 'MMM dd, yyyy')}</span>
+                        </div>
+                        <p className="text-sm font-medium">{request.description}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">{request.description}</p>
-                      {request.status === 'COMPLETED' && <p className="text-xs text-green-600">Status: Completed</p>}
+                      <Badge variant={getPriorityVariant(request.priority)} className="rounded-none text-[10px]">
+                        {request.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8"><Wrench className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No maintenance requests</h3><p className="mt-2 text-muted-foreground">This tenant hasn&apos;t submitted any maintenance requests yet.</p></div>
+                <div className="text-center py-12 text-muted-foreground text-sm">No repair work orders found</div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
         {/* DOCUMENTS TAB */}
-        <TabsContent value="documents" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div><CardTitle>Documents</CardTitle><CardDescription>All documents related to this tenant</CardDescription></div>
+        {activeTab === 'documents' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest">Document Vault</h3>
                 <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-                  <DialogTrigger asChild><Button variant="outline"><FileText className="h-4 w-4 mr-2" />Upload Document</Button></DialogTrigger>
-                  <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
-                    <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="rounded-none h-8 text-xs font-mono uppercase">
+                      Upload
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-none border-border max-w-[650px]">
+                    <DialogHeader>
+                      <DialogTitle className="font-mono uppercase tracking-wide">Upload Document</DialogTitle>
+                    </DialogHeader>
                     <UploadDocumentForm tenantId={tenant.id} onSuccess={handleDocumentUploaded} onCancel={() => setIsUploadDialogOpen(false)} />
                   </DialogContent>
                 </Dialog>
               </div>
-            </CardHeader>
-            <CardContent>
+              
               {tenant.documents.length > 0 ? (
-                <div className="space-y-4">
-                  {tenant.documents.map((document) => (
-                    <div key={document.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-primary/10 p-2 rounded"><FileText className="h-4 w-4 text-primary" /></div>
-                        <div><p className="font-medium">{document.name}</p><p className="text-sm text-muted-foreground">{document.documentType} • {format(new Date(document.createdAt), 'MMM dd, yyyy')}</p></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tenant.documents.map((doc) => (
+                    <div key={doc.id} className="border border-border p-4 flex flex-col justify-between hover:bg-muted/5 transition-colors">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="p-2 bg-muted/10 border border-border">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-medium truncate" title={doc.name}>{doc.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono mt-1">{doc.documentType}</p>
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm" asChild><a href={document.fileUrl} target="_blank" rel="noopener noreferrer">View</a></Button>
+                      <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                        <span className="text-[10px] text-muted-foreground font-mono">{format(new Date(doc.createdAt), 'MMM dd')}</span>
+                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline text-primary">View</a>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8"><FileText className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No documents</h3><p className="mt-2 text-muted-foreground">No documents have been uploaded for this tenant yet.</p></div>
+                <div className="text-center py-12 text-muted-foreground text-sm">No documents found</div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
         {/* PAYMENTS TAB */}
-        <TabsContent value="payments" className="space-y-6">
-          <TenantPDCSection tenantBpCode={tenant.bpCode} />
-        </TabsContent>
+        {activeTab === 'payments' && (
+          <div className="space-y-6">
+            <TenantPDCSection pdcs={tenant.pdcs as TenantPDC[]} />
+          </div>
+        )}
 
         {/* NOTICES TAB */}
-        <TabsContent value="notices" className="space-y-6">
-          <TenantNoticesSection tenantId={tenant.id} />
-        </TabsContent>
-      </Tabs>
+        {activeTab === 'notices' && (
+          <div className="space-y-6">
+            <TenantNoticesSection notices={tenant.notices} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

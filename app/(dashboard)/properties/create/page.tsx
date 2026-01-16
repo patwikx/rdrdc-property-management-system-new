@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Building2, Save, Info, CheckCircle, Users, Receipt, FileText, Zap, Activity, MapPin, Hash, Home } from "lucide-react"
+import { Building2, Save, Info, CheckCircle, Users, Receipt, FileText, Zap, Activity, MapPin, Hash, Home, ChevronRight, LayoutGrid } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,69 +20,32 @@ const propertyTypeOptions = [
   { 
     value: PropertyType.COMMERCIAL, 
     label: "Commercial", 
-    description: "Office buildings, retail spaces, warehouses",
+    description: "Office, Retail, Warehouse",
     icon: Building2,
     color: "bg-blue-600"
   },
   { 
     value: PropertyType.RESIDENTIAL, 
     label: "Residential", 
-    description: "Apartments, condominiums, houses",
+    description: "Apartment, Condo, House",
     icon: Home,
     color: "bg-green-600"
   },
   { 
     value: PropertyType.MIXED, 
     label: "Mixed Use", 
-    description: "Combined residential and commercial spaces",
-    icon: Building2,
+    description: "Combined Asset Types",
+    icon: LayoutGrid,
     color: "bg-purple-600"
   },
 ]
 
 const workflowSteps = [
-  {
-    step: 1,
-    title: "Create Property",
-    description: "Add basic property information",
-    icon: Building2,
-    status: "current"
-  },
-  {
-    step: 2,
-    title: "Add Property Titles",
-    description: "Register property titles and ownership details",
-    icon: Receipt,
-    status: "upcoming"
-  },
-  {
-    step: 3,
-    title: "Create Spaces",
-    description: "Define leasable spaces and spaces",
-    icon: Home,
-    status: "upcoming"
-  },
-  {
-    step: 4,
-    title: "Setup Utilities",
-    description: "Configure utility connections",
-    icon: Zap,
-    status: "upcoming"
-  },
-  {
-    step: 5,
-    title: "Upload Documents",
-    description: "Add property documents and contracts",
-    icon: FileText,
-    status: "upcoming"
-  },
-  {
-    step: 6,
-    title: "Manage Tenants",
-    description: "Add tenants and create leases",
-    icon: Users,
-    status: "upcoming"
-  }
+  { step: 1, title: "Create Property", status: "current" },
+  { step: 2, title: "Register Titles", status: "upcoming" },
+  { step: 3, title: "Define Spaces", status: "upcoming" },
+  { step: 4, title: "Configure Utilities", status: "upcoming" },
+  { step: 5, title: "Upload Docs", status: "upcoming" },
 ]
 
 export default function CreatePropertyPage() {
@@ -104,10 +67,8 @@ export default function CreatePropertyPage() {
 
   async function onSubmit(data: PropertyFormData) {
     setIsLoading(true)
-    
     try {
       const result = await createProperty(data)
-      
       if (result.error) {
         toast.error(result.error)
         if (result.details) {
@@ -115,9 +76,7 @@ export default function CreatePropertyPage() {
             if (error && typeof error === 'object' && '_errors' in error) {
               const messages = (error as { _errors: string[] })._errors
               if (messages && messages.length > 0) {
-                form.setError(field as keyof PropertyFormData, {
-                  message: messages[0],
-                })
+                form.setError(field as keyof PropertyFormData, { message: messages[0] })
               }
             }
           })
@@ -136,104 +95,111 @@ export default function CreatePropertyPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Create New Property</h2>
-            <p className="text-muted-foreground">
-              Add a new property to your portfolio and start managing it
-            </p>
-          </div>
+      <div className="flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Create New Property</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Add a new property to your portfolio
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/properties">
+            <Button variant="outline" disabled={isLoading} className="rounded-none h-9 px-4 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+              Cancel
+            </Button>
+          </Link>
+          <Button 
+            type="submit" 
+            form="property-form"
+            disabled={isLoading} 
+            className="rounded-none h-9 px-4 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Save className="h-3 w-3 mr-2" />
+                Create Property
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Property Type Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Building2 className="h-5 w-5" />
-                <span>Property Type</span>
-              </CardTitle>
-              <CardDescription>
-                Choose the type of property you&apos;re adding
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                {propertyTypeOptions.map((option) => {
-                  const Icon = option.icon
-                  return (
-                    <div
-                      key={option.value}
-                      className={`relative cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md ${
-                        selectedType === option.value
-                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                      onClick={() => {
-                        setSelectedType(option.value)
-                        form.setValue('propertyType', option.value)
-                      }}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className={`rounded-lg p-2 ${option.color}`}>
-                          <Icon className="h-4 w-4 text-white" />
+          <Form {...form}>
+            <form id="property-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              
+              {/* Type Selection */}
+              <div className="border border-border bg-background p-6 space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest">Property Type</h3>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {propertyTypeOptions.map((option) => {
+                    const Icon = option.icon
+                    const isSelected = selectedType === option.value
+                    return (
+                      <div
+                        key={option.value}
+                        className={`relative cursor-pointer border p-4 transition-all group ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => {
+                          setSelectedType(option.value)
+                          form.setValue('propertyType', option.value)
+                        }}
+                      >
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className={`p-2 rounded-none ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className={`font-mono text-xs font-bold tracking-wide ${isSelected ? 'text-primary' : 'text-foreground'}`}>{option.label}</h3>
+                            <p className="text-[9px] text-muted-foreground mt-1 font-mono uppercase">
+                              {option.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{option.label}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {option.description}
-                          </p>
-                        </div>
+                        {isSelected && <div className="absolute inset-0 border-2 border-primary pointer-events-none" />}
                       </div>
-                      {selectedType === option.value && (
-                        <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Property Information Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Info className="h-5 w-5" />
-                <span>Property Information</span>
-              </CardTitle>
-              <CardDescription>
-                Enter the basic details for your property
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Property Code and Name */}
+              {/* Property Details */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <Info className="h-3 w-3" />
+                    Property Information
+                  </span>
+                </div>
+                <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="propertyCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center space-x-2">
-                            <Hash className="h-4 w-4" />
-                            <span>Property Code</span>
-                          </FormLabel>
+                          <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Property Code</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="e.g., PROP-001, BLD-A, COM-001" 
+                              placeholder="e.g. PROP-001" 
                               {...field}
                               disabled={isLoading}
+                              className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Unique identifier for easy reference (must be unique)
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -244,59 +210,47 @@ export default function CreatePropertyPage() {
                       name="propertyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center space-x-2">
-                            <Building2 className="h-4 w-4" />
-                            <span>Property Name</span>
-                          </FormLabel>
+                          <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Property Name</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="e.g., Downtown Commercial Center" 
+                              placeholder="e.g. Main Building" 
                               {...field}
                               disabled={isLoading}
+                              className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Full name of the property
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Address */}
                   <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>Complete Address</span>
-                        </FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Full Address</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="Street, Barangay, City, Province" 
+                            placeholder="Street, City, Province" 
                             {...field}
                             disabled={isLoading}
+                            className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                           />
                         </FormControl>
-                        <FormDescription>
-                          Full address including street, city, and province
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Area and Units */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-dashed border-border">
                     <FormField
                       control={form.control}
                       name="leasableArea"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Total Leasable Area (sqm)</FormLabel>
+                          <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Leasable Area (sqm)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number"
@@ -306,181 +260,77 @@ export default function CreatePropertyPage() {
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               disabled={isLoading}
+                              className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Total area available for leasing
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                   </div>
+                </div>
+              </div>
 
-                  {/* Hidden field for property type */}
-                  <FormField
-                    control={form.control}
-                    name="propertyType"
-                    render={({ field }) => (
-                      <input type="hidden" {...field} value={selectedType} />
-                    )}
-                  />
-
-                  {/* Submit Buttons */}
-                  <div className="flex items-center space-x-4 pt-6 border-t">
-                    <Button type="submit" disabled={isLoading} size="lg">
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                          Creating Property...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Create Property
-                        </>
-                      )}
-                    </Button>
-                    <Link href="/properties">
-                      <Button variant="outline" disabled={isLoading} size="lg">
-                        Cancel
-                      </Button>
-                    </Link>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+              {/* Hidden field for property type */}
+              <FormField
+                control={form.control}
+                name="propertyType"
+                render={({ field }) => (
+                  <input type="hidden" {...field} value={selectedType} />
+                )}
+              />
+            </form>
+          </Form>
         </div>
 
-        {/* Sidebar with Quick Guide */}
+        {/* Sidebar Guide */}
         <div className="space-y-6">
-          {/* Property Management Workflow */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Activity className="h-5 w-5" />
-                <span>Property Setup Workflow</span>
-              </CardTitle>
-              <CardDescription>
-                Follow these steps to fully set up your property
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {workflowSteps.map((step, index) => {
-                  const Icon = step.icon
-                  return (
-                    <div key={step.step} className="flex items-start space-x-3">
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                        step.status === 'current' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {step.status === 'current' ? (
-                          <Icon className="h-4 w-4" />
-                        ) : (
-                          step.step
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${
-                          step.status === 'current' ? 'text-foreground' : 'text-muted-foreground'
-                        }`}>
-                          {step.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {step.description}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Setup Steps</h3>
+            </div>
+            <div className="space-y-0 relative">
+              <div className="absolute left-3.5 top-2 bottom-2 w-px bg-border" />
+              {workflowSteps.map((step, index) => (
+                <div key={step.step} className="flex items-center gap-4 relative py-2">
+                  <div className={`w-7 h-7 flex items-center justify-center rounded-none border text-xs font-mono z-10 ${
+                    step.status === 'current' 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-background text-muted-foreground border-border'
+                  }`}>
+                    {step.step}
+                  </div>
+                  <span className={`text-xs font-mono uppercase tracking-wide ${
+                    step.status === 'current' ? 'text-foreground font-bold' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          {/* Quick Tips */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Info className="h-5 w-5" />
-                <span>Quick Tips</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">Property Code</p>
-                    <p className="text-xs text-muted-foreground">
-                      Use a consistent naming convention like PROP-001, BLD-A, etc.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">Property Type</p>
-                    <p className="text-xs text-muted-foreground">
-                      Choose carefully as this affects available features and reports
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">After Creation</p>
-                    <p className="text-xs text-muted-foreground">
-                      You can add spaces, titles, documents, and utilities next
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* What You Can Manage */}
-          <Card>
-            <CardHeader>
-              <CardTitle>What You Can Manage</CardTitle>
-              <CardDescription>
-                Features available after creating your property
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Home className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm">Spaces</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Receipt className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Property Titles & Taxes</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Users className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm">Tenants & Leases</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-4 w-4 text-orange-600" />
-                  <span className="text-sm">Documents & Contracts</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Zap className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm">Utilities & Services</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Activity className="h-4 w-4 text-red-600" />
-                  <span className="text-sm">Title Movements</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Helpful Tips</h3>
+            </div>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>Property Code must be unique across the portfolio.</span>
+              </li>
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>Asset Type determines available report templates.</span>
+              </li>
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>Spaces can be added in bulk after creation.</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

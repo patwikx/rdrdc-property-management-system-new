@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Building2, Edit, Plus, Trash2, Ruler, Home, ArrowUp, ArrowUpRight, Layers, Warehouse } from "lucide-react"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Plus, Trash2, Home, ArrowUp, ArrowUpRight, Layers, Warehouse, Info, Building } from "lucide-react"
 import { UnitWithDetails } from "@/lib/actions/unit-actions"
 import { UnitFormData } from "@/lib/validations/unit-schema"
 import { UseFormReturn } from "react-hook-form"
@@ -28,36 +27,38 @@ interface UnitEditFormProps {
 const unitStatusOptions = [
   { 
     value: UnitStatus.VACANT, 
-    label: "Vacant", 
+    label: "VACANT", 
     description: "Available for lease",
-    color: "bg-green-600"
+    color: "bg-emerald-600"
   },
   { 
     value: UnitStatus.OCCUPIED, 
-    label: "Occupied", 
+    label: "OCCUPIED", 
     description: "Currently leased",
-    color: "bg-red-600"
+    color: "bg-blue-600"
   },
   { 
     value: UnitStatus.MAINTENANCE, 
-    label: "Maintenance", 
+    label: "MAINTENANCE", 
     description: "Under repair or renovation",
-    color: "bg-yellow-600"
+    color: "bg-rose-600"
   },
   { 
     value: UnitStatus.RESERVED, 
-    label: "Reserved", 
+    label: "RESERVED", 
     description: "Reserved for future tenant",
-    color: "bg-blue-600"
+    color: "bg-amber-600"
   },
 ]
 
 const floorTypeOptions = [
-  { value: "Ground Floor", label: "Ground Floor", icon: Home },
-  { value: "Second Floor", label: "Second Floor", icon: ArrowUp },
-  { value: "Third Floor", label: "Third Floor", icon: ArrowUpRight },
-  { value: "Mezzanine", label: "Mezzanine", icon: Layers },
-  { value: "Rooftop", label: "Rooftop", icon: Warehouse },
+  { value: "GROUND_FLOOR", label: "GROUND_FLOOR", icon: Home },
+  { value: "SECOND_FLOOR", label: "SECOND_FLOOR", icon: ArrowUp },
+  { value: "THIRD_FLOOR", label: "THIRD_FLOOR", icon: ArrowUpRight },
+  { value: "MEZZANINE", label: "MEZZANINE", icon: Layers },
+  { value: "ROOFTOP", label: "ROOFTOP", icon: Warehouse },
+  { value: "BASEMENT", label: "BASEMENT", icon: Layers },
+  { value: "OTHER", label: "OTHER", icon: Building },
 ]
 
 export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditFormProps) {
@@ -68,7 +69,8 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
     if (unit.unitFloors.length > 0) {
       const initialFloors = unit.unitFloors.map(floor => ({
         id: floor.id,
-        floorType: floor.floorType.replace('_', ' '),
+        // Use the raw floorType from DB (e.g. "GROUND_FLOOR") to match options
+        floorType: floor.floorType, 
         area: floor.area,
         ratePerSqm: floor.rate,
         floorRent: floor.rent
@@ -147,415 +149,316 @@ export function UnitEditForm({ unit, form, isSaving, onFloorsChange }: UnitEditF
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Basic Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Edit className="h-5 w-5" />
-            <span>Basic Information</span>
-          </CardTitle>
-          <CardDescription>Update space details and status</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Info className="h-3 w-3" />
+            Space Identity
+          </span>
+        </div>
+        <div className="p-6">
           <Form {...form}>
             <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormField
-                control={form.control}
-                name="unitNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Space Number *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., 101, A-1, Ground Floor" 
-                        {...field}
-                        disabled={isSaving}
-                        className="h-10"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Unique identifier for this space
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Current Status *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
-                      <FormControl>
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select space status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {unitStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${option.color.replace('bg-', 'bg-')}`} />
-                              <span>{option.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-xs">
-                      Current availability status
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {unit.property && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
-                  name="propertyTitleId"
+                  name="unitNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Associated Property Title</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
-                        <FormControl>
-                          <SelectTrigger className="h-10">
-                            <SelectValue placeholder="Select a property title (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="no-title">No specific title</SelectItem>
-                          {unit.propertyTitle && (
-                            <SelectItem value={unit.propertyTitle.id}>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{unit.propertyTitle.titleNo}</span>
-                                <span className="text-xs text-muted-foreground">Lot {unit.propertyTitle.lotNo}</span>
-                              </div>
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription className="text-xs">
-                        Link this space to a specific property title
-                      </FormDescription>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Space Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="SPACE_ID" 
+                          {...field}
+                          disabled={isSaving}
+                          className="rounded-none border-border font-mono text-sm h-10 focus-visible:ring-0 focus-visible:border-primary"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
 
-            {/* Area and Rent */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="totalArea"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Total Floor Area (sqm) *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input 
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          disabled={isSaving}
-                          className="h-10 pr-12"
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          sqm
-                        </span>
-                      </div>
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Total floor area of the space
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="totalRent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Total Monthly Rent *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          ₱
-                        </span>
-                        <Input 
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          disabled={isSaving}
-                          className="h-10 pl-8"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Monthly rental amount for this space
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            </div>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Floor Configuration */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
-                <Building2 className="h-5 w-5" />
-                <span>Floor Configuration</span>
-              </CardTitle>
-              <CardDescription>Configure individual floors and rental rates</CardDescription>
-            </div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={addFloor}
-              disabled={isSaving}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Floor
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {floors.map((floor, index) => {
-              const FloorIcon = getFloorIcon(floor.floorType)
-              return (
-                <Card key={floor.id} className="relative">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <FloorIcon className="h-4 w-4 text-muted-foreground" />
-                        Floor {index + 1}
-                        {floor.floorType && (
-                          <span className="text-xs text-muted-foreground font-normal">
-                            ({floor.floorType})
-                          </span>
-                        )}
-                      </CardTitle>
-                      {floors.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFloor(floor.id)}
-                          disabled={isSaving}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {/* Floor Type */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Floor Type *</label>
-                        <Select 
-                          value={floor.floorType} 
-                          onValueChange={(value) => updateFloor(floor.id, 'floorType', value)}
-                          disabled={isSaving}
-                        >
-                          <SelectTrigger className="h-10 w-full">
-                            <SelectValue placeholder="Select type">
-                              {floor.floorType && (
-                                <div className="flex items-center gap-2">
-                                  <FloorIcon className="h-4 w-4" />
-                                  <span>{floor.floorType}</span>
-                                </div>
-                              )}
-                            </SelectValue>
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Current Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
+                        <FormControl>
+                          <SelectTrigger className="rounded-none border-border h-10 font-mono text-xs uppercase">
+                            <SelectValue placeholder="SELECT_STATUS" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {floorTypeOptions.map((option) => {
-                              const OptionIcon = option.icon
-                              return (
-                                <SelectItem key={option.value} value={option.value}>
-                                  <div className="flex items-center gap-2">
-                                    <OptionIcon className="h-4 w-4" />
-                                    <span>{option.label}</span>
-                                  </div>
-                                </SelectItem>
-                              )
-                            })}
+                        </FormControl>
+                        <SelectContent className="rounded-none border-border">
+                          {unitStatusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="font-mono text-xs uppercase">
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-2 h-2 rounded-full ${option.color}`} />
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {unit.property && (
+                  <FormField
+                    control={form.control}
+                    name="propertyTitleId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Associated Title</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "no-title"} disabled={isSaving}>
+                          <FormControl>
+                            <SelectTrigger className="rounded-none border-border h-10 font-mono text-xs">
+                              <SelectValue placeholder="No title linked" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-none border-border">
+                            <SelectItem value="no-title" className="font-mono text-xs">NO_TITLE_LINKED</SelectItem>
+                            {unit.propertyTitle && (
+                              <SelectItem value={unit.propertyTitle.id} className="font-mono text-xs">
+                                {unit.propertyTitle.titleNo} (Lot {unit.propertyTitle.lotNo})
+                              </SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
-                      </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
 
-                      {/* Area */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Area (sqm) *</label>
+              {/* Area and Rent */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed border-border">
+                <FormField
+                  control={form.control}
+                  name="totalArea"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Total Floor Area (sqm)</FormLabel>
+                      <FormControl>
                         <div className="relative">
-                          <Input
+                          <Input 
                             type="number"
                             step="0.01"
                             min="0"
                             placeholder="0.00"
-                            value={floor.area || ''}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value) || 0
-                              updateFloor(floor.id, 'area', value)
-                            }}
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             disabled={isSaving}
-                            className="h-10 pr-12"
+                            className="rounded-none border-border font-mono text-sm h-10 pr-12 focus-visible:ring-0 focus-visible:border-primary"
                           />
-                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                            sqm
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">
+                            SQM
                           </span>
                         </div>
-                      </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                      {/* Rate per sqm */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Rate (₱/sqm) *</label>
+                <FormField
+                  control={form.control}
+                  name="totalRent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Total Monthly Rent</FormLabel>
+                      <FormControl>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">
                             ₱
                           </span>
-                          <Input
+                          <Input 
                             type="number"
                             step="0.01"
                             min="0"
                             placeholder="0.00"
-                            value={floor.ratePerSqm || ''}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value) || 0
-                              updateFloor(floor.id, 'ratePerSqm', value)
-                            }}
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             disabled={isSaving}
-                            className="h-10 pl-8"
+                            className="rounded-none border-border font-mono text-sm h-10 pl-8 focus-visible:ring-0 focus-visible:border-primary"
                           />
                         </div>
-                      </div>
-
-                      {/* Floor Rent (calculated) */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Floor Rent</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                            ₱
-                          </span>
-                          <Input
-                            type="number"
-                            value={floor.floorRent.toFixed(2)}
-                            disabled
-                            className="h-10 pl-8 bg-muted"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Auto-calculated</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Total Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Ruler className="h-5 w-5" />
-            <span>Total Summary</span>
-          </CardTitle>
-          <CardDescription>Calculated totals from floor configuration</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="totalArea"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Total Floor Area (sqm)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input 
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                          disabled
-                          className="h-10 pr-12 bg-muted"
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          sqm
-                        </span>
-                      </div>
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Sum of all floor areas
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="totalRent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Total Monthly Rent</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                          ₱
-                        </span>
-                        <Input 
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={field.value.toFixed(2)}
-                          disabled
-                          className="h-10 pl-8 bg-muted"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Auto-calculated from floor rent totals
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Floor Configuration */}
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3 flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Layers className="h-3 w-3" />
+            Floor Configuration
+          </span>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={addFloor}
+            disabled={isSaving}
+            className="rounded-none h-7 text-[10px] font-mono uppercase tracking-wider border-border hover:bg-muted"
+          >
+            <Plus className="h-3 w-3 mr-2" />
+            Add Floor
+          </Button>
+        </div>
+        <div className="p-6 space-y-4">
+          {floors.map((floor, index) => {
+            const FloorIcon = getFloorIcon(floor.floorType)
+            return (
+              <div key={floor.id} className="relative border border-border bg-background p-4 group hover:border-primary/50 transition-colors">
+                <div className="flex items-center justify-between mb-4 border-b border-dashed border-border/50 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 border border-border bg-muted/10">
+                      <FloorIcon className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider font-mono">Floor {index + 1}</span>
+                  </div>
+                  {floors.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFloor(floor.id)}
+                      disabled={isSaving}
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-none"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Floor Type */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Type</label>
+                    <Select 
+                      value={floor.floorType} 
+                      onValueChange={(value) => updateFloor(floor.id, 'floorType', value)}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger className="w-full rounded-none h-9 border-border font-mono text-xs uppercase">
+                        <SelectValue placeholder="SELECT FLOOR TYPE">
+                          {floor.floorType && (
+                            <div className="flex items-center gap-2">
+                              <FloorIcon className="h-3 w-3" />
+                              <span>{floor.floorType}</span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none border-border">
+                        {floorTypeOptions.map((option) => {
+                          const OptionIcon = option.icon
+                          return (
+                            <SelectItem key={option.value} value={option.value} className="font-mono text-xs uppercase">
+                              <div className="flex items-center gap-2">
+                                <OptionIcon className="h-3 w-3" />
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Area */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Area (sqm)</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={floor.area || ''}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0
+                          updateFloor(floor.id, 'area', value)
+                        }}
+                        disabled={isSaving}
+                        className="rounded-none h-9 border-border font-mono text-xs pr-8 focus-visible:ring-0 focus-visible:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rate per sqm */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Rate (₱/sqm)</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">₱</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={floor.ratePerSqm || ''}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0
+                          updateFloor(floor.id, 'ratePerSqm', value)
+                        }}
+                        disabled={isSaving}
+                        className="rounded-none h-9 border-border font-mono text-xs pl-6 focus-visible:ring-0 focus-visible:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Floor Rent (calculated) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Floor Rent</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">₱</span>
+                      <Input
+                        type="number"
+                        value={floor.floorRent.toFixed(2)}
+                        disabled
+                        className="rounded-none h-9 border-border font-mono text-xs pl-6 bg-muted/10 text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Total Summary */}
+      <div className="border border-border bg-background p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Building className="h-4 w-4 text-primary" />
+          <span className="text-xs font-bold uppercase tracking-widest text-foreground">Calculated Totals</span>
+        </div>
+        <div className="flex gap-6 text-sm font-mono">
+          <div>
+            <span className="text-muted-foreground mr-2">Area:</span>
+            <span className="font-medium">{form.watch('totalArea')?.toLocaleString() || 0} sqm</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground mr-2">Rent:</span>
+            <span className="font-medium">₱{form.watch('totalRent')?.toLocaleString() || 0}</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

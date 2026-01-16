@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, X, TrendingUp } from "lucide-react"
+import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, X, TrendingUp, ArrowLeft, Check, ChevronsUpDown } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,6 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { z } from "zod"
-import { Check, ChevronsUpDown } from "lucide-react"
 
 // Types
 interface Tenant {
@@ -91,7 +90,6 @@ export default function CreateLeasePage() {
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       securityDeposit: 0,
-      // Rate increase settings - sensible defaults provided; user may override
       standardIncreasePercentage: 10,
       increaseIntervalYears: 3,
       autoIncreaseEnabled: true
@@ -131,22 +129,18 @@ export default function CreateLeasePage() {
   // Filter and search units
   const filteredUnits = useMemo(() => {
     return units.filter(unit => {
-      // Search filter
       const matchesSearch = searchQuery === "" || 
         unit.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         unit.property.propertyName.toLowerCase().includes(searchQuery.toLowerCase())
 
-      // Property filter
       const matchesProperty = selectedProperty === "all" || 
         unit.property.id === selectedProperty
 
-      // Area filter
       const matchesMinArea = minArea === "" || 
         unit.totalArea >= parseFloat(minArea)
       const matchesMaxArea = maxArea === "" || 
         unit.totalArea <= parseFloat(maxArea)
 
-      // Rent filter
       const matchesMinRent = minRent === "" || 
         unit.totalRent >= parseFloat(minRent)
       const matchesMaxRent = maxRent === "" || 
@@ -232,7 +226,6 @@ export default function CreateLeasePage() {
   const handleRemoveUnit = (unitId: string, event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
-    
     setSelectedUnitsData(prev => prev.filter(u => u.unit.id !== unitId))
   }
 
@@ -259,7 +252,6 @@ export default function CreateLeasePage() {
           customRentAmount: unitData.customRentAmount,
           floorOverrides: unitData.floorOverrides
         })),
-        // Rate increase settings (Requirements 1.2, 1.3)
         standardIncreasePercentage: data.standardIncreasePercentage,
         increaseIntervalYears: data.increaseIntervalYears,
         autoIncreaseEnabled: data.autoIncreaseEnabled
@@ -281,15 +273,24 @@ export default function CreateLeasePage() {
     }
   }
 
+  const getTenantName = (tenant: Tenant) => {
+    return tenant.businessName || tenant.company
+  }
+
+  const getTenantDisplayText = (tenantId: string) => {
+    const tenant = tenants.find(t => t.id === tenantId)
+    return tenant ? getTenantName(tenant) : "Select tenant"
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
+          <div className="h-8 bg-muted/20 w-1/3" />
+          <div className="h-4 bg-muted/20 w-1/2" />
           <div className="grid gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-32 bg-muted rounded" />
+              <div key={i} className="h-32 bg-muted/10 border border-border" />
             ))}
           </div>
         </div>
@@ -297,47 +298,43 @@ export default function CreateLeasePage() {
     )
   }
 
-  const getTenantName = (tenant: Tenant) => {
-    return tenant.businessName || tenant.company
-  }
-
-  const getTenantDisplayText = (tenantId: string) => {
-    const tenant = tenants.find(t => t.id === tenantId)
-    return tenant ? getTenantName(tenant) : "Select a tenant"
-  }
-
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center space-x-4">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Create New Lease</h2>
-          <p className="text-muted-foreground">
-            Create a new lease agreement for a tenant
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Create New Lease</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Initialize new contract agreement
           </p>
         </div>
+        <Link href="/tenants/leases">
+          <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+            <ArrowLeft className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
+        </Link>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="h-5 w-5" />
-                    <span>Tenant Information</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Select the tenant for this lease agreement
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+            <div className="lg:col-span-2 space-y-8">
+              {/* Tenant Selection */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <Users className="h-3 w-3" />
+                    Tenant Party
+                  </span>
+                </div>
+                <div className="p-6">
                   <FormField
                     control={form.control}
                     name="tenantId"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Tenant</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Select Tenant *</FormLabel>
                         <Popover open={openTenantSelect} onOpenChange={setOpenTenantSelect}>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -346,20 +343,20 @@ export default function CreateLeasePage() {
                                 role="combobox"
                                 aria-expanded={openTenantSelect}
                                 className={cn(
-                                  "w-full justify-between",
+                                  "w-full justify-between h-10 rounded-none border-border font-mono text-sm",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
-                                {field.value ? getTenantDisplayText(field.value) : "Select a tenant"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                {field.value ? getTenantDisplayText(field.value) : "Select tenant"}
+                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-full p-0" align="start">
+                          <PopoverContent className="w-[400px] p-0 rounded-none border-border" align="start">
                             <Command>
-                              <CommandInput placeholder="Search tenant..." />
+                              <CommandInput placeholder="Search tenant..." className="font-mono text-xs uppercase" />
                               <CommandList>
-                                <CommandEmpty>No tenant found.</CommandEmpty>
+                                <CommandEmpty>No tenant found</CommandEmpty>
                                 <CommandGroup>
                                   {tenants.map((tenant) => (
                                     <CommandItem
@@ -369,18 +366,17 @@ export default function CreateLeasePage() {
                                         form.setValue("tenantId", tenant.id)
                                         setOpenTenantSelect(false)
                                       }}
+                                      className="font-mono text-xs uppercase"
                                     >
                                       <Check
                                         className={cn(
-                                          "mr-2 h-4 w-4",
+                                          "mr-2 h-3 w-3",
                                           field.value === tenant.id ? "opacity-100" : "opacity-0"
                                         )}
                                       />
-                                      <div className="flex items-center space-x-2">
-                                         <Badge variant="outline" className="text-xs">
-                                          {tenant.bpCode}
-                                        </Badge>
-                                        <span>{getTenantName(tenant)}</span>
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="font-bold">{getTenantName(tenant)}</span>
+                                        <span className="text-[10px] text-muted-foreground">{tenant.bpCode}</span>
                                       </div>
                                     </CommandItem>
                                   ))}
@@ -393,33 +389,31 @@ export default function CreateLeasePage() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    <span>Lease Period</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Set the start and end dates for the lease
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
+              {/* Lease Period */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <CalendarIcon className="h-3 w-3" />
+                    Contract Duration
+                  </span>
+                </div>
+                <div className="p-6 grid gap-6 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="startDate"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Start Date *</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant="outline"
                                 className={cn(
-                                  "w-full pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal h-10 rounded-none border-border font-mono text-sm",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -428,11 +422,11 @@ export default function CreateLeasePage() {
                                 ) : (
                                   <span>Pick a date</span>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -451,14 +445,14 @@ export default function CreateLeasePage() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">End Date *</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant="outline"
                                 className={cn(
-                                  "w-full pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal h-10 rounded-none border-border font-mono text-sm",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -467,11 +461,11 @@ export default function CreateLeasePage() {
                                 ) : (
                                   <span>Pick a date</span>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -484,43 +478,38 @@ export default function CreateLeasePage() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Building className="h-5 w-5" />
-                    <span>Space Selection</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Select spaces to include in this lease and configure rent amounts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              {/* Space Selection */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <Building className="h-3 w-3" />
+                    Space Assignment
+                  </span>
+                </div>
+                <div className="p-6">
                   {units.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Building className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <h3 className="mt-4 text-lg font-semibold">No available spaces</h3>
-                      <p className="mt-2 text-muted-foreground">
-                        All spaces are currently occupied or reserved.
-                      </p>
+                    <div className="text-center py-12 border border-dashed border-border bg-muted/5">
+                      <Building className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Available Spaces</h3>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-mono">All units occupied</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* Search and Filters Bar */}
-                      <div className="flex flex-wrap gap-2">
+                      {/* Search and Filters */}
+                      <div className="flex flex-wrap gap-2 pb-4 border-b border-dashed border-border">
                         <div className="relative flex-1 min-w-[200px]">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                           <Input
-                            placeholder="Search by space number or property..."
+                            placeholder="Search spaces..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
+                            className="pl-9 h-9 rounded-none border-border font-mono text-xs uppercase"
                           />
                         </div>
 
-                        {/* Property Filter - Combobox */}
                         <Popover open={openPropertySelect} onOpenChange={setOpenPropertySelect}>
                           <PopoverTrigger asChild>
                             <Button
@@ -528,19 +517,19 @@ export default function CreateLeasePage() {
                               variant="outline"
                               role="combobox"
                               aria-expanded={openPropertySelect}
-                              className="w-[200px] justify-between"
+                              className="w-[180px] justify-between h-9 rounded-none border-border font-mono text-xs uppercase"
                             >
                               {selectedProperty === "all"
                                 ? "All properties"
                                 : properties.find((p) => p.id === selectedProperty)?.name}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0">
+                          <PopoverContent className="w-[200px] p-0 rounded-none border-border">
                             <Command>
-                              <CommandInput placeholder="Search property..." />
+                              <CommandInput placeholder="Search property..." className="font-mono text-xs uppercase" />
                               <CommandList>
-                                <CommandEmpty>No property found.</CommandEmpty>
+                                <CommandEmpty>No property found</CommandEmpty>
                                 <CommandGroup>
                                   <CommandItem
                                     value="all"
@@ -548,10 +537,11 @@ export default function CreateLeasePage() {
                                       setSelectedProperty("all")
                                       setOpenPropertySelect(false)
                                     }}
+                                    className="font-mono text-xs uppercase"
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "mr-2 h-3 w-3",
                                         selectedProperty === "all" ? "opacity-100" : "opacity-0"
                                       )}
                                     />
@@ -565,10 +555,11 @@ export default function CreateLeasePage() {
                                         setSelectedProperty(prop.id)
                                         setOpenPropertySelect(false)
                                       }}
+                                      className="font-mono text-xs uppercase"
                                     >
                                       <Check
                                         className={cn(
-                                          "mr-2 h-4 w-4",
+                                          "mr-2 h-3 w-3",
                                           selectedProperty === prop.id ? "opacity-100" : "opacity-0"
                                         )}
                                       />
@@ -581,103 +572,38 @@ export default function CreateLeasePage() {
                           </PopoverContent>
                         </Popover>
 
-                        {/* Area Min */}
                         <Input
                           type="number"
-                          placeholder="Min area (sqm)"
+                          placeholder="Min area"
                           value={minArea}
                           onChange={(e) => setMinArea(e.target.value)}
-                          className="w-[140px]"
+                          className="w-[100px] h-9 rounded-none border-border font-mono text-xs"
                         />
 
-                        {/* Area Max */}
-                        <Input
-                          type="number"
-                          placeholder="Max area (sqm)"
-                          value={maxArea}
-                          onChange={(e) => setMaxArea(e.target.value)}
-                          className="w-[140px]"
-                        />
-
-                        {/* Clear Filters Button */}
                         {hasActiveFilters && (
                           <Button
                             type="button"
                             variant="outline"
                             size="icon"
                             onClick={clearFilters}
-                            title="Clear all filters"
+                            title="Clear filters"
+                            className="h-9 w-9 rounded-none border-border"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3" />
                           </Button>
                         )}
                       </div>
 
-                      {/* Active Filters Badges */}
-                      {hasActiveFilters && (
-                        <div className="flex flex-wrap gap-2 items-center">
-                          <span className="text-xs text-muted-foreground">Active filters:</span>
-                          {selectedProperty !== "all" && (
-                            <Badge variant="secondary" className="gap-1">
-                              {properties.find(p => p.id === selectedProperty)?.name}
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() => setSelectedProperty("all")}
-                              />
-                            </Badge>
-                          )}
-                          {minArea && (
-                            <Badge variant="secondary" className="gap-1">
-                              Min: {minArea} sqm
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() => setMinArea("")}
-                              />
-                            </Badge>
-                          )}
-                          {maxArea && (
-                            <Badge variant="secondary" className="gap-1">
-                              Max: {maxArea} sqm
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() => setMaxArea("")}
-                              />
-                            </Badge>
-                          )}
-                          {minRent && (
-                            <Badge variant="secondary" className="gap-1">
-                              Min: ₱{minRent}
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() => setMinRent("")}
-                              />
-                            </Badge>
-                          )}
-                          {maxRent && (
-                            <Badge variant="secondary" className="gap-1">
-                              Max: ₱{maxRent}
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() => setMaxRent("")}
-                              />
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-
                       {/* Results */}
                       {filteredUnits.length === 0 ? (
-                        <div className="text-center py-12">
-                          <Search className="mx-auto h-12 w-12 text-muted-foreground" />
-                          <h3 className="mt-4 text-lg font-semibold">No spaces found</h3>
-                          <p className="mt-2 text-muted-foreground">
-                            Try adjusting your search or filters
-                          </p>
+                        <div className="text-center py-12 border border-dashed border-border bg-muted/5">
+                          <Search className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Spaces Found</h3>
                         </div>
                       ) : (
                         <>
-                          <div className="text-sm text-muted-foreground">
-                            Showing {filteredUnits.length} of {units.length} spaces
+                          <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wide">
+                            Available: {filteredUnits.length} / {units.length}
                           </div>
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -701,30 +627,30 @@ export default function CreateLeasePage() {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
+            {/* Right Sidebar */}
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <DollarSign className="h-5 w-5" />
-                    <span>Financial Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              {/* Financials */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <DollarSign className="h-3 w-3" />
+                    Financial Breakdown
+                  </span>
+                </div>
+                <div className="p-6 space-y-6">
                   <FormField
                     control={form.control}
                     name="securityDeposit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Security Deposit</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Security Deposit</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                              ₱
-                            </span>
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">₱</span>
                             <Input
                               type="number"
                               min="0"
@@ -732,7 +658,7 @@ export default function CreateLeasePage() {
                               placeholder="0.00"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              className="pl-8"
+                              className="pl-8 h-9 rounded-none border-border font-mono text-sm"
                             />
                           </div>
                         </FormControl>
@@ -741,65 +667,54 @@ export default function CreateLeasePage() {
                     )}
                   />
 
-                  <div className="space-y-2 pt-4 border-t">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Selected Spaces:</span>
-                      <span className="font-medium">{selectedUnitsData.length}</span>
+                  <div className="space-y-3 pt-4 border-t border-dashed border-border">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-muted-foreground uppercase">Spaces Selected</span>
+                      <span className="font-bold">{selectedUnitsData.length}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Monthly Rent:</span>
-                      <span className="font-medium">₱{calculateTotalRent().toLocaleString()}</span>
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-muted-foreground uppercase">Monthly Rent</span>
+                      <span className="font-bold">₱{calculateTotalRent().toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Security Deposit:</span>
-                      <span className="font-medium">₱{form.watch('securityDeposit')?.toLocaleString() || '0'}</span>
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-muted-foreground uppercase">Deposit</span>
+                      <span className="font-bold">₱{(form.watch('securityDeposit') || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between font-medium pt-2 border-t">
-                      <span>Total Initial Payment:</span>
-                      <span>₱{(calculateTotalRent() + (form.watch('securityDeposit') || 0)).toLocaleString()}</span>
+                    <div className="flex justify-between items-center text-sm font-mono pt-3 border-t border-border mt-2">
+                      <span className="font-bold uppercase tracking-wide">Initial Due</span>
+                      <span className="font-bold text-primary">₱{(calculateTotalRent() + (form.watch('securityDeposit') || 0)).toLocaleString()}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              {/* Rate Increase Settings Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5" />
-                    <span>Rate Increase Settings</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configure automatic rate increase parameters for this lease
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              {/* Rate Escalation */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <TrendingUp className="h-3 w-3" />
+                    Escalation Terms
+                  </span>
+                </div>
+                <div className="p-6 space-y-4">
                   <FormField
                     control={form.control}
                     name="standardIncreasePercentage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Standard Increase Percentage *</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Increase Rate (%)</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.1"
-                              placeholder="10"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              className="pr-8"
-                            />
-                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                              %
-                            </span>
-                          </div>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="10"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            className="h-9 rounded-none border-border font-mono text-sm"
+                          />
                         </FormControl>
-                        <FormDescription>
-                          Percentage increase applied at each interval
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -810,27 +725,19 @@ export default function CreateLeasePage() {
                     name="increaseIntervalYears"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Increase Interval *</FormLabel>
+                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Interval (Years)</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              min="1"
-                              max="10"
-                              step="1"
-                              placeholder="3"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                              className="pr-12"
-                            />
-                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                              years
-                            </span>
-                          </div>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            step="1"
+                            placeholder="3"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                            className="h-9 rounded-none border-border font-mono text-sm"
+                          />
                         </FormControl>
-                        <FormDescription>
-                          Number of years between rate increases
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -840,46 +747,48 @@ export default function CreateLeasePage() {
                     control={form.control}
                     name="autoIncreaseEnabled"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            className="rounded-none mt-0.5"
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Enable Automatic Rate Increases
+                          <FormLabel className="text-xs font-bold uppercase tracking-wide">
+                            Auto-Apply Increase
                           </FormLabel>
-                          <FormDescription>
-                            When enabled, the system will automatically flag this lease for rate increases at the specified interval
+                          <FormDescription className="text-[10px] font-mono">
+                            System will flag lease for rate review automatically.
                           </FormDescription>
                         </div>
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <div className="space-y-2">
+              {/* Actions */}
+              <div className="grid gap-2">
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full rounded-none h-10 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={isSaving || selectedUnitsData.length === 0}
                 >
                   {isSaving ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Creating Lease...
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                      Initializing...
                     </>
                   ) : (
                     <>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Lease
+                      <Plus className="h-3 w-3 mr-2" />
+                      Create Contract
                     </>
                   )}
                 </Button>
-                <Button type="button" variant="outline" className="w-full" asChild>
+                <Button type="button" variant="outline" className="w-full rounded-none h-10 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted" asChild>
                   <Link href="/tenants/leases">
                     Cancel
                   </Link>

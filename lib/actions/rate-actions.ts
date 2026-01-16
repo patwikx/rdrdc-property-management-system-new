@@ -1762,31 +1762,6 @@ export async function processScheduledRateIncreases(): Promise<ProcessScheduledR
 }
 
 /**
- * Internal helper to get active override without the full details.
- * Used by processScheduledRateIncreases to avoid circular dependencies.
- */
-async function getActiveOverrideInternal(
-  leaseUnitId: string
-): Promise<RateOverride | null> {
-  const now = new Date()
-
-  const override = await prisma.rateOverride.findFirst({
-    where: {
-      leaseUnitId,
-      status: RateApprovalStatus.APPROVED,
-      effectiveFrom: { lte: now },
-      OR: [
-        { effectiveTo: null },
-        { effectiveTo: { gte: now } }
-      ]
-    },
-    orderBy: { effectiveFrom: 'desc' }
-  })
-
-  return override
-}
-
-/**
  * Gets all leases that are due for scheduled rate increases.
  * Useful for previewing which leases will be affected before running processScheduledRateIncreases.
  * 

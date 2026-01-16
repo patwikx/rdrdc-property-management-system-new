@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Edit, Save, Trash2, FileCheck, Building, Users, Calendar, DollarSign, AlertTriangle, History, TrendingUp, Shield } from "lucide-react"
+import { Edit, Save, Trash2, FileCheck, Building, Users, Calendar, DollarSign, AlertTriangle, History, TrendingUp, Shield, CreditCard, ChevronRight, X, User } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react"
@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { getLeaseById, updateLease, terminateLease, deleteLease, LeaseWithDetails } from "@/lib/actions/lease-actions"
 import { getRateHistory, type RateHistoryWithDetails } from "@/lib/actions/rate-actions"
 import { RateHistory, RateHistoryCompact } from "@/components/rate-management/rate-history"
@@ -25,6 +26,7 @@ import { LeaseUpdateSchema, LeaseUpdateFormData, LeaseTerminationSchema, LeaseTe
 import { LeaseStatus } from "@prisma/client"
 import { toast } from "sonner"
 import { format, differenceInDays } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface LeasePageProps {
   params: Promise<{
@@ -34,21 +36,21 @@ interface LeasePageProps {
 
 function getLeaseStatusColor(status: LeaseStatus) {
   switch (status) {
-    case 'ACTIVE': return 'bg-green-600'
-    case 'PENDING': return 'bg-yellow-600'
-    case 'TERMINATED': return 'bg-red-600'
-    case 'EXPIRED': return 'bg-gray-600'
-    default: return 'bg-gray-600'
+    case 'ACTIVE': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+    case 'PENDING': return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+    case 'TERMINATED': return 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+    case 'EXPIRED': return 'bg-slate-500/10 text-slate-600 border-slate-500/20'
+    default: return 'bg-muted/10 text-muted-foreground border-border'
   }
 }
 
 function getPaymentStatusColor(status: string) {
   switch (status) {
-    case 'COMPLETED': return 'bg-green-600'
-    case 'PENDING': return 'bg-yellow-600'
-    case 'FAILED': return 'bg-red-600'
-    case 'REFUNDED': return 'bg-blue-600'
-    default: return 'bg-gray-600'
+    case 'COMPLETED': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+    case 'PENDING': return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+    case 'FAILED': return 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+    case 'REFUNDED': return 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+    default: return 'bg-muted/10 text-muted-foreground border-border'
   }
 }
 
@@ -205,10 +207,6 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
   async function handleDelete() {
     if (!lease) return
     
-    if (!confirm("Are you sure you want to delete this lease? This action cannot be undone.")) {
-      return
-    }
-    
     setIsDeleting(true)
     
     try {
@@ -256,182 +254,178 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
   const isExpiringSoon = daysUntilExpiry <= 30 && daysUntilExpiry > 0 && lease.status === 'ACTIVE'
   const isExpired = daysUntilExpiry < 0 && lease.status === 'ACTIVE'
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: FileCheck },
+    { id: 'units', label: `Spaces (${lease.leaseUnits.length})`, icon: Building },
+    { id: 'rate-history', label: 'Rate History', icon: History },
+    { id: 'payments', label: `Payments (${lease.payments.length})`, icon: DollarSign },
+    { id: 'documents', label: 'Documents', icon: FileCheck },
+  ]
+
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8 pt-6 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col space-y-6">
+        <div className="flex items-center justify-between border-b border-border pb-6">
           <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="text-3xl font-bold tracking-tight">Lease Agreement</h2>
-              <Badge className={getLeaseStatusColor(lease.status)}>
+            <h2 className="text-2xl font-bold tracking-tight font-mono uppercase flex items-center gap-3">
+              LEASE-{lease.id.slice(0, 8)}
+              <Badge variant="outline" className={cn("rounded-none text-xs uppercase tracking-widest border-0 px-2 py-0.5", getLeaseStatusColor(lease.status))}>
                 {lease.status}
               </Badge>
-              {isExpiringSoon && (
-                <Badge variant="outline" className="text-orange-600 border-orange-600">
-                  Expiring in {daysUntilExpiry} days
-                </Badge>
-              )}
-              {isExpired && (
-                <Badge variant="outline" className="text-red-600 border-red-600">
-                  Expired
-                </Badge>
-              )}
+            </h2>
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground font-mono">
+              <span className="uppercase tracking-wide">{lease.tenant.bpCode}</span>
+              <span className="text-border">|</span>
+              <span>{tenantName}</span>
             </div>
-            <p className="text-muted-foreground">
-              {tenantName} • {lease.tenant.bpCode}
-            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            {!isEditing ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(true)} className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+                  <Edit className="h-3 w-3 mr-2" />
+                  Edit Contract
+                </Button>
+                {lease.status === 'ACTIVE' && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowTerminateDialog(true)}
+                    className="rounded-none h-9 text-xs font-mono uppercase tracking-wider text-orange-600 border-orange-600 hover:bg-orange-50"
+                  >
+                    <AlertTriangle className="h-3 w-3 mr-2" />
+                    Terminate
+                  </Button>
+                )}
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-rose-600 hover:bg-rose-700"
+                    >
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-none border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="font-mono uppercase tracking-wide">Confirm Deletion</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this lease contract? This action cannot be undone and will remove all associated records.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-none border-border">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="rounded-none bg-rose-600 hover:bg-rose-700" disabled={isDeleting}>
+                        {isDeleting ? "Deleting..." : "Delete Lease"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border">
+                  <X className="h-3 w-3 mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={updateForm.handleSubmit(onUpdate)} disabled={isSaving} className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
+                  {isSaving ? "Saving..." : <><Save className="h-3 w-3 mr-2" /> Save Changes</>}
+                </Button>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {!isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              {lease.status === 'ACTIVE' && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowTerminateDialog(true)}
-                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Terminate
-                </Button>
-              )}
-              <Button 
-                variant="destructive" 
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </>
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button onClick={updateForm.handleSubmit(onUpdate)} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </>
-          )}
+
+        {/* Stats Strip */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Monthly Rent</span>
+              <DollarSign className="h-4 w-4 text-emerald-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-600">
+                ₱{lease.totalRentAmount.toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Deposit</span>
+              <DollarSign className="h-4 w-4 text-blue-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-blue-600">
+                ₱{lease.securityDeposit.toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Spaces</span>
+              <Building className="h-4 w-4 text-purple-600/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter text-purple-600">
+                {lease.leaseUnits.length}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">Units</span>
+            </div>
+          </div>
+          <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Remaining</span>
+              <Calendar className="h-4 w-4 text-muted-foreground/50" />
+            </div>
+            <div>
+              <span className={`text-2xl font-mono font-medium tracking-tighter ${daysUntilExpiry < 0 ? 'text-rose-600' : daysUntilExpiry <= 30 ? 'text-amber-600' : ''}`}>
+                {daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">Days</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="units">Spaces</TabsTrigger>
-          <TabsTrigger value="rate-history">Rate History</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <div className="border-b border-border w-full overflow-x-auto">
+          <nav className="flex space-x-8">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </nav>
+        </div>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-4">
-            <div className="lg:col-span-3 space-y-6">
-              {/* Quick Stats */}
-              <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Rent</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
-                      ₱{lease.totalRentAmount.toLocaleString()}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Per month
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Security Deposit</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">
-                      ₱{lease.securityDeposit.toLocaleString()}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Deposit amount
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Leased Spaces</CardTitle>
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {lease.leaseUnits.length}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Spaces included
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Days Remaining</CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={`text-2xl font-bold ${
-                      daysUntilExpiry < 0 ? 'text-red-600' : 
-                      daysUntilExpiry <= 30 ? 'text-orange-600' : 'text-green-600'
-                    }`}>
-                      {daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {daysUntilExpiry < 0 ? `${Math.abs(daysUntilExpiry)} days ago` : 'Until expiry'}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Lease Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FileCheck className="h-5 w-5" />
-                    <span>Lease Details</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Complete lease agreement information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+        {/* Overview Content */}
+        {activeTab === 'overview' && (
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-6">
+              {/* Contract Terms */}
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <FileCheck className="h-3 w-3" />
+                    Contract Terms
+                  </span>
+                </div>
+                <div className="p-6">
                   {isEditing ? (
                     <Form {...updateForm}>
                       <div className="grid gap-4 md:grid-cols-2">
@@ -440,70 +434,49 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                           name="startDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Start Date</FormLabel>
+                              <FormLabel className="text-[10px] uppercase tracking-widest">Start Date</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="date"
-                                  value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                  onChange={(e) => field.onChange(new Date(e.target.value))}
-                                />
+                                <Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(e.target.value))} className="rounded-none h-9 font-mono text-sm" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
                         <FormField
                           control={updateForm.control}
                           name="endDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>End Date</FormLabel>
+                              <FormLabel className="text-[10px] uppercase tracking-widest">End Date</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="date"
-                                  value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                  onChange={(e) => field.onChange(new Date(e.target.value))}
-                                />
+                                <Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(e.target.value))} className="rounded-none h-9 font-mono text-sm" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-
                         <FormField
                           control={updateForm.control}
                           name="securityDeposit"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Security Deposit</FormLabel>
+                              <FormLabel className="text-[10px] uppercase tracking-widest">Security Deposit</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                />
+                                <Input type="number" min="0" step="0.01" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} className="rounded-none h-9 font-mono text-sm" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-
                         <FormField
                           control={updateForm.control}
                           name="status"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Status</FormLabel>
+                              <FormLabel className="text-[10px] uppercase tracking-widest">Status</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
+                                <FormControl><SelectTrigger className="rounded-none h-9 font-mono text-sm"><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent className="rounded-none">
                                   <SelectItem value="PENDING">Pending</SelectItem>
                                   <SelectItem value="ACTIVE">Active</SelectItem>
                                   <SelectItem value="TERMINATED">Terminated</SelectItem>
@@ -517,212 +490,143 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                       </div>
                     </Form>
                   ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-6 md:grid-cols-2">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Start Date</label>
-                        <p className="text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">End Date</label>
-                        <p className="text-sm">{format(new Date(lease.endDate), 'MMMM dd, yyyy')}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Duration</label>
-                        <p className="text-sm">
+                        <label className="text-[10px] uppercase text-muted-foreground tracking-widest block mb-1">Duration</label>
+                        <div className="font-mono text-sm">
+                          {format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
                           {Math.ceil(differenceInDays(new Date(lease.endDate), new Date(lease.startDate)) / 30)} months
-                        </p>
+                        </div>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Created</label>
-                        <p className="text-sm">{format(new Date(lease.createdAt), 'MMMM dd, yyyy')}</p>
+                        <label className="text-[10px] uppercase text-muted-foreground tracking-widest block mb-1">Financials</label>
+                        <div className="font-mono text-sm">Rent: ₱{lease.totalRentAmount.toLocaleString()}</div>
+                        <div className="font-mono text-sm text-muted-foreground">Dep: ₱{lease.securityDeposit.toLocaleString()}</div>
                       </div>
                       {lease.terminationDate && (
-                        <>
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Termination Date</label>
-                            <p className="text-sm">{format(new Date(lease.terminationDate), 'MMMM dd, yyyy')}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Termination Reason</label>
-                            <p className="text-sm">{lease.terminationReason || 'Not specified'}</p>
-                          </div>
-                        </>
+                        <div className="col-span-2 border-t border-dashed border-border pt-4 mt-2">
+                          <label className="text-[10px] uppercase text-rose-600 tracking-widest block mb-1">Termination Details</label>
+                          <div className="font-mono text-sm text-rose-600">Terminated on {format(new Date(lease.terminationDate), 'MMM dd, yyyy')}</div>
+                          <p className="text-sm mt-1">{lease.terminationReason || 'No reason specified'}</p>
+                        </div>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>  
-          {/* Sidebar - Tenant Information */}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="h-5 w-5" />
-                    <span>Tenant Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="border border-border bg-background">
+                <div className="border-b border-border bg-muted/10 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <User className="h-3 w-3" />
+                    Tenant Party
+                  </span>
+                </div>
+                <div className="p-4 space-y-4">
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Tenant Name</label>
-                    <p className="text-sm font-medium">{tenantName}</p>
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Name</label>
+                    <div className="font-medium text-sm">{tenantName}</div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">BP Code</label>
-                    <p className="text-sm font-mono">{lease.tenant.bpCode}</p>
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">BP Code</label>
+                    <div className="font-mono text-sm">{lease.tenant.bpCode}</div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Company</label>
-                    <p className="text-sm">{lease.tenant.company}</p>
+                    <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Contact</label>
+                    <div className="text-sm truncate">{lease.tenant.email}</div>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm">{lease.tenant.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Status</label>
-                    <div className="mt-1">
-                      <Badge variant="outline">{lease.tenant.status}</Badge>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t">
+                  <div className="pt-4 border-t border-border">
                     <Link href={`/tenants/${lease.tenant.id}`}>
-                      <Button variant="outline" size="sm" className="w-full">
-                        View Tenant Details
+                      <Button variant="outline" className="w-full rounded-none h-8 text-xs font-mono uppercase tracking-wider">
+                        View Profile
                       </Button>
                     </Link>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="units" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Building className="h-5 w-5" />
-                <span>Leased Spaces</span>
-              </CardTitle>
-              <CardDescription>
-                Spaces included in this lease agreement. You can request rate changes or overrides for each space.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+        {/* Units Tab */}
+        {activeTab === 'units' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Leased Spaces</h3>
+              <div className="grid gap-4">
                 {lease.leaseUnits.map((leaseUnit) => (
-                  <div key={leaseUnit.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-primary/10 p-3 rounded">
-                          <Building className="h-5 w-5 text-primary" />
+                  <div key={leaseUnit.id} className="border border-border p-4 hover:bg-muted/5 transition-colors">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted/10 border border-border">
+                          <Building className="h-4 w-4 text-foreground" />
                         </div>
                         <div>
-                          <h3 className="font-medium">{leaseUnit.unit.unitNumber}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {leaseUnit.unit.property.propertyName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {leaseUnit.unit.totalArea} sqm • {leaseUnit.unit.status}
-                          </p>
+                          <h4 className="font-mono font-bold text-sm">{leaseUnit.unit.unitNumber}</h4>
+                          <p className="text-xs text-muted-foreground">{leaseUnit.unit.property.propertyName}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</p>
-                        <p className="text-sm text-muted-foreground">per month</p>
+                        <div className="font-mono font-bold text-sm">₱{leaseUnit.rentAmount.toLocaleString()}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">/ MONTH</div>
                       </div>
                     </div>
                     
-                    {/* Rate Management Actions */}
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <div className="flex items-center gap-2">
-                        {currentUserId && lease.status === 'ACTIVE' ? (
+                    <div className="flex items-center justify-between pt-4 border-t border-dashed border-border">
+                      <div className="flex gap-2">
+                        {currentUserId && lease.status === 'ACTIVE' && (
                           <>
                             <RateChangeForm
                               leaseUnitId={leaseUnit.id}
                               currentRate={leaseUnit.rentAmount}
                               requestedById={currentUserId}
-                              onSuccess={() => {
-                                loadRateHistory(lease.leaseUnits)
-                              }}
+                              onSuccess={() => loadRateHistory(lease.leaseUnits)}
                               trigger={
-                                <Button variant="outline" size="sm">
-                                  <TrendingUp className="h-4 w-4 mr-2" />
-                                  Request Rate Change
+                                <Button variant="outline" size="sm" className="rounded-none h-7 text-[10px] uppercase font-mono">
+                                  Request Change
                                 </Button>
                               }
                             />
                             <RateOverrideForm
                               leaseUnitId={leaseUnit.id}
                               requestedById={currentUserId}
-                              onSuccess={() => {
-                                loadRateHistory(lease.leaseUnits)
-                              }}
+                              onSuccess={() => loadRateHistory(lease.leaseUnits)}
                               trigger={
-                                <Button variant="outline" size="sm">
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Request Override
+                                <Button variant="outline" size="sm" className="rounded-none h-7 text-[10px] uppercase font-mono">
+                                  Override
                                 </Button>
                               }
                             />
                           </>
-                        ) : !currentUserId && lease.status === 'ACTIVE' ? (
-                          <span className="text-sm text-muted-foreground">
-                            Loading user session...
-                          </span>
-                        ) : lease.status !== 'ACTIVE' ? (
-                          <span className="text-sm text-muted-foreground">
-                            Rate changes only available for active leases
-                          </span>
-                        ) : null}
+                        )}
                       </div>
                       <Link href={`/properties/${leaseUnit.unit.property.id}/units/${leaseUnit.unit.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Space
+                        <Button variant="ghost" size="sm" className="rounded-none h-7 text-[10px] uppercase font-mono hover:bg-transparent hover:underline">
+                          View Details <ChevronRight className="h-3 w-3 ml-1" />
                         </Button>
                       </Link>
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
-        <TabsContent value="rate-history" className="space-y-6">
-          {lease.leaseUnits.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <History className="h-5 w-5" />
-                  <span>Rate History</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <History className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-semibold">No spaces in this lease</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    Rate history will appear here once spaces are added to the lease.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {/* Unit selector for rate history */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <History className="h-5 w-5" />
-                    <span>Rate History by Space</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Select a space to view its rate change history
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+        {/* Rate History Tab */}
+        {activeTab === 'rate-history' && (
+          <div className="space-y-6">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Rate History</h3>
+              {lease.leaseUnits.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">No spaces in this lease</div>
+              ) : (
+                <div className="space-y-6">
                   <div className="flex flex-wrap gap-2">
                     {lease.leaseUnits.map((leaseUnit) => {
                       const historyCount = rateHistoryByUnit[leaseUnit.id]?.length || 0
@@ -731,161 +635,91 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                           key={leaseUnit.id}
                           variant={selectedUnitForHistory === leaseUnit.id ? "default" : "outline"}
                           size="sm"
-                          onClick={() => setSelectedUnitForHistory(
-                            selectedUnitForHistory === leaseUnit.id ? null : leaseUnit.id
-                          )}
+                          onClick={() => setSelectedUnitForHistory(selectedUnitForHistory === leaseUnit.id ? null : leaseUnit.id)}
+                          className="rounded-none h-8 text-xs font-mono uppercase"
                         >
-                          <Building className="h-4 w-4 mr-2" />
                           {leaseUnit.unit.unitNumber}
-                          {historyCount > 0 && (
-                            <Badge variant="secondary" className="ml-2">
-                              {historyCount}
-                            </Badge>
-                          )}
+                          {historyCount > 0 && <Badge variant="secondary" className="ml-2 rounded-none px-1 h-4">{historyCount}</Badge>}
                         </Button>
                       )
                     })}
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Rate history display */}
-              {selectedUnitForHistory ? (
-                <RateHistory
-                  leaseUnitId={selectedUnitForHistory}
-                  history={rateHistoryByUnit[selectedUnitForHistory] || []}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="py-8">
-                    <div className="text-center text-muted-foreground">
-                      <History className="mx-auto h-12 w-12 mb-4" />
-                      <p>Select a space above to view its rate history</p>
+                  {selectedUnitForHistory ? (
+                    <RateHistory history={rateHistoryByUnit[selectedUnitForHistory] || []} />
+                  ) : (
+                    <div className="border border-dashed border-border p-12 text-center">
+                      <History className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+                      <p className="text-sm text-muted-foreground">Select a space above to view its rate history</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               )}
-
-              {/* Summary of all rate changes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>All Rate Changes Summary</CardTitle>
-                  <CardDescription>
-                    Quick overview of recent rate changes across all spaces
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {lease.leaseUnits.map((leaseUnit) => {
-                      const history = rateHistoryByUnit[leaseUnit.id] || []
-                      return (
-                        <div key={leaseUnit.id} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{leaseUnit.unit.unitNumber}</span>
-                              <span className="text-sm text-muted-foreground">
-                                ({leaseUnit.unit.property.propertyName})
-                              </span>
-                            </div>
-                            <div className="text-sm">
-                              Current: <span className="font-medium">₱{leaseUnit.rentAmount.toLocaleString()}</span>
-                            </div>
-                          </div>
-                          <RateHistoryCompact history={history} maxItems={3} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-          )}
-        </TabsContent>
+          </div>
+        )}
 
-        <TabsContent value="payments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5" />
-                <span>Payment History</span>
-              </CardTitle>
-              <CardDescription>
-                Payment records for this lease
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Payments Tab */}
+        {activeTab === 'payments' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Payment History</h3>
               {lease.payments.length === 0 ? (
-                <div className="text-center py-8">
-                  <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-semibold">No payments recorded</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    Payment history will appear here once payments are made.
-                  </p>
+                <div className="text-center py-12 border border-dashed border-border bg-muted/5">
+                  <DollarSign className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm text-muted-foreground">No payments recorded</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {lease.payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-green-100 p-3 rounded">
-                          <DollarSign className="h-5 w-5 text-green-600" />
+                    <div key={payment.id} className="flex items-center justify-between p-4 border border-border bg-muted/5">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-green-500/10 border border-green-500/20">
+                          <DollarSign className="h-4 w-4 text-green-600" />
                         </div>
                         <div>
-                          <h3 className="font-medium">₱{payment.amount.toLocaleString()}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {payment.paymentType} • {payment.paymentMethod}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(payment.paymentDate), 'MMMM dd, yyyy')}
-                          </p>
+                          <div className="font-mono font-bold text-sm">₱{payment.amount.toLocaleString()}</div>
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{payment.paymentType} • {payment.paymentMethod}</div>
                         </div>
                       </div>
-                      <Badge className={getPaymentStatusColor(payment.paymentStatus)}>
-                        {payment.paymentStatus}
-                      </Badge>
+                      <div className="text-right">
+                        <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-widest mb-1", getPaymentStatusColor(payment.paymentStatus))}>
+                          {payment.paymentStatus}
+                        </Badge>
+                        <div className="text-[10px] font-mono text-muted-foreground">{format(new Date(payment.paymentDate), 'MMM dd, yyyy')}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
-        <TabsContent value="documents" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <FileCheck className="h-5 w-5" />
-                <span>Lease Documents</span>
-              </CardTitle>
-              <CardDescription>
-                Documents related to this lease agreement
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <FileCheck className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No documents uploaded</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Lease documents and attachments will appear here.
-                </p>
-                <Button className="mt-4" variant="outline">
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="space-y-4">
+            <div className="border border-border bg-background p-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6">Lease Documents</h3>
+              <div className="text-center py-12 border border-dashed border-border bg-muted/5">
+                <FileCheck className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground mb-4">No documents uploaded</p>
+                <Button variant="outline" className="rounded-none h-8 text-xs font-mono uppercase">
                   Upload Document
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Terminate Lease Dialog */}
       <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-none border-border">
           <DialogHeader>
-            <DialogTitle>Terminate Lease</DialogTitle>
+            <DialogTitle className="font-mono uppercase tracking-wide">Terminate Lease</DialogTitle>
             <DialogDescription>
-              Are you sure you want to terminate this lease? This action will mark the lease as terminated and make the spaces available.
+              Mark this lease as terminated. This will free up the associated spaces.
             </DialogDescription>
           </DialogHeader>
           <Form {...terminationForm}>
@@ -895,11 +729,12 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                 name="reason"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Termination Reason</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wide">Termination Reason</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Please provide a reason for terminating this lease..."
+                        placeholder="Please provide a reason..."
                         {...field}
+                        className="rounded-none border-border min-h-[100px]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -907,18 +742,11 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
                 )}
               />
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowTerminateDialog(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowTerminateDialog(false)} className="rounded-none border-border">
                   Cancel
                 </Button>
-                <Button type="submit" variant="destructive" disabled={isSaving}>
-                  {isSaving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Terminating...
-                    </>
-                  ) : (
-                    'Terminate Lease'
-                  )}
+                <Button type="submit" variant="destructive" disabled={isSaving} className="rounded-none bg-orange-600 hover:bg-orange-700">
+                  {isSaving ? "Processing..." : "Confirm Termination"}
                 </Button>
               </DialogFooter>
             </form>

@@ -1,4 +1,3 @@
-// app-sidebar.tsx
 "use client"
 
 import * as React from "react"
@@ -260,26 +259,28 @@ export function AppSidebar({
   }), [session.user])
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
-          <Image 
-            src='/rdrdc-logo.png' 
-            height={40} 
-            width={40} 
-            alt="rdrdc-logo"
-            className="shrink-0 object-contain group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
-          />
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-bold">RDRDC</span>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Property Management System</span>
+    <Sidebar collapsible="icon" className="border-r border-border bg-background" {...props}>
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:p-2 transition-all">
+        <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:justify-center">
+          <div className="h-8 w-8 shrink-0 bg-primary/10 flex items-center justify-center rounded-none group-data-[collapsible=icon]:rounded-md transition-all">
+            <Image 
+              src='/rdrdc-logo.png' 
+              height={24} 
+              width={24} 
+              alt="rdrdc-logo"
+              className="object-contain"
+            />
+          </div>
+          <div className="flex flex-col flex-1 min-w-0 transition-all duration-300 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden">
+            <span className="font-mono font-bold tracking-tight text-sm leading-none text-foreground truncate">RDRDC</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1 truncate">Properties</span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="gap-0 px-2 group-data-[collapsible=icon]:px-1 transition-all">
         <NavMain items={navItems} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2">
         <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />

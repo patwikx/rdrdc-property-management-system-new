@@ -13,7 +13,7 @@ import {
   type RateChangeRequestWithDetails,
   type RateOverrideWithDetails
 } from "@/lib/actions/rate-actions"
-import { Clock, CheckCircle, XCircle, RefreshCw, Shield, TrendingUp } from "lucide-react"
+import { Clock, CheckCircle, RefreshCw, Shield, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
 
 export default function ApprovalsPage() {

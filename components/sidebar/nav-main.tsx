@@ -1,4 +1,3 @@
-// nav-main.tsx
 "use client"
 
 import * as React from "react"
@@ -40,21 +39,21 @@ interface NavMainProps {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname()
 
-  // Check if current item or any of its subitems is active
   const isItemActive = React.useCallback((item: NavMainItem): boolean => {
     if (pathname === item.url) return true
     return item.items?.some(subItem => pathname === subItem.url) ?? false
   }, [pathname])
 
-  // Check if subitem is active
   const isSubItemActive = React.useCallback((url: string): boolean => {
     return pathname === url
   }, [pathname])
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarGroupLabel className="text-xs font-mono text-muted-foreground/70 uppercase tracking-widest px-2 mb-2">
+        Main Menu
+      </SidebarGroupLabel>
+      <SidebarMenu className="gap-1">
         {items.map((item) => {
           const itemIsActive = isItemActive(item)
           const hasSubItems = item.items && item.items.length > 0
@@ -73,16 +72,17 @@ export function NavMain({ items }: NavMainProps) {
                       <SidebarMenuButton 
                         tooltip={item.title}
                         className={cn(
-                          itemIsActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                          "rounded-none h-9 font-mono text-xs tracking-wide transition-all hover:bg-muted",
+                          itemIsActive && "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
                         )}
                       >
-                        {item.icon && <item.icon />}
+                        {item.icon && <item.icon className="h-4 w-4 mr-2" />}
                         <span>{item.title}</span>
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        <ChevronRight className="ml-auto h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-70" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub>
+                      <SidebarMenuSub className="border-l border-border/50 ml-4 pl-2 my-1 space-y-0.5">
                         {item.items?.map((subItem) => {
                           const subItemIsActive = isSubItemActive(subItem.url)
                           return (
@@ -90,7 +90,8 @@ export function NavMain({ items }: NavMainProps) {
                               <SidebarMenuSubButton 
                                 asChild
                                 className={cn(
-                                  subItemIsActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                                  "rounded-none h-8 font-mono text-[11px] hover:bg-muted",
+                                  subItemIsActive && "bg-muted font-bold text-primary"
                                 )}
                               >
                                 <Link href={subItem.url}>
@@ -107,12 +108,13 @@ export function NavMain({ items }: NavMainProps) {
                   <SidebarMenuButton 
                     tooltip={item.title}
                     className={cn(
-                      itemIsActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                      "rounded-none h-9 font-mono text-xs tracking-wide transition-all hover:bg-muted",
+                      itemIsActive && "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
                     )}
                     asChild
                   >
                     <Link href={item.url}>
-                      {item.icon && <item.icon />}
+                      {item.icon && <item.icon className="h-4 w-4" />}
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

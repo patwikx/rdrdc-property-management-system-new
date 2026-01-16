@@ -119,7 +119,10 @@ export interface TenantWithDetails {
     dueDate: Date
     checkNo: string
     amount: number
-    status: string
+    status: "Open" | "Deposited" | "RETURNED" | "Bounced" | "Cancelled"
+    remarks: string | null
+    docDate: Date
+    updatedAt: Date
   }[]
   notices: {
     id: string

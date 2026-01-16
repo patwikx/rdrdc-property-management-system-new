@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { PropertyTaxUpdateSchema, type PropertyTaxUpdateData } from "@/lib/validations/property-tax-schema"
 import { updatePropertyTax } from "@/lib/actions/property-tax-actions"
-import { Save, CalendarIcon } from "lucide-react"
+import { Save, CalendarIcon, Hash, DollarSign, Calendar as CalendarIconLucide } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -93,17 +93,20 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* First Row - Basic Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <FormField
               control={form.control}
               name="taxYear"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Tax Year *</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <CalendarIconLucide className="h-3 w-3" />
+                    Tax Year
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -112,7 +115,7 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
                       {...field}
                       onChange={(e) => field.onChange(Number.parseInt(e.target.value) || new Date().getFullYear())}
                       disabled={isLoading}
-                      className="h-12 text-base"
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                     />
                   </FormControl>
                   <FormMessage />
@@ -125,13 +128,16 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
               name="TaxDecNo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Tax Declaration Number *</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <Hash className="h-3 w-3" />
+                    Tax Dec No
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., TD-2024-001234"
+                      placeholder="E.G. TD-2024-001234"
                       {...field}
                       disabled={isLoading}
-                      className="h-12 text-base"
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                     />
                   </FormControl>
                   <FormMessage />
@@ -144,12 +150,12 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
               name="taxAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Tax Amount *</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <DollarSign className="h-3 w-3" />
+                    Amount
+                  </FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground">
-                        ₱
-                      </span>
                       <Input
                         type="number"
                         step="0.01"
@@ -158,8 +164,11 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
                         {...field}
                         onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                         disabled={isLoading}
-                        className="h-12 pl-10 text-base"
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10 pl-8"
                       />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">
+                        ₱
+                      </span>
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -169,36 +178,37 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
           </div>
 
           {/* Second Row - Due Date & Payment Status */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="dueDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Due Date *</FormLabel>
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono mb-2">Due Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={cn(
-                            "h-12 text-base w-full justify-start text-left font-normal",
+                            "rounded-none h-10 font-mono text-sm border-border w-full justify-start text-left font-normal px-3",
                             !field.value && "text-muted-foreground",
                           )}
                           disabled={isLoading}
                         >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          <CalendarIcon className="mr-3 h-4 w-4 shrink-0" />
+                          {field.value ? format(field.value, "PPP") : <span>PICK_DATE</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date("1900-01-01") || isLoading}
                         initialFocus
+                        className="rounded-none"
                       />
                     </PopoverContent>
                   </Popover>
@@ -211,24 +221,30 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
               control={form.control}
               name="isPaid"
               render={({ field }) => (
-                <FormItem className="flex flex-col justify-center">
-                  <FormLabel className="text-sm font-medium">Payment Status</FormLabel>
-                  <div className="flex items-center space-x-3 h-12 p-4 border rounded-md">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
-                    <span className="text-base">Mark as Already Paid</span>
-                  </div>
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 border border-border px-4 h-10 bg-muted/5 mt-auto">
+                  <FormControl>
+                    <Checkbox 
+                      checked={field.value} 
+                      onCheckedChange={field.onChange} 
+                      disabled={isLoading} 
+                      className="rounded-none h-4 w-4 border-muted-foreground"
+                    />
+                  </FormControl>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-foreground font-mono cursor-pointer flex-1">
+                    Mark as Paid Record
+                  </FormLabel>
                 </FormItem>
               )}
             />
           </div>
 
           {/* Tax Type Selection */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-dashed border-border/50">
             <FormField
               control={form.control}
               name="isAnnual"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-6 border rounded-lg">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -240,11 +256,12 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
                         }
                       }}
                       disabled={isLoading}
+                      className="rounded-none"
                     />
                   </FormControl>
                   <div>
-                    <FormLabel className="font-medium text-base">Annual Tax Assessment</FormLabel>
-                    <FormDescription className="text-sm">Full year tax assessment (January - December)</FormDescription>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wide">Annual Assessment</FormLabel>
+                    <FormDescription className="text-[10px] font-mono">Full year coverage</FormDescription>
                   </div>
                 </FormItem>
               )}
@@ -254,7 +271,7 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
               control={form.control}
               name="isQuarterly"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-6 border rounded-lg">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -267,37 +284,38 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
                         }
                       }}
                       disabled={isLoading}
+                      className="rounded-none"
                     />
                   </FormControl>
                   <div>
-                    <FormLabel className="font-medium text-base">Quarterly Tax Payment</FormLabel>
-                    <FormDescription className="text-sm">Quarterly installment payment</FormDescription>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wide">Quarterly Payment</FormLabel>
+                    <FormDescription className="text-[10px] font-mono">Installment basis</FormDescription>
                   </div>
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Quarter Selection (if quarterly is selected) */}
+          {/* Quarter Selection */}
           {isQuarterly && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="animate-in fade-in slide-in-from-top-2">
               <FormField
                 control={form.control}
                 name="whatQuarter"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Select Quarter *</FormLabel>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Select Quarter</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""} disabled={isLoading}>
                       <FormControl>
-                        <SelectTrigger className="h-12 text-base">
-                          <SelectValue placeholder="Choose quarter" />
+                        <SelectTrigger className="rounded-none border-border h-10 font-mono text-sm">
+                          <SelectValue placeholder="CHOOSE_QUARTER" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Q1">Q1 - First Quarter (January - March)</SelectItem>
-                        <SelectItem value="Q2">Q2 - Second Quarter (April - June)</SelectItem>
-                        <SelectItem value="Q3">Q3 - Third Quarter (July - September)</SelectItem>
-                        <SelectItem value="Q4">Q4 - Fourth Quarter (October - December)</SelectItem>
+                      <SelectContent className="rounded-none border-border">
+                        <SelectItem value="Q1" className="font-mono text-xs">Q1 (JAN-MAR)</SelectItem>
+                        <SelectItem value="Q2" className="font-mono text-xs">Q2 (APR-JUN)</SelectItem>
+                        <SelectItem value="Q3" className="font-mono text-xs">Q3 (JUL-SEP)</SelectItem>
+                        <SelectItem value="Q4" className="font-mono text-xs">Q4 (OCT-DEC)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -307,21 +325,21 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
             </div>
           )}
 
-          {/* Remarks - Single Row */}
+          {/* Remarks */}
           <FormField
             control={form.control}
             name="remarks"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Additional Notes (Optional)</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Notes / Remarks</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Any additional notes or comments..."
+                    placeholder="ADDITIONAL_INFORMATION..."
                     {...field}
                     value={field.value || ""}
                     disabled={isLoading}
                     rows={2}
-                    className="resize-none"
+                    className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary resize-none"
                   />
                 </FormControl>
                 <FormMessage />
@@ -330,24 +348,14 @@ export function EditTaxForm({ tax, onSuccess, onCancel }: EditTaxFormProps) {
           />
 
           {/* Submit Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-border">
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide border-border">
                 Cancel
               </Button>
             )}
-            <Button type="submit" disabled={isLoading} className="min-w-[140px]">
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Update Tax Record
-                </>
-              )}
+            <Button type="submit" disabled={isLoading} className="min-w-[140px] rounded-none h-10 font-mono text-xs uppercase tracking-wide bg-primary text-primary-foreground hover:bg-primary/90">
+              {isLoading ? "UPDATING..." : <><Save className="h-4 w-4 mr-2" /> UPDATE_RECORD</>}
             </Button>
           </div>
         </form>

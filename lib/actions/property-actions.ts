@@ -63,6 +63,7 @@ export interface PropertyWithDetails {
   documents: {
     id: string
     name: string
+    description: string | null
     documentType: string
     fileUrl: string
     createdAt: Date
@@ -433,6 +434,7 @@ export async function getPropertyById(id: string): Promise<PropertyWithDetails |
         select: {
           id: true,
           name: true,
+          description: true,
           documentType: true,
           fileUrl: true,
           createdAt: true,
@@ -563,6 +565,7 @@ export async function getPropertyByCode(propertyCode: string): Promise<PropertyW
         select: {
           id: true,
           name: true,
+          description: true,
           documentType: true,
           fileUrl: true,
           createdAt: true,
@@ -622,4 +625,57 @@ export async function getPropertyByCode(propertyCode: string): Promise<PropertyW
   })
 
   return property
+}
+
+export async function getPropertyStats() {
+  const session = await auth()
+  
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
+  const [
+    totalProperties,
+    totalAreaResult,
+    totalUnits,
+    occupiedUnits,
+    vacantUnits,
+    monthlyRevenueResult
+  ] = await Promise.all([
+    prisma.property.count(),
+    prisma.property.aggregate({
+      _sum: {
+        leasableArea: true
+      }
+    }),
+    prisma.unit.count(),
+    prisma.unit.count({
+      where: {
+        status: 'OCCUPIED'
+      }
+    }),
+    prisma.unit.count({
+      where: {
+        status: 'VACANT'
+      }
+    }),
+    prisma.lease.aggregate({
+      _sum: {
+        totalRentAmount: true
+      },
+      where: {
+        status: 'ACTIVE'
+      }
+    })
+  ])
+
+  return {
+    totalProperties,
+    totalArea: totalAreaResult._sum.leasableArea || 0,
+    totalUnits,
+    occupiedUnits,
+    vacantUnits,
+    monthlyRevenue: monthlyRevenueResult._sum.totalRentAmount || 0,
+    occupancyRate: totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0
+  }
 }

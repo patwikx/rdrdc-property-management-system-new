@@ -1,4 +1,4 @@
-// app/tenants/create/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form } from "@/components/ui/form"
-import { Save } from "lucide-react"
+import { Save, User, Info, CheckCircle, Activity, LayoutGrid, ArrowLeft, ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { createTenantAction, createTenantWithLeaseAction } from "@/lib/actions/tenant-server-actions"
@@ -20,10 +20,19 @@ import { ContactInfoSection } from "@/components/tenant-form/contact-info"
 import { BusinessInfoSection } from "@/components/tenant-form/business-info"
 import { LeaseSetupSection } from "@/components/tenant-form/lease-setup-section"
 import { TenantPreview } from "@/components/tenant-form/tenant-preview"
+import { motion, AnimatePresence } from "framer-motion"
+
+const workflowSteps = [
+  { step: 1, title: "Basic Profile", fields: ['status', 'bpCode', 'firstName', 'lastName', 'homeAddress', 'facebookName'] },
+  { step: 2, title: "Contact Details", fields: ['email', 'phone', 'emergencyContactName', 'emergencyContactPhone'] },
+  { step: 3, title: "Business Info", fields: ['company', 'businessName', 'natureOfBusiness', 'yearsInBusiness', 'positionInCompany', 'officeAddress', 'facebookPage', 'website', 'isStore', 'isOffice', 'isFranchise', 'bankName1', 'bankAddress1', 'bankName2', 'bankAddress2', 'otherBusinessName', 'otherBusinessAddress'] },
+  { step: 4, title: "Lease Setup", fields: ['createLease', 'propertyId', 'selectedUnits', 'startDate', 'endDate', 'totalRentAmount', 'securityDeposit', 'leaseStatus'] },
+]
 
 export default function CreateTenantPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
   const [properties, setProperties] = useState<Array<{id: string, propertyName: string}>>([])
   const [selectedProperty, setSelectedProperty] = useState<PropertyWithDetails | null>(null)
   const [selectedUnitsData, setSelectedUnitsData] = useState<SelectedUnitData[]>([])
@@ -35,15 +44,12 @@ export default function CreateTenantPage() {
       firstName: "",
       lastName: "",
       status: 'PENDING',
-      // Personal Information
       homeAddress: "",
       facebookName: "",
-      // Contact Info
       email: "",
       phone: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
-      // Business Info
       company: "",
       businessName: "",
       natureOfBusiness: "",
@@ -56,15 +62,12 @@ export default function CreateTenantPage() {
       isStore: false,
       isOffice: false,
       isFranchise: false,
-      // Bank Details
       bankName1: "",
       bankAddress1: "",
       bankName2: "",
       bankAddress2: "",
-      // Other Business
       otherBusinessName: "",
       otherBusinessAddress: "",
-      // Lease Info
       createLease: false,
       propertyId: "",
       selectedUnits: [],
@@ -202,12 +205,34 @@ export default function CreateTenantPage() {
     })))
   }
 
+  const handleNext = async () => {
+    const fields = workflowSteps[currentStep - 1].fields as (keyof TenantFormData)[]
+    const isValid = await form.trigger(fields)
+    
+    if (isValid && currentStep < workflowSteps.length) {
+      setCurrentStep(curr => curr + 1)
+    }
+  }
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(curr => curr - 1)
+    }
+  }
+
   async function onSubmit(data: TenantFormData) {
+    // Double-check we're on the final step before submitting
+    if (currentStep !== workflowSteps.length) {
+      console.warn('Form submission blocked - not on final step')
+      return
+    }
+    
     setIsLoading(true)
     
     try {
       if (data.createLease && data.propertyId && data.selectedUnits && data.selectedUnits.length > 0) {
         const result = await createTenantWithLeaseAction({
+          // ... (map all fields as before)
           bpCode: data.bpCode,
           firstName: data.firstName,
           lastName: data.lastName,
@@ -218,10 +243,8 @@ export default function CreateTenantPage() {
           company: data.company,
           businessName: data.businessName,
           status: data.status,
-          // Personal Information
           homeAddress: data.homeAddress,
           facebookName: data.facebookName,
-          // Business Information
           natureOfBusiness: data.natureOfBusiness,
           yearsInBusiness: data.yearsInBusiness,
           positionInCompany: data.positionInCompany,
@@ -232,12 +255,10 @@ export default function CreateTenantPage() {
           isStore: data.isStore,
           isOffice: data.isOffice,
           isFranchise: data.isFranchise,
-          // Bank Details
           bankName1: data.bankName1,
           bankAddress1: data.bankAddress1,
           bankName2: data.bankName2,
           bankAddress2: data.bankAddress2,
-          // Other Business
           otherBusinessName: data.otherBusinessName,
           otherBusinessAddress: data.otherBusinessAddress,
           createLease: true,
@@ -259,6 +280,7 @@ export default function CreateTenantPage() {
         toast.success("Tenant and lease created successfully!")
       } else {
         const tenantResult = await createTenantAction({
+          // ... (map all fields as before)
           bpCode: data.bpCode,
           firstName: data.firstName,
           lastName: data.lastName,
@@ -269,10 +291,8 @@ export default function CreateTenantPage() {
           company: data.company,
           businessName: data.businessName,
           status: data.status,
-          // Personal Information
           homeAddress: data.homeAddress,
           facebookName: data.facebookName,
-          // Business Information
           natureOfBusiness: data.natureOfBusiness,
           yearsInBusiness: data.yearsInBusiness,
           positionInCompany: data.positionInCompany,
@@ -283,12 +303,10 @@ export default function CreateTenantPage() {
           isStore: data.isStore,
           isOffice: data.isOffice,
           isFranchise: data.isFranchise,
-          // Bank Details
           bankName1: data.bankName1,
           bankAddress1: data.bankAddress1,
           bankName2: data.bankName2,
           bankAddress2: data.bankAddress2,
-          // Other Business
           otherBusinessName: data.otherBusinessName,
           otherBusinessAddress: data.otherBusinessAddress,
         })
@@ -324,73 +342,168 @@ export default function CreateTenantPage() {
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Add New Tenant</h2>
-            <p className="text-muted-foreground">
-              Create a new tenant profile with optional lease setup
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Create New Tenant</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Step {currentStep} of {workflowSteps.length}: {workflowSteps[currentStep-1].title}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/tenants">
+            <Button variant="outline" disabled={isLoading} className="rounded-none h-9 px-4 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+              Cancel
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tenant Details</CardTitle>
-          <CardDescription>
-            Configure the tenant information and optional lease setup
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <TenantStatusSelector form={form} />
-                <BasicInfoSection form={form} isLoading={isLoading} />
-                <ContactInfoSection form={form} isLoading={isLoading} />
-                <BusinessInfoSection form={form} isLoading={isLoading} />
-                <LeaseSetupSection
-                  form={form}
-                  isLoading={isLoading}
-                  properties={properties}
-                  selectedProperty={selectedProperty}
-                  selectedUnitsData={selectedUnitsData}
-                  onToggleUnit={toggleUnitSelection}
-                  onUpdateUnitRent={updateUnitRent}
-                  onUpdateFloorRate={updateFloorRate}
-                />
-                <TenantPreview 
-                  form={form} 
-                  selectedProperty={selectedProperty}
-                  selectedUnitsData={selectedUnitsData}
-                />
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Form */}
+        <div className="lg:col-span-2">
+          <Form {...form}>
+            <form id="tenant-form" onSubmit={(e) => {
+              e.preventDefault()
+              if (currentStep === workflowSteps.length) {
+                form.handleSubmit(onSubmit)(e)
+              } else {
+                handleNext()
+              }
+            }} className="space-y-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
+                >
+                  {currentStep === 1 && (
+                    <>
+                      <TenantStatusSelector form={form} />
+                      <BasicInfoSection form={form} isLoading={isLoading} />
+                    </>
+                  )}
+                  {currentStep === 2 && (
+                    <ContactInfoSection form={form} isLoading={isLoading} />
+                  )}
+                  {currentStep === 3 && (
+                    <BusinessInfoSection form={form} isLoading={isLoading} />
+                  )}
+                  {currentStep === 4 && (
+                    <LeaseSetupSection
+                      form={form}
+                      isLoading={isLoading}
+                      properties={properties}
+                      selectedProperty={selectedProperty}
+                      selectedUnitsData={selectedUnitsData}
+                      onToggleUnit={toggleUnitSelection}
+                      onUpdateUnitRent={updateUnitRent}
+                      onUpdateFloorRate={updateFloorRate}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
 
-                <div className="flex items-center justify-end space-x-3 pt-6">
-                  <Link href="/tenants">
-                    <Button variant="outline" disabled={isLoading}>
-                      Cancel
-                    </Button>
-                  </Link>
-                  <Button type="submit" disabled={isLoading} className="min-w-[120px]">
+              {/* Navigation Actions */}
+              <div className="flex items-center justify-between pt-6 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrev}
+                  disabled={currentStep === 1 || isLoading}
+                  className="rounded-none h-10 px-6 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted"
+                >
+                  <ArrowLeft className="h-3 w-3 mr-2" />
+                  Back
+                </Button>
+
+                {currentStep === workflowSteps.length ? (
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="rounded-none h-10 px-8 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
                         Creating...
                       </>
                     ) : (
                       <>
-                        <Save className="h-4 w-4 mr-2" />
+                        <Save className="h-3 w-3 mr-2" />
                         Create Tenant
                       </>
                     )}
                   </Button>
+                ) : (
+                  <Button 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleNext()
+                    }}
+                    className="rounded-none h-10 px-6 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Next
+                    <ArrowRight className="h-3 w-3 ml-2" />
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        </div>
+
+        {/* Sidebar Guide */}
+        <div className="space-y-6">
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Progress</h3>
+            </div>
+            <div className="space-y-0 relative">
+              <div className="absolute left-3.5 top-2 bottom-2 w-px bg-border" />
+              {workflowSteps.map((step) => (
+                <div key={step.step} className="flex items-center gap-4 relative py-2">
+                  <div className={`w-7 h-7 flex items-center justify-center rounded-none border text-xs font-mono z-10 transition-colors ${
+                    currentStep >= step.step
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-background text-muted-foreground border-border'
+                  }`}>
+                    {currentStep > step.step ? <Check className="h-3 w-3" /> : step.step}
+                  </div>
+                  <span className={`text-xs font-mono uppercase tracking-wide transition-colors ${
+                    currentStep === step.step ? 'text-foreground font-bold' : 
+                    currentStep > step.step ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </span>
                 </div>
-              </form>
-            </Form>
+              ))}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Helpful Tips</h3>
+            </div>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>Fill out all required fields marked with * to proceed.</span>
+              </li>
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>You can review the lease details in the final step.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -49,23 +49,6 @@ const getResultTypeLabel = (type: SearchResultType): string => {
   }
 }
 
-const getResultTypeBadgeVariant = (type: SearchResultType): "default" | "secondary" | "destructive" | "outline" => {
-  switch (type) {
-    case 'property':
-      return 'default'
-    case 'tenant':
-      return 'secondary'
-    case 'unit':
-      return 'outline'
-    case 'property-title':
-      return 'secondary'
-    case 'document':
-      return 'outline'
-    default:
-      return 'outline'
-  }
-}
-
 export function GlobalSearch() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
@@ -135,39 +118,40 @@ export function GlobalSearch() {
     <>
       <Button
         variant="outline"
-        className="relative h-9 w-9 p-0 xl:h-10 xl:w-60 xl:justify-start xl:px-3 xl:py-2"
+        className="relative h-9 w-9 p-0 xl:h-10 xl:w-64 xl:justify-start xl:px-4 xl:py-2 rounded-none border-border bg-background hover:bg-muted/10 font-mono text-muted-foreground transition-all"
         onClick={() => setOpen(true)}
       >
-        <Search className="h-4 w-4 xl:mr-2" />
-        <span className="hidden xl:inline-flex">Search everything...</span>
-        <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex">
+        <Search className="h-4 w-4 xl:mr-3" />
+        <span className="hidden xl:inline-flex text-xs uppercase tracking-widest">Search_Database...</span>
+        <kbd className="pointer-events-none absolute right-2 top-2.5 hidden h-5 select-none items-center gap-1 bg-muted/20 px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex border border-border">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Search properties, tenants, units, titles, documents..."
+          placeholder="QUERY_DATABASE..."
           value={query}
           onValueChange={setQuery}
+          className="font-mono text-xs uppercase tracking-wider rounded-none border-none focus:ring-0"
         />
-        <CommandList>
+        <CommandList className="rounded-none border-t border-border bg-background">
           {isLoading && (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span className="ml-3 text-xs font-mono text-muted-foreground uppercase tracking-widest">Scanning...</span>
             </div>
           )}
           
           {!isLoading && query && results.length === 0 && (
-            <CommandEmpty>No results found for &quot;{query}&quot;</CommandEmpty>
+            <CommandEmpty className="py-8 font-mono text-xs text-muted-foreground uppercase tracking-widest">No_Data_Found</CommandEmpty>
           )}
 
           {!isLoading && groupedResults.map(([type, items]) => {
             const typeLabel = getResultTypeLabel(type as SearchResultType)
             
             return (
-              <CommandGroup key={type} heading={`${typeLabel}s`}>
+              <CommandGroup key={type} heading={typeLabel.toUpperCase()} className="font-mono [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-muted-foreground/70">
                 {items.map((result) => {
                   const ResultIcon = getResultIcon(result.type)
                   return (
@@ -175,28 +159,25 @@ export function GlobalSearch() {
                       key={result.id}
                       value={`${result.title} ${result.subtitle || ''}`}
                       onSelect={() => handleSelect(result)}
-                      className="flex items-center gap-3 px-3 py-3"
+                      className="flex items-center gap-3 px-3 py-3 rounded-none aria-selected:bg-primary/10 aria-selected:text-primary group border-l-2 border-transparent aria-selected:border-primary transition-colors cursor-pointer"
                     >
-                      <ResultIcon className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1 space-y-1">
+                      <ResultIcon className="h-4 w-4 text-muted-foreground group-aria-selected:text-primary" />
+                      <div className="flex-1 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{result.title}</span>
-                          <Badge variant={getResultTypeBadgeVariant(result.type)} className="text-xs">
-                            {getResultTypeLabel(result.type)}
+                          <span className="font-bold text-sm tracking-tight">{result.title}</span>
+                          <Badge variant="outline" className="text-[9px] rounded-none border-border h-4 px-1 font-normal text-muted-foreground">
+                            {getResultTypeLabel(result.type).toUpperCase()}
                           </Badge>
                         </div>
                         {result.subtitle && (
-                          <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                          <p className="text-xs text-muted-foreground group-aria-selected:text-primary/70 font-mono">{result.subtitle}</p>
                         )}
                         {/* Additional context based on type */}
                         {'propertyCode' in result && (
-                          <p className="text-xs text-muted-foreground">Code: {result.propertyCode}</p>
+                          <p className="text-[10px] text-muted-foreground/50 font-mono">CODE: {result.propertyCode}</p>
                         )}
                         {'bpCode' in result && (
-                          <p className="text-xs text-muted-foreground">BP: {result.bpCode}</p>
-                        )}
-                        {'titleNo' in result && (
-                          <p className="text-xs text-muted-foreground">Title: {result.titleNo}</p>
+                          <p className="text-[10px] text-muted-foreground/50 font-mono">BP: {result.bpCode}</p>
                         )}
                       </div>
                     </CommandItem>
