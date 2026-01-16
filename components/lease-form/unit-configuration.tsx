@@ -3,7 +3,6 @@ import { X, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AvailableUnit } from "@/lib/actions/lease-actions"
 
@@ -37,11 +36,11 @@ export function UnitConfiguration({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4 pt-4 border-t border-dashed border-border">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">Selected Spaces Configuration</h4>
-        <Badge variant="secondary">
-          {selectedUnitsData.length} space{selectedUnitsData.length !== 1 ? 's' : ''} selected
+        <h4 className="text-xs font-bold uppercase tracking-widest">Configuration</h4>
+        <Badge variant="secondary" className="rounded-none text-[9px] uppercase tracking-wider">
+          {selectedUnitsData.length} Selected
         </Badge>
       </div>
 
@@ -50,138 +49,110 @@ export function UnitConfiguration({
           const hasFloors = unitData.unit.unitFloors && unitData.unit.unitFloors.length > 0
 
           return (
-            <Card key={unitData.unit.id} className="overflow-hidden">
-              <CardHeader className="p-4 pb-2 mt-[-20px] mb-[-15px]">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <CardTitle className="text-base">Space: {unitData.unit.unitNumber}</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {unitData.unit.property.propertyName}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => onRemoveUnit(unitData.unit.id, e)}
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <div key={unitData.unit.id} className="border border-border bg-background group hover:border-primary/30 transition-colors">
+              {/* Header */}
+              <div className="flex items-center justify-between p-3 border-b border-border/50 bg-muted/5">
+                <div className="flex items-center space-x-2">
+                  <Building className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-mono font-bold text-sm">SPACE {unitData.unit.unitNumber}</span>
                 </div>
-              </CardHeader>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => onRemoveUnit(unitData.unit.id, e)}
+                  className="h-6 w-6 p-0 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
 
-              <CardContent className="p-4 pt-0 space-y-3">
-
+              <div className="p-4 space-y-4">
+                {/* Total Rent Input */}
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                    Total Monthly Rent
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">
+                      ₱
+                    </span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={unitData.customRentAmount || 0}
+                      onChange={(e) => onUpdateUnitRent(unitData.unit.id, parseFloat(e.target.value) || 0)}
+                      className="pl-8 h-9 rounded-none border-border font-mono text-xs focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </div>
+                </div>
 
                 {hasFloors && (
-                  <div className="space-y-3 pt-3 border-t">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium">Floor-by-Floor Rates</Label>
-                      <Badge variant="outline" className="text-xs">
-                        {unitData.unit.unitFloors?.length} floor{unitData.unit.unitFloors?.length !== 1 ? 's' : ''}
-                      </Badge>
-                    </div>
+                  <div className="space-y-3 pt-3 border-t border-dashed border-border/50">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono block">
+                      Floor Rate Adjustments
+                    </Label>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {unitData.unit.unitFloors?.map((floor) => {
                         const floorOverride = unitData.floorOverrides.find(f => f.floorId === floor.id)
                         const currentRate = floorOverride?.customRate ?? floor.rate ?? 0
                         const currentRent = floorOverride?.customRent ?? floor.rent ?? 0
 
                         return (
-                          <div key={floor.id} className="p-3 border rounded-lg bg-muted/30 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-xs font-medium">Floor: {floor.floorType}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Area: {floor.area} sqm
-                                </p>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                ₱{currentRent.toLocaleString()}
-                              </Badge>
+                          <div key={floor.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border border-border bg-muted/5 items-center">
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block mb-0.5">Type</span>
+                              <p className="text-xs font-bold font-mono">{floor.floorType}</p>
+                            </div>
+                            
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block mb-0.5">Area</span>
+                              <p className="text-xs font-mono">{floor.area} sqm</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="space-y-1">
-                                <Label htmlFor={`rate-${floor.id}`} className="text-xs">
-                                  Rate per sqm
-                                </Label>
-                                <div className="relative">
-                                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">
-                                    ₱
-                                  </span>
-                                  <Input
-                                    id={`rate-${floor.id}`}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={currentRate}
-                                    onChange={(e) => 
-                                      onUpdateFloorRate(
-                                        unitData.unit.id,
-                                        floor.id,
-                                        parseFloat(e.target.value) || 0,
-                                        floor.area
-                                      )
-                                    }
-                                    className="pl-6 h-8 text-xs"
-                                  />
-                                </div>
+                            <div className="md:col-span-2 grid grid-cols-2 gap-2">
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-[9px] text-muted-foreground">₱</span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={currentRate}
+                                  onChange={(e) => 
+                                    onUpdateFloorRate(
+                                      unitData.unit.id,
+                                      floor.id,
+                                      parseFloat(e.target.value) || 0,
+                                      floor.area
+                                    )
+                                  }
+                                  className="pl-5 h-7 text-[10px] font-mono rounded-none border-border"
+                                  placeholder="RATE"
+                                />
                               </div>
-
-                              <div className="space-y-1">
-                                <Label className="text-xs">Monthly Rent</Label>
-                                <div className="h-8 px-3 py-2 border rounded-md bg-muted flex items-center text-xs">
-                                  ₱{currentRent.toLocaleString()}
-                                </div>
+                              <div className="flex items-center justify-end px-2 h-7 bg-muted/20 border border-border">
+                                <span className="text-[10px] font-mono">₱{currentRent.toLocaleString()}</span>
                               </div>
                             </div>
                           </div>
                         )
                       })}
                     </div>
-
-                    <div className="pt-2 border-t">
-                <div className="space-y-2">
-                  <Label htmlFor={`total-rent-${unitData.unit.id}`} className="text-xs">
-                    Total Monthly Rent
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                      ₱
-                    </span>
-                    <Input
-                      id={`total-rent-${unitData.unit.id}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={unitData.customRentAmount || 0}
-                      onChange={(e) => onUpdateUnitRent(unitData.unit.id, parseFloat(e.target.value) || 0)}
-                      className="pl-8 h-9"
-                    />
-                  </div>
-                </div>
-                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )
         })}
       </div>
 
-      <div className="p-4 border rounded-lg bg-muted/20">
-        <div className="flex justify-between items-center">
-          <span className="font-medium">Total Monthly Rent</span>
-          <span className="text-xl font-bold text-primary">
-            ₱{selectedUnitsData.reduce((sum, u) => sum + u.customRentAmount, 0).toLocaleString()}
-          </span>
-        </div>
+      <div className="p-4 border border-border bg-muted/10 flex justify-between items-center mt-4">
+        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Monthly Rent</span>
+        <span className="text-lg font-bold font-mono text-primary">
+          ₱{selectedUnitsData.reduce((sum, u) => sum + u.customRentAmount, 0).toLocaleString()}
+        </span>
       </div>
     </div>
   )

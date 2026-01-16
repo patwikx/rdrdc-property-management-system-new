@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Plus, Search, Building, Phone, Mail, X, Briefcase, ChevronRight } from "lucide-react"
+import { User, Plus, Search, Building, Phone, Mail, X, Briefcase, ChevronRight, Upload } from "lucide-react"
 import { getAllTenants, TenantWithDetails } from "@/lib/actions/tenant-actions"
 import { TenantStatus, LeaseStatus } from "@prisma/client"
 import { format } from "date-fns"
@@ -112,12 +112,20 @@ export default function TenantsPage() {
             Partner Relationship Management
           </p>
         </div>
-        <Link href="/tenants/create">
-          <Button className="rounded-none h-10 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Tenant
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/tenants/import">
+            <Button variant="outline" className="rounded-none h-10 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </Link>
+          <Link href="/tenants/create">
+            <Button className="rounded-none h-10 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Tenant
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Summary Strip */}

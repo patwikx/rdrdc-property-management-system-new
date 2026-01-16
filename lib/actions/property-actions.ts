@@ -626,3 +626,56 @@ export async function getPropertyByCode(propertyCode: string): Promise<PropertyW
 
   return property
 }
+
+export async function getPropertyStats() {
+  const session = await auth()
+  
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
+  const [
+    totalProperties,
+    totalAreaResult,
+    totalUnits,
+    occupiedUnits,
+    vacantUnits,
+    monthlyRevenueResult
+  ] = await Promise.all([
+    prisma.property.count(),
+    prisma.property.aggregate({
+      _sum: {
+        leasableArea: true
+      }
+    }),
+    prisma.unit.count(),
+    prisma.unit.count({
+      where: {
+        status: 'OCCUPIED'
+      }
+    }),
+    prisma.unit.count({
+      where: {
+        status: 'VACANT'
+      }
+    }),
+    prisma.lease.aggregate({
+      _sum: {
+        totalRentAmount: true
+      },
+      where: {
+        status: 'ACTIVE'
+      }
+    })
+  ])
+
+  return {
+    totalProperties,
+    totalArea: totalAreaResult._sum.leasableArea || 0,
+    totalUnits,
+    occupiedUnits,
+    vacantUnits,
+    monthlyRevenue: monthlyRevenueResult._sum.totalRentAmount || 0,
+    occupancyRate: totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0
+  }
+}

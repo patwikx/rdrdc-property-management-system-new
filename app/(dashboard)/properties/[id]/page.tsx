@@ -12,6 +12,7 @@ import { getPropertyById, updateProperty, deleteProperty, PropertyWithDetails } 
 import { PropertyType } from "@prisma/client"
 import { toast } from "sonner"
 import Link from "next/link"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 // Import our components
 import { PropertyOverview } from "@/components/properties/property-overview"
@@ -135,10 +136,6 @@ export default function PropertyPage({ params }: PropertyPageProps) {
   async function handleDelete() {
     if (!property) return
     
-    if (!confirm("Are you sure you want to delete this property? This action cannot be undone.")) {
-      return
-    }
-    
     setIsDeleting(true)
     
     try {
@@ -218,14 +215,32 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                 <Edit className="h-3.5 w-3.5 mr-2" />
                 Edit_Data
               </Button>
-              <Button 
-                variant="destructive" 
-                className="rounded-none h-9 text-xs uppercase tracking-wide bg-rose-600 hover:bg-rose-700"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "DELETING..." : <><Trash2 className="h-3.5 w-3.5 mr-2" /> DELETE</>}
-              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="rounded-none h-9 text-xs uppercase tracking-wide bg-rose-600 hover:bg-rose-700"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" /> 
+                    DELETE
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-none border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="font-mono uppercase tracking-wide">Confirm Deletion</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this property? This action cannot be undone and will remove all associated data including units, leases, and documents.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-none border-border">Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="rounded-none bg-rose-600 hover:bg-rose-700" disabled={isDeleting}>
+                      {isDeleting ? "DELETING..." : "CONFIRM DELETE"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           ) : (
             <>

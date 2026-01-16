@@ -76,7 +76,7 @@ export function NavMain({ items }: NavMainProps) {
                           itemIsActive && "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
                         )}
                       >
-                        {item.icon && <item.icon className="h-4 w-4" />}
+                        {item.icon && <item.icon className="h-4 w-4 mr-2" />}
                         <span>{item.title}</span>
                         <ChevronRight className="ml-auto h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-70" />
                       </SidebarMenuButton>

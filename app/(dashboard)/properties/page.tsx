@@ -20,9 +20,116 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getProperties } from "@/lib/actions/property-actions"
+import { getProperties, getPropertyStats } from "@/lib/actions/property-actions"
 import { PropertyType } from "@prisma/client"
 import { cn } from "@/lib/utils"
+
+function PropertyStatsCards() {
+  const [stats, setStats] = useState({
+    totalProperties: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    vacantUnits: 0,
+    totalArea: 0,
+    monthlyRevenue: 0,
+    occupancyRate: 0
+  })
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const data = await getPropertyStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Failed to load stats:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStats()
+  }, [])
+
+  // Format currency for Philippine Peso
+  const formatRevenue = (amount: number) => {
+    if (amount >= 1000000) {
+      return `₱${(amount / 1000000).toFixed(1)}M`
+    } else if (amount >= 1000) {
+      return `₱${(amount / 1000).toFixed(1)}k`
+    }
+    return `₱${amount.toFixed(0)}`
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-12 bg-muted/10 animate-pulse" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 border border-border bg-background">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 bg-muted/10 animate-pulse border-r border-border last:border-r-0" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-0">
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-zinc-950">
+        {/* Total Properties */}
+        <div className="p-4 border-r border-zinc-800 flex flex-col justify-between h-24 hover:bg-zinc-900/50 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Total Properties</span>
+            <Building2 className="h-4 w-4 text-zinc-500" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-white">{stats.totalProperties}</span>
+            <span className="text-[10px] text-zinc-500 ml-2">Assets</span>
+          </div>
+        </div>
+
+        {/* Total Leasable Area */}
+        <div className="p-4 border-r border-zinc-800 flex flex-col justify-between h-24 hover:bg-zinc-900/50 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Total Area</span>
+            <Maximize className="h-4 w-4 text-emerald-500/70" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-500">{(stats.totalArea / 1000).toFixed(1)}k</span>
+            <span className="text-[10px] text-zinc-500 ml-2">sqm</span>
+          </div>
+        </div>
+
+        {/* Occupancy Rate */}
+        <div className="p-4 border-r border-zinc-800 flex flex-col justify-between h-24 hover:bg-zinc-900/50 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Occupancy</span>
+            <DoorOpen className="h-4 w-4 text-blue-500/70" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-blue-500">{stats.occupancyRate.toFixed(1)}%</span>
+            <span className="text-[10px] text-zinc-500 ml-2">Rate</span>
+          </div>
+        </div>
+
+        {/* Revenue */}
+        <div className="p-4 flex flex-col justify-between h-24 hover:bg-zinc-900/50 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Revenue</span>
+            <TrendingUp className="h-4 w-4 text-pink-500/70" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-pink-500">{formatRevenue(stats.monthlyRevenue)}</span>
+            <span className="text-[10px] text-zinc-500 ml-2">Monthly</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function PropertyCard({ property }: { property: Awaited<ReturnType<typeof getProperties>>['properties'][0] }) {
   const occupiedUnits = property.units.filter(unit => unit.status === 'OCCUPIED').length
@@ -401,6 +508,8 @@ export default function PropertiesPage() {
           </Button>
         </Link>
       </div>
+
+      <PropertyStatsCards />
 
       <SearchAndFilter
         search={search}
