@@ -47,32 +47,95 @@ export interface UnitWithDetails {
   } | null
 }
 
-export async function getUnits(
-  page: number = 1,
-  limit: number = 12,
-  search?: string,
-  status?: UnitStatus,
+export type UnitSortBy = 'rate' | 'name' | 'status' | 'area'
+export type SortOrder = 'asc' | 'desc'
+
+export interface GetUnitsParams {
+  page?: number
+  limit?: number
+  search?: string
+  status?: UnitStatus
   propertyId?: string
+  minRate?: number
+  maxRate?: number
+  sortBy?: UnitSortBy
+  sortOrder?: SortOrder
+}
+
+export async function getUnits(
+  params: GetUnitsParams = {}
 ): Promise<{
   units: UnitWithDetails[]
   totalCount: number
   totalPages: number
+  highestRateUnitId?: string
 }> {
+  const {
+    page = 1,
+    limit = 12,
+    search,
+    status,
+    propertyId,
+    minRate,
+    maxRate,
+    sortBy = 'name',
+    sortOrder = 'asc'
+  } = params
+
   try {
     const skip = (page - 1) * limit
 
-    const where = {
-      AND: [
-        search ? {
-          OR: [
-            { unitNumber: { contains: search, mode: 'insensitive' as const } },
-            { property: { propertyName: { contains: search, mode: 'insensitive' as const } } },
-            { property: { propertyCode: { contains: search, mode: 'insensitive' as const } } }
-          ]
-        } : {},
-        status ? { status } : {},
-        propertyId ? { propertyId } : {}
-      ]
+    // Build where clause with rate filtering
+    const whereConditions: Record<string, unknown>[] = []
+    
+    if (search) {
+      whereConditions.push({
+        OR: [
+          { unitNumber: { contains: search, mode: 'insensitive' as const } },
+          { property: { propertyName: { contains: search, mode: 'insensitive' as const } } },
+          { property: { propertyCode: { contains: search, mode: 'insensitive' as const } } }
+        ]
+      })
+    }
+    
+    if (status) {
+      whereConditions.push({ status })
+    }
+    
+    if (propertyId) {
+      whereConditions.push({ propertyId })
+    }
+    
+    // Rate filtering - Requirements 3.1, 3.2
+    if (minRate !== undefined && minRate > 0) {
+      whereConditions.push({ totalRent: { gte: minRate } })
+    }
+    
+    if (maxRate !== undefined && maxRate > 0) {
+      whereConditions.push({ totalRent: { lte: maxRate } })
+    }
+
+    const where = whereConditions.length > 0 ? { AND: whereConditions } : {}
+
+    // Build orderBy based on sortBy parameter - Requirements 3.1, 3.2
+    let orderBy: Record<string, unknown>[] | Record<string, unknown>
+    switch (sortBy) {
+      case 'rate':
+        orderBy = { totalRent: sortOrder }
+        break
+      case 'area':
+        orderBy = { totalArea: sortOrder }
+        break
+      case 'status':
+        orderBy = { status: sortOrder }
+        break
+      case 'name':
+      default:
+        orderBy = [
+          { property: { propertyName: sortOrder } },
+          { unitNumber: sortOrder }
+        ]
+        break
     }
 
     const [units, totalCount] = await Promise.all([
@@ -137,10 +200,7 @@ export async function getUnits(
             take: 1
           }
         },
-        orderBy: [
-          { property: { propertyName: 'asc' } },
-          { unitNumber: 'asc' }
-        ]
+        orderBy
       }),
       prisma.unit.count({ where })
     ])
@@ -173,10 +233,17 @@ export async function getUnits(
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    // Find highest rate unit ID when sorting by rate descending - Requirement 3.5
+    let highestRateUnitId: string | undefined
+    if (sortBy === 'rate' && sortOrder === 'desc' && unitsWithDetails.length > 0) {
+      highestRateUnitId = unitsWithDetails[0].id
+    }
+
     return {
       units: unitsWithDetails,
       totalCount,
-      totalPages
+      totalPages,
+      highestRateUnitId
     }
   } catch (error) {
     console.error("Error fetching units:", error)

@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Building2, Search, X, Home, Users, Wrench, FileText, Layers } from "lucide-react"
+import { Building2, Search, X, Home, Users, Wrench, FileText, Layers, Star } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getUnits, getUnitStats, getPropertiesForFilter, type UnitWithDetails } from "@/lib/actions/units-actions"
+import { getUnits, getUnitStats, getPropertiesForFilter, type UnitWithDetails, type UnitSortBy, type SortOrder } from "@/lib/actions/units-actions"
+import { SpaceRateFilter } from "@/components/filters/space-rate-filter"
 import { UnitStatus } from "@prisma/client"
 import { format } from "date-fns"
 
@@ -24,7 +25,7 @@ function getUnitStatusColor(status: UnitStatus) {
   }
 }
 
-function UnitCard({ unit }: { unit: UnitWithDetails }) {
+function UnitCard({ unit, isHighestRate }: { unit: UnitWithDetails; isHighestRate?: boolean }) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
@@ -37,13 +38,17 @@ function UnitCard({ unit }: { unit: UnitWithDetails }) {
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${isHighestRate ? 'ring-2 ring-yellow-500 dark:ring-yellow-400' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="text-lg flex items-center gap-2">
               <Home className="h-4 w-4" />
               Space {unit.unitNumber}
+              {/* Requirement 3.5: Highlight highest-rate space */}
+              {isHighestRate && (
+                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              )}
             </CardTitle>
             <CardDescription className="text-sm">
               {unit.property.propertyName} • {unit.property.propertyCode}
@@ -84,7 +89,9 @@ function UnitCard({ unit }: { unit: UnitWithDetails }) {
           </div>
           <div>
             <p className="text-muted-foreground">Monthly Rent</p>
-            <p className="font-medium">{formatCurrency(unit.totalRent)}</p>
+            <p className={`font-medium ${isHighestRate ? 'text-yellow-600 dark:text-yellow-400' : ''}`}>
+              {formatCurrency(unit.totalRent)}
+            </p>
           </div>
         </div>
 
@@ -152,30 +159,53 @@ function UnitCard({ unit }: { unit: UnitWithDetails }) {
   )
 }
 
-function UnitsList({ 
-  page, 
-  search, 
-  status,
-  propertyId
-}: { 
+
+interface UnitsListProps {
   page: number
   search: string
   status: UnitStatus | undefined
   propertyId: string | undefined
-}) {
+  minRate: number | undefined
+  maxRate: number | undefined
+  sortBy: UnitSortBy
+  sortOrder: SortOrder
+}
+
+function UnitsList({ 
+  page, 
+  search, 
+  status,
+  propertyId,
+  minRate,
+  maxRate,
+  sortBy,
+  sortOrder
+}: UnitsListProps) {
   const [units, setUnits] = useState<UnitWithDetails[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [highestRateUnitId, setHighestRateUnitId] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function loadUnits() {
       setIsLoading(true)
       try {
-        const result = await getUnits(page, 12, search || undefined, status, propertyId || undefined)
+        const result = await getUnits({
+          page,
+          limit: 12,
+          search: search || undefined,
+          status,
+          propertyId: propertyId || undefined,
+          minRate,
+          maxRate,
+          sortBy,
+          sortOrder
+        })
         setUnits(result.units)
         setTotalCount(result.totalCount)
         setTotalPages(result.totalPages)
+        setHighestRateUnitId(result.highestRateUnitId)
       } catch (error) {
         console.error('Failed to load units:', error)
       } finally {
@@ -184,7 +214,7 @@ function UnitsList({
     }
 
     loadUnits()
-  }, [page, search, status, propertyId])
+  }, [page, search, status, propertyId, minRate, maxRate, sortBy, sortOrder])
 
   if (isLoading) {
     return <UnitsLoading />
@@ -196,7 +226,9 @@ function UnitsList({
         <Home className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 text-lg font-semibold">No spaces found</h3>
         <p className="mt-2 text-muted-foreground">
-          {search || status || propertyId ? 'Try adjusting your search criteria.' : 'No units have been created yet.'}
+          {search || status || propertyId || minRate || maxRate 
+            ? 'Try adjusting your search criteria.' 
+            : 'No units have been created yet.'}
         </p>
       </div>
     )
@@ -206,7 +238,11 @@ function UnitsList({
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {units.map((unit) => (
-          <UnitCard key={unit.id} unit={unit} />
+          <UnitCard 
+            key={unit.id} 
+            unit={unit} 
+            isHighestRate={unit.id === highestRateUnitId}
+          />
         ))}
       </div>
 
@@ -217,6 +253,10 @@ function UnitsList({
           search={search}
           status={status}
           propertyId={propertyId}
+          minRate={minRate}
+          maxRate={maxRate}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
         />
       )}
 
@@ -337,23 +377,21 @@ function SearchAndFilter({
           <SelectItem value={UnitStatus.RESERVED}>Reserved</SelectItem>
         </SelectContent>
       </Select>
-
-      {(search || status || propertyId) && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            onSearchChange('')
-            onStatusChange(undefined)
-            onPropertyChange(undefined)
-          }}
-        >
-          <X className="h-4 w-4 mr-2" />
-          Clear
-        </Button>
-      )}
     </div>
   )
+}
+
+
+interface PaginationProps {
+  currentPage: number
+  totalPages: number
+  search: string
+  status: UnitStatus | undefined
+  propertyId: string | undefined
+  minRate: number | undefined
+  maxRate: number | undefined
+  sortBy: UnitSortBy
+  sortOrder: SortOrder
 }
 
 function Pagination({ 
@@ -361,14 +399,12 @@ function Pagination({
   totalPages, 
   search, 
   status,
-  propertyId
-}: {
-  currentPage: number
-  totalPages: number
-  search: string
-  status: UnitStatus | undefined
-  propertyId: string | undefined
-}) {
+  propertyId,
+  minRate,
+  maxRate,
+  sortBy,
+  sortOrder
+}: PaginationProps) {
   const router = useRouter()
 
   const createPageUrl = (page: number) => {
@@ -377,6 +413,10 @@ function Pagination({
     if (search) params.set('search', search)
     if (status) params.set('status', status)
     if (propertyId) params.set('property', propertyId)
+    if (minRate !== undefined) params.set('minRate', minRate.toString())
+    if (maxRate !== undefined) params.set('maxRate', maxRate.toString())
+    if (sortBy !== 'name') params.set('sortBy', sortBy)
+    if (sortOrder !== 'asc') params.set('sortOrder', sortOrder)
     
     const queryString = params.toString()
     return `/properties/units${queryString ? `?${queryString}` : ''}`
@@ -515,10 +555,12 @@ function StatsCards() {
   )
 }
 
+
 export default function UnitsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  // Parse URL parameters - Requirements 5.1, 5.2
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'))
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const [status, setStatus] = useState<UnitStatus | undefined>(
@@ -527,20 +569,36 @@ export default function UnitsPage() {
   const [propertyId, setPropertyId] = useState<string | undefined>(
     searchParams.get('property') || undefined
   )
+  const [minRate, setMinRate] = useState<number | undefined>(
+    searchParams.get('minRate') ? parseFloat(searchParams.get('minRate')!) : undefined
+  )
+  const [maxRate, setMaxRate] = useState<number | undefined>(
+    searchParams.get('maxRate') ? parseFloat(searchParams.get('maxRate')!) : undefined
+  )
+  const [sortBy, setSortBy] = useState<UnitSortBy>(
+    (searchParams.get('sortBy') as UnitSortBy) || 'name'
+  )
+  const [sortOrder, setSortOrder] = useState<SortOrder>(
+    (searchParams.get('sortOrder') as SortOrder) || 'asc'
+  )
 
-  // Update URL when filters change
+  // Update URL when filters change - Requirements 5.1, 5.2, 5.3, 5.4
   useEffect(() => {
     const params = new URLSearchParams()
     if (page > 1) params.set('page', page.toString())
     if (search) params.set('search', search)
     if (status) params.set('status', status)
     if (propertyId) params.set('property', propertyId)
+    if (minRate !== undefined) params.set('minRate', minRate.toString())
+    if (maxRate !== undefined) params.set('maxRate', maxRate.toString())
+    if (sortBy !== 'name') params.set('sortBy', sortBy)
+    if (sortOrder !== 'asc') params.set('sortOrder', sortOrder)
     
     const queryString = params.toString()
     const newUrl = `/properties/units${queryString ? `?${queryString}` : ''}`
     
     router.replace(newUrl, { scroll: false })
-  }, [page, search, status, propertyId, router])
+  }, [page, search, status, propertyId, minRate, maxRate, sortBy, sortOrder, router])
 
   // Reset page when search or filters change
   useEffect(() => {
@@ -548,7 +606,7 @@ export default function UnitsPage() {
       setPage(1)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status, propertyId])
+  }, [search, status, propertyId, minRate, maxRate, sortBy, sortOrder])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
@@ -561,6 +619,38 @@ export default function UnitsPage() {
   const handlePropertyChange = (value: string | undefined) => {
     setPropertyId(value)
   }
+
+  const handleRateFilterChange = (filters: {
+    minRate?: number
+    maxRate?: number
+    sortBy?: UnitSortBy
+    sortOrder?: SortOrder
+  }) => {
+    if (filters.minRate !== undefined || filters.minRate === undefined) {
+      setMinRate(filters.minRate)
+    }
+    if (filters.maxRate !== undefined || filters.maxRate === undefined) {
+      setMaxRate(filters.maxRate)
+    }
+    if (filters.sortBy) {
+      setSortBy(filters.sortBy)
+    }
+    if (filters.sortOrder) {
+      setSortOrder(filters.sortOrder)
+    }
+  }
+
+  const handleClearAllFilters = () => {
+    setSearch('')
+    setStatus(undefined)
+    setPropertyId(undefined)
+    setMinRate(undefined)
+    setMaxRate(undefined)
+    setSortBy('name')
+    setSortOrder('asc')
+  }
+
+  const hasAnyFilter = search || status || propertyId || minRate !== undefined || maxRate !== undefined || sortBy !== 'name' || sortOrder !== 'asc'
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -575,20 +665,49 @@ export default function UnitsPage() {
 
       <StatsCards />
 
-      <SearchAndFilter
-        search={search}
-        status={status}
-        propertyId={propertyId}
-        onSearchChange={handleSearchChange}
-        onStatusChange={handleStatusChange}
-        onPropertyChange={handlePropertyChange}
-      />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <SearchAndFilter
+          search={search}
+          status={status}
+          propertyId={propertyId}
+          onSearchChange={handleSearchChange}
+          onStatusChange={handleStatusChange}
+          onPropertyChange={handlePropertyChange}
+        />
+
+        <div className="flex items-center gap-2">
+          {/* Rate Filter Component - Requirements 3.1, 3.2, 3.3 */}
+          <SpaceRateFilter
+            minRate={minRate}
+            maxRate={maxRate}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onFilterChange={handleRateFilterChange}
+          />
+
+          {/* Clear all filters - Requirement 3.4 */}
+          {hasAnyFilter && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearAllFilters}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear All
+            </Button>
+          )}
+        </div>
+      </div>
 
       <UnitsList 
         page={page}
         search={search}
         status={status}
         propertyId={propertyId}
+        minRate={minRate}
+        maxRate={maxRate}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
       />
     </div>
   )
