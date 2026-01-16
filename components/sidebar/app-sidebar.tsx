@@ -13,6 +13,7 @@ import {
   FolderKanban,
   FileBarChart,
   Receipt,
+  Zap,
 } from "lucide-react"
 import {
   Sidebar,
@@ -117,10 +118,25 @@ const getNavigationItems = (userRole: string) => {
       ],
     },
     {
+      title: "Utilities",
+      url: "/utilities",
+      icon: Zap,
+      items: [
+        {
+          title: "Billing Monitoring",
+          url: "/utilities/billing",
+        },
+      ],
+    },
+    {
       title: "Maintenance",
       url: "/maintenance",
       icon: Wrench,
       items: [
+        {
+          title: "RWO Board",
+          url: "/maintenance/rwo",
+        },
         {
           title: "Requests",
           url: "/maintenance/requests",
