@@ -1,17 +1,18 @@
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calculator, Receipt, CheckCircle, Clock, AlertCircle, Plus, Search, Edit } from "lucide-react"
+import { Receipt, CheckCircle, Clock, AlertCircle, Plus, Search, Edit, FileText, Calendar, CheckCircle2, Hash, DollarSign } from "lucide-react"
 import { PropertyWithDetails } from "@/lib/actions/property-actions"
 import { CreateTaxForm } from "./create-tax-form"
 import { EditTaxForm } from "./edit-tax-form"
 import { MarkPaidDialog } from "./mark-paid-dialog"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface RealPropertyTaxProps {
   property: PropertyWithDetails
@@ -22,39 +23,38 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid" | "overdue">("all")
   const [selectedYear, setSelectedYear] = useState<string>("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [selectedTitleId, setSelectedTitleId] = useState<string>("")
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingTax, setEditingTax] = useState<typeof allPropertyTaxes[0] | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingTax, setEditingTax] = useState<any>(null)
   const [isMarkPaidDialogOpen, setIsMarkPaidDialogOpen] = useState(false)
-  const [markingPaidTax, setMarkingPaidTax] = useState<typeof allPropertyTaxes[0] | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [markingPaidTax, setMarkingPaidTax] = useState<any>(null)
 
   const handleTaxCreated = () => {
     setIsAddDialogOpen(false)
-    setSelectedTitleId("")
-    // Refresh the page or update the property data
     window.location.reload()
   }
 
   const handleTaxUpdated = () => {
     setIsEditDialogOpen(false)
     setEditingTax(null)
-    // Refresh the page or update the property data
     window.location.reload()
   }
 
   const handleTaxMarkedPaid = () => {
     setIsMarkPaidDialogOpen(false)
     setMarkingPaidTax(null)
-    // Refresh the page or update the property data
     window.location.reload()
   }
 
-  const handleEditTax = (tax: typeof allPropertyTaxes[0]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEditTax = (tax: any) => {
     setEditingTax(tax)
     setIsEditDialogOpen(true)
   }
 
-  const handleMarkAsPaid = (tax: typeof allPropertyTaxes[0]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleMarkAsPaid = (tax: any) => {
     setMarkingPaidTax(tax)
     setIsMarkPaidDialogOpen(true)
   }
@@ -98,66 +98,56 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
   // Get unique years for filter
   const availableYears = [...new Set(allPropertyTaxes.map(tax => tax.taxYear))].sort((a, b) => b - a)
 
-  const getStatusBadge = (tax: typeof allPropertyTaxes[0]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getStatusStyle = (tax: any) => {
     if (tax.isPaid) {
-      return <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />Paid</Badge>
+      return { border: 'border-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-500' }
     } else if (new Date(tax.dueDate) < new Date()) {
-      return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Overdue</Badge>
+      return { border: 'border-rose-500', text: 'text-rose-600', bg: 'bg-rose-500' }
     } else {
-      return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Unpaid</Badge>
+      return { border: 'border-amber-500', text: 'text-amber-600', bg: 'bg-amber-500' }
     }
   }
 
+  // Prepare titles for dropdown
+  const titleOptions = property.titles.map(t => ({
+    id: t.id,
+    titleNo: t.titleNo,
+    lotNo: t.lotNo,
+    registeredOwner: t.registeredOwner
+  }))
+
   if (allPropertyTaxes.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Calculator className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">No property taxes found</h3>
-        <p className="mt-2 text-muted-foreground">
-          This property doesn&apos;t have any property tax records yet.
+      <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border bg-muted/5">
+        <Receipt className="h-10 w-10 text-muted-foreground/30 mb-4" />
+        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Tax Records Found</h3>
+        <p className="text-xs text-muted-foreground mt-1 mb-6 font-mono">
+          {property.titles.length > 0 ? "ADD_FIRST_RECORD" : "REGISTER_TITLE_FIRST"}
         </p>
         {property.titles.length > 0 ? (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="mt-4" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button className="rounded-none h-9 text-xs font-mono uppercase tracking-wider">
+                <Plus className="h-3 w-3 mr-2" />
                 Add Tax Record
               </Button>
             </DialogTrigger>
-            <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
+            <DialogContent className="max-w-xl rounded-none border-border">
               <DialogHeader>
-                <DialogTitle>Add Property Tax Record</DialogTitle>
+                <DialogTitle className="font-mono uppercase tracking-wide">Add Property Tax Record</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="title-select">Select Property Title</Label>
-                  <Select onValueChange={setSelectedTitleId} value={selectedTitleId}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Choose a property title" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {property.titles.map((title) => (
-                        <SelectItem key={title.id} value={title.id}>
-                          {title.titleNo} - Lot {title.lotNo} ({title.registeredOwner})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {selectedTitleId && (
-                  <CreateTaxForm 
-                    propertyTitleId={selectedTitleId}
-                    onSuccess={handleTaxCreated}
-                    onCancel={() => setIsAddDialogOpen(false)}
-                  />
-                )}
-              </div>
+              <CreateTaxForm 
+                titles={titleOptions}
+                onSuccess={handleTaxCreated}
+                onCancel={() => setIsAddDialogOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         ) : (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Please add a property title first before creating tax records.
-          </p>
+          <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider opacity-50 cursor-not-allowed">
+            Add Title First
+          </Button>
         )}
       </div>
     )
@@ -165,317 +155,210 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Taxes</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalTaxes}</div>
-            <p className="text-xs text-muted-foreground">
-              ₱{totalAmount.toLocaleString()} total amount
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paid Taxes</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{paidTaxes}</div>
-            <p className="text-xs text-muted-foreground">
-              ₱{paidAmount.toLocaleString()} paid
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unpaid Taxes</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{unpaidTaxes}</div>
-            <p className="text-xs text-muted-foreground">
-              ₱{unpaidAmount.toLocaleString()} unpaid
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Taxes</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{overdueTaxes}</div>
-            <p className="text-xs text-muted-foreground">
-              Past due date
-            </p>
-          </CardContent>
-        </Card>
+      {/* SUMMARY BAR */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Total Records</span>
+            <Receipt className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter">{totalTaxes}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">₱{totalAmount.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Paid</span>
+            <CheckCircle className="h-4 w-4 text-emerald-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-600">{paidTaxes}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">₱{paidAmount.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Unpaid</span>
+            <Clock className="h-4 w-4 text-amber-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-amber-600">{unpaidTaxes}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">₱{unpaidAmount.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Overdue</span>
+            <AlertCircle className="h-4 w-4 text-rose-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-rose-600">{overdueTaxes}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">Critical</span>
+          </div>
+        </div>
       </div>
 
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Property Tax Records</CardTitle>
-          <CardDescription>Manage and track all property tax payments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Label htmlFor="search" className="text-sm font-medium mb-1">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search by Tax Dec No, Title No, or Owner..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <div className="min-w-[140px]">
-                <Label className="text-sm font-medium">Status</Label>
-                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as typeof filterStatus)}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="paid">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>Paid</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="unpaid">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-yellow-600" />
-                        <span>Unpaid</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="overdue">
-                      <div className="flex items-center space-x-2">
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                        <span>Overdue</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+      <div className="flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+            <div className="h-1.5 w-1.5 bg-primary rounded-none" />
+            Property Taxes
+          </h3>
+          <p className="text-[10px] text-muted-foreground font-mono mt-1">
+            Real Property Tax Registry
+          </p>
+        </div>
+        {property.titles.length > 0 && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="rounded-none h-8 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+                <Plus className="h-3 w-3 mr-2" />
+                Add Record
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl rounded-none border-border">
+              <DialogHeader>
+                <DialogTitle className="font-mono uppercase tracking-wide">Add Property Tax Record</DialogTitle>
+              </DialogHeader>
+              <CreateTaxForm 
+                titles={titleOptions}
+                onSuccess={handleTaxCreated}
+                onCancel={() => setIsAddDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 p-4 border border-border bg-muted/5">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search records..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 rounded-none border-border bg-background h-10 font-mono text-xs uppercase placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:border-primary"
+          />
+        </div>
+        
+        <div className="flex gap-2">
+          <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as typeof filterStatus)}>
+            <SelectTrigger className="w-[140px] rounded-none border-border bg-background h-10 font-mono text-xs uppercase">
+              <SelectValue placeholder="Status: All" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs uppercase">All Status</SelectItem>
+              <SelectItem value="paid" className="font-mono text-xs uppercase">Paid</SelectItem>
+              <SelectItem value="unpaid" className="font-mono text-xs uppercase">Unpaid</SelectItem>
+              <SelectItem value="overdue" className="font-mono text-xs uppercase">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[120px] rounded-none border-border bg-background h-10 font-mono text-xs uppercase">
+              <SelectValue placeholder="Year: All" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs uppercase">All Years</SelectItem>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year.toString()} className="font-mono text-xs">{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Tax Records Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredTaxes.map((tax) => {
+          const styles = getStatusStyle(tax)
+          return (
+            <Card key={tax.id} className="group rounded-none border border-border hover:border-primary/50 transition-all hover:shadow-none bg-background overflow-hidden h-full flex flex-col relative cursor-pointer" onClick={() => handleEditTax(tax)}>
+              {/* Status Line */}
+              <div className={`h-1 w-full ${styles.bg}`} />
+              
+              <div className="p-4 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">Tax Year</span>
+                    <span className="font-mono text-xl font-bold tracking-tight">{tax.taxYear}</span>
+                  </div>
+                  <Badge variant="outline" className={`rounded-none text-[9px] uppercase tracking-widest border ${styles.border} ${styles.text} bg-transparent`}>
+                    {tax.isPaid ? 'PAID' : (new Date(tax.dueDate) < new Date() ? 'OVERDUE' : 'UNPAID')}
+                  </Badge>
+                </div>
+
+                <div className="space-y-3 pt-2 border-t border-dashed border-border/50">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Hash className="h-3 w-3" /> Decl. No
+                    </span>
+                    <span className="font-medium">{tax.TaxDecNo}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <DollarSign className="h-3 w-3" /> Amount
+                    </span>
+                    <span className="font-medium">₱{tax.taxAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" /> Due
+                    </span>
+                    <span className={cn("font-medium", !tax.isPaid && new Date(tax.dueDate) < new Date() ? "text-rose-600" : "")}>
+                      {format(new Date(tax.dueDate), 'MMM dd, yyyy')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-3 border-t border-border/50 space-y-3">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono truncate bg-muted/10 p-1.5 border border-border/30">
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{tax.titleNo}</span>
+                  </div>
+
+                  {!tax.isPaid && (
+                    <Button 
+                      size="sm" 
+                      className="w-full rounded-none h-7 text-[10px] font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 mt-2 z-10 relative"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleMarkAsPaid(tax)
+                      }}
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                      Mark as Paid
+                    </Button>
+                  )}
+                </div>
               </div>
               
-              <div className="min-w-[120px]">
-                <Label className="text-sm font-medium">Year</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="All Years" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    {availableYears.map(year => (
-                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Hover Action Overlay */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border p-1">
+                <Edit className="h-3 w-3 text-muted-foreground" />
               </div>
-            </div>
-            
-            <div className="flex items-end">
-              {property.titles.length > 0 ? (
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Tax
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
-                    <DialogHeader>
-                      <DialogTitle>Add Property Tax Record</DialogTitle>
-                    </DialogHeader >
-                    <div className="space-y-4 mt-4">
-                      <div>
-                        <Label htmlFor="title-select">Select Property Title</Label>
-                        <Select onValueChange={setSelectedTitleId} value={selectedTitleId}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Choose a property title" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {property.titles.map((title) => (
-                              <SelectItem key={title.id} value={title.id}>
-                                {title.titleNo} - Lot {title.lotNo} ({title.registeredOwner})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {selectedTitleId && (
-                        <CreateTaxForm 
-                          propertyTitleId={selectedTitleId}
-                          onSuccess={handleTaxCreated}
-                          onCancel={() => setIsAddDialogOpen(false)}
-                        />
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              ) : (
-                <Button variant="outline" size="sm" disabled>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Tax
-                </Button>
-              )}
-            </div>
-          </div>
+            </Card>
+          )
+        })}
+      </div>
 
-          {/* Tax Records Table */}
-          <div className="border rounded-lg">
-            {filteredTaxes.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No tax records match your search criteria.</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {filteredTaxes.map((tax) => (
-                  <div key={tax.id} className="p-4 hover:bg-muted/50 transition-colors">
-                    {/* Main Row */}
-                    <div className="flex items-center justify-between">
-                      {/* Table-like columns */}
-                      <div className="flex items-center space-x-4 min-w-0 flex-1">
-                        {/* Tax Dec No Column */}
-                        <div className="text-center min-w-[120px]">
-                          <div className="font-mono font-semibold text-sm bg-muted px-2 py-1 rounded">{tax.TaxDecNo}</div>
-                          <div className="text-xs text-muted-foreground">Tax Dec No</div>
-                        </div>
-                        
-                        {/* Title No Column */}
-                        <div className="text-center min-w-[100px]">
-                          <div className="font-semibold text-sm">{tax.titleNo}</div>
-                          <div className="text-xs text-muted-foreground">Title No</div>
-                        </div>
-                        
-                        {/* Lot No Column */}
-                        <div className="text-center min-w-[80px]">
-                          <div className="font-semibold text-sm">{tax.lotNo}</div>
-                          <div className="text-xs text-muted-foreground">Lot No</div>
-                        </div>
-                        
-                        {/* Amount & Owner Column */}
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold mb-1">₱{tax.taxAmount.toLocaleString()}</div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {tax.registeredOwner}
-                          </div>
-                        </div>
-                        
-                        {/* Year Column */}
-                        <div className="text-center min-w-[60px]">
-                          <div className="text-lg font-bold">{tax.taxYear}</div>
-                          <div className="text-xs text-muted-foreground">Year</div>
-                        </div>
-                        
-                        {/* Due Date Column */}
-                        <div className="text-center min-w-[100px]">
-                          <div className={`font-medium ${!tax.isPaid && new Date(tax.dueDate) < new Date() ? 'text-destructive' : ''}`}>
-                            {format(new Date(tax.dueDate), 'MMM dd, yyyy')}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Due Date</div>
-                        </div>
-                        
-                        {/* Status Column */}
-                        <div className="text-center min-w-[100px]">
-                          {getStatusBadge(tax)}
-                        </div>
-                        
-                        {/* Actions Column */}
-                        <div className="flex space-x-2 min-w-[120px] justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditTax(tax)}
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                          {!tax.isPaid && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleMarkAsPaid(tax)}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Mark Paid
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Additional Info Row */}
-                    {(tax.isPaid && tax.paidDate) || tax.remarks ? (
-                      <div className="mt-3 pt-3 border-t border-border/50">
-                        <div className="flex flex-wrap gap-4 text-sm">
-                          {tax.isPaid && tax.paidDate && (
-                            <div className="flex items-center space-x-2 text-green-700">
-                              <CheckCircle className="h-4 w-4" />
-                              <span>Paid on {format(new Date(tax.paidDate), 'MMM dd, yyyy')}</span>
-                            </div>
-                          )}
-                          {tax.remarks && (
-                            <div className="flex items-start space-x-2 flex-1">
-                              <Receipt className="h-4 w-4 text-muted-foreground mt-0.5" />
-                              <div>
-                                <span className="text-xs text-muted-foreground uppercase tracking-wide">Remarks:</span>
-                                <p className="text-sm">{tax.remarks}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {filteredTaxes.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">No matching records found</p>
+        </div>
+      )}
 
-          {filteredTaxes.length > 0 && (
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              Showing {filteredTaxes.length} of {totalTaxes} tax records
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit Tax Dialog */}
+      {/* Dialogs */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="!w-[650px] !max-w-[650px] !min-w-[650px]" style={{ width: '650px', maxWidth: '650px', minWidth: '650px' }}>
+        <DialogContent className="max-w-xl rounded-none border-border">
           <DialogHeader>
-            <DialogTitle>Edit Property Tax Record</DialogTitle>
+            <DialogTitle className="font-mono uppercase tracking-wide">Edit Tax Record</DialogTitle>
           </DialogHeader>
           {editingTax && (
             <EditTaxForm 
-              tax={{
-                id: editingTax.id,
-                taxYear: editingTax.taxYear,
-                TaxDecNo: editingTax.TaxDecNo,
-                taxAmount: editingTax.taxAmount,
-                dueDate: editingTax.dueDate,
-                isPaid: editingTax.isPaid,
-                paidDate: editingTax.paidDate,
-                remarks: editingTax.remarks,
-                isAnnual: editingTax.isAnnual,
-                isQuarterly: editingTax.isQuarterly,
-                whatQuarter: editingTax.whatQuarter,
-              }}
+              tax={editingTax}
               onSuccess={handleTaxUpdated}
               onCancel={() => setIsEditDialogOpen(false)}
             />
@@ -483,7 +366,6 @@ export function RealPropertyTax({ property }: RealPropertyTaxProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Mark as Paid Dialog */}
       {markingPaidTax && (
         <MarkPaidDialog
           isOpen={isMarkPaidDialogOpen}

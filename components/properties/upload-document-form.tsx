@@ -5,13 +5,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { DocumentSchema, DocumentFormData } from "@/lib/validations/document-schema"
 import { createDocument } from "@/lib/actions/document-actions"
 import { DocumentType } from "@prisma/client"
-import { Save, X, CheckCircle } from "lucide-react"
+import { Save, FileText, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { FileUpload, UploadedFileDisplay } from "@/components/file-upload"
 
@@ -24,36 +24,11 @@ interface UploadDocumentFormProps {
 }
 
 const documentTypeOptions = [
-  { 
-    value: DocumentType.LEASE, 
-    label: "Lease Agreement", 
-    description: "Rental contracts and lease documents",
-    color: "bg-blue-600 text-white border-blue-600"
-  },
-  { 
-    value: DocumentType.CONTRACT, 
-    label: "Contract", 
-    description: "Service contracts and agreements",
-    color: "bg-emerald-600 text-white border-emerald-600"
-  },
-  { 
-    value: DocumentType.INVOICE, 
-    label: "Invoice", 
-    description: "Bills, receipts, and invoices",
-    color: "bg-amber-600 text-white border-amber-600"
-  },
-  { 
-    value: DocumentType.MAINTENANCE, 
-    label: "Maintenance", 
-    description: "Maintenance records and reports",
-    color: "bg-orange-600 text-white border-orange-600"
-  },
-  { 
-    value: DocumentType.OTHER, 
-    label: "Other", 
-    description: "Miscellaneous documents",
-    color: "bg-slate-600 text-white border-slate-600"
-  },
+  { value: DocumentType.LEASE, label: "LEASE_AGREEMENT" },
+  { value: DocumentType.CONTRACT, label: "CONTRACT" },
+  { value: DocumentType.INVOICE, label: "INVOICE" },
+  { value: DocumentType.MAINTENANCE, label: "MAINTENANCE" },
+  { value: DocumentType.OTHER, label: "OTHER" },
 ]
 
 export function UploadDocumentForm({ 
@@ -77,7 +52,6 @@ export function UploadDocumentForm({
       description: "",
       documentType: DocumentType.OTHER,
       fileUrl: "",
-      // Use undefined instead of empty string for optional foreign keys
       propertyId: propertyId || undefined,
       unitId: unitId || undefined,
       tenantId: tenantId || undefined,
@@ -108,7 +82,6 @@ export function UploadDocumentForm({
     setIsLoading(true)
     
     try {
-      // Clean up data - convert empty strings to undefined
       const cleanData: DocumentFormData = {
         ...data,
         description: data.description || undefined,
@@ -147,14 +120,15 @@ export function UploadDocumentForm({
   return (
     <div className="max-h-[80vh] overflow-y-auto px-1">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-          {/* File Upload */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">Document File</label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Upload PDF, Word, Excel, or image files (max 16MB)
-              </p>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* File Upload Section */}
+          <div className="space-y-3 p-4 border border-dashed border-border bg-muted/5">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                <Upload className="h-3 w-3" />
+                Upload File
+              </label>
+              <span className="text-[10px] text-muted-foreground font-mono">MAX_SIZE: 16MB</span>
             </div>
             
             {!uploadedFile ? (
@@ -167,7 +141,7 @@ export function UploadDocumentForm({
                 multiple={false}
               />
             ) : (
-              <div className="border rounded-lg p-3 bg-muted/30">
+              <div className="border border-border p-3 bg-background">
                 <UploadedFileDisplay
                   fileName={uploadedFile.fileName}
                   name={uploadedFile.name}
@@ -179,24 +153,25 @@ export function UploadDocumentForm({
             )}
           </div>
 
-          {/* Document Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Document Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Document Name</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <FileText className="h-3 w-3" />
+                    Document Name
+                  </FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., Lease Agreement - Unit 101" 
+                      placeholder="E.G. LEASE AGREEMENT 2024" 
                       {...field}
                       disabled={isLoading}
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                     />
                   </FormControl>
-                  <FormDescription>
-                    Descriptive name for the document
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -207,16 +182,16 @@ export function UploadDocumentForm({
               name="documentType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="mt-[-12px]">Document Type</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Document Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                     <FormControl>
-                      <SelectTrigger className="mt-[-12px]">
-                        <SelectValue placeholder="Select document type" />
+                      <SelectTrigger className="rounded-none border-border h-10 font-mono text-sm">
+                        <SelectValue placeholder="SELECT_TYPE" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="rounded-none border-border">
                       {documentTypeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <SelectItem key={option.value} value={option.value} className="font-mono text-xs uppercase">
                           {option.label}
                         </SelectItem>
                       ))}
@@ -234,93 +209,40 @@ export function UploadDocumentForm({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description (Optional)</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Description / Notes</FormLabel>
                 <FormControl>
                   <textarea
-                    placeholder="Additional details about this document..."
+                    placeholder="ADDITIONAL_CONTEXT..."
                     {...field}
                     disabled={isLoading}
                     rows={3}
-                    className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono resize-none"
                   />
                 </FormControl>
-                <FormDescription>
-                  Optional description or notes about the document
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Show association info if provided */}
+          {/* Context Banner */}
           {(propertyId || unitId || tenantId) && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-blue-800 mb-1">Document Association</p>
-              <p className="text-sm text-blue-700">
-                This document will be linked to:
-                {propertyId && " Property"}
-                {unitId && " Unit"}
-                {tenantId && " Tenant"}
-              </p>
-            </div>
-          )}
-
-          {/* Document Type Preview */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <h4 className="font-semibold mb-3 text-foreground">Document Type Preview</h4>
-            <div className="flex items-center space-x-2 mb-3">
-              {documentTypeOptions.map((option) => (
-                <Badge 
-                  key={option.value}
-                  className={`${option.color} font-medium shadow-sm ${
-                    form.watch('documentType') === option.value 
-                      ? 'ring-2 ring-primary ring-offset-2 opacity-100 scale-105 transition-all duration-200' 
-                      : 'opacity-60 hover:opacity-80 transition-opacity duration-200'
-                  }`}
-                >
-                  {option.label}
-                </Badge>
-              ))}
-            </div>
-            <p className="text-sm text-foreground/80 font-medium">
-              {documentTypeOptions.find(opt => opt.value === form.watch('documentType'))?.description}
-            </p>
-          </div>
-
-          {/* Upload Status */}
-          {uploadedFile && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">File uploaded successfully</span>
-              </div>
-              <p className="text-sm text-green-700 mt-1">
-                Ready to save document information
+            <div className="bg-blue-500/5 border border-blue-500/20 p-3">
+              <p className="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                Context: {propertyId ? "PROPERTY_RECORD" : ""} {unitId ? "UNIT_RECORD" : ""} {tenantId ? "TENANT_RECORD" : ""}
               </p>
             </div>
           )}
 
           {/* Submit Buttons */}
-          <div className="flex items-center space-x-4 pt-6 border-t">
-            <Button type="submit" disabled={isLoading || !uploadedFile}>
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Document
-                </>
-              )}
-            </Button>
+          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-border">
             {onCancel && (
-              <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-                <X className="h-4 w-4 mr-2" />
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide border-border">
                 Cancel
               </Button>
             )}
+            <Button type="submit" disabled={isLoading || !uploadedFile} className="min-w-[140px] rounded-none h-10 font-mono text-xs uppercase tracking-wide bg-primary text-primary-foreground hover:bg-primary/90">
+              {isLoading ? "UPLOADING..." : <><Save className="h-4 w-4 mr-2" /> SAVE_DOCUMENT</>}
+            </Button>
           </div>
         </form>
       </Form>

@@ -1,7 +1,7 @@
 // components/tenant-form/BasicInfoSection.tsx
 import { Building, User } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
 import { TenantFormData } from "@/types/tenant-form"
 
@@ -12,32 +12,31 @@ interface BasicInfoSectionProps {
 
 export function BasicInfoSection({ form, isLoading }: BasicInfoSectionProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Basic Identification */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <Building className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Basic Information</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Building className="h-3 w-3" />
+            Identity
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <FormField
             control={form.control}
             name="bpCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">BP Code *</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">BP Code *</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="e.g., BP001234, TNT-2024-001" 
+                    placeholder="e.g. BP-001" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10 font-mono"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Unique Business Partner identification code
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -48,18 +47,15 @@ export function BasicInfoSection({ form, isLoading }: BasicInfoSectionProps) {
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">First Name *</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">First Name *</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="First name" 
+                    placeholder="e.g. John" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Tenant&apos;s first name
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -70,18 +66,15 @@ export function BasicInfoSection({ form, isLoading }: BasicInfoSectionProps) {
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Last Name *</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Last Name *</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Last name" 
+                    placeholder="e.g. Doe" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Tenant&apos;s last name
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -90,30 +83,29 @@ export function BasicInfoSection({ form, isLoading }: BasicInfoSectionProps) {
       </div>
 
       {/* Personal Information */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 pb-2 border-b">
-          <User className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Personal Information</h3>
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <User className="h-3 w-3" />
+            Personal Details
+          </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="homeAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Home Address</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Home Address</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Residential address" 
+                    placeholder="e.g. 123 Main St, City" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Client&apos;s home/residential address
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -124,18 +116,15 @@ export function BasicInfoSection({ form, isLoading }: BasicInfoSectionProps) {
             name="facebookName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Facebook Name</FormLabel>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Facebook Name</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Facebook profile name" 
+                    placeholder="e.g. johndoe" 
                     {...field}
                     disabled={isLoading}
-                    className="h-10"
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
-                  Personal Facebook profile name
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

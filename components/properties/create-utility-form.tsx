@@ -5,12 +5,12 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PropertyUtilitySchema, PropertyUtilityFormData } from "@/lib/validations/utility-schema"
 import { createPropertyUtility } from "@/lib/actions/utility-actions"
 import { UtilityType } from "@prisma/client"
-import { Zap, Save, X, Building, Hash, Activity } from "lucide-react"
+import { Zap, Save, Building, Hash, Activity, X } from "lucide-react"
 import { toast } from "sonner"
 
 interface CreateUtilityFormProps {
@@ -22,23 +22,23 @@ interface CreateUtilityFormProps {
 const utilityTypeOptions = [
   { 
     value: UtilityType.ELECTRICITY, 
-    label: "Electricity", 
-    description: "Electric power connection",
-    color: "bg-yellow-600",
+    label: "ELECTRICITY", 
+    description: "POWER_GRID_CONNECTION",
+    color: "bg-yellow-500",
     icon: Zap
   },
   { 
     value: UtilityType.WATER, 
-    label: "Water", 
-    description: "Water supply connection",
-    color: "bg-blue-600",
+    label: "WATER", 
+    description: "MUNICIPAL_WATER_SUPPLY",
+    color: "bg-blue-500",
     icon: Activity
   },
   { 
     value: UtilityType.OTHERS, 
-    label: "Others", 
-    description: "Gas, internet, cable, etc.",
-    color: "bg-gray-600",
+    label: "OTHERS", 
+    description: "DATA_GAS_MISC",
+    color: "bg-slate-500",
     icon: Building
   },
 ]
@@ -83,19 +83,15 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
         form.reset()
         onSuccess?.()
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const selectedUtilityType = form.watch('utilityType')
-  const selectedOption = utilityTypeOptions.find(opt => opt.value === selectedUtilityType)
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Utility Type Selection */}
@@ -104,32 +100,34 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
               name="utilityType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Utility Type</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Utility Type</FormLabel>
                   <FormControl>
                     <div className="grid gap-3 md:grid-cols-3">
                       {utilityTypeOptions.map((option) => {
                         const Icon = option.icon
+                        const isSelected = field.value === option.value
                         return (
                           <div
                             key={option.value}
-                            className={`relative cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md ${
-                              field.value === option.value
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            className={`relative cursor-pointer border p-4 transition-all group ${
+                              isSelected
+                                ? 'border-primary bg-primary/5'
                                 : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => field.onChange(option.value)}
                           >
                             <div className="flex flex-col items-center text-center space-y-2">
-                              <div className={`rounded-lg p-2 ${option.color}`}>
-                                <Icon className="h-4 w-4 text-white" />
+                              <div className={`p-2 rounded-none ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                                <Icon className="h-5 w-5" />
                               </div>
                               <div>
-                                <h3 className="font-semibold text-sm">{option.label}</h3>
-                                <p className="text-xs text-muted-foreground">
+                                <h3 className={`font-mono text-xs font-bold tracking-wide ${isSelected ? 'text-primary' : 'text-foreground'}`}>{option.label}</h3>
+                                <p className="text-[9px] text-muted-foreground mt-1 font-mono uppercase">
                                   {option.description}
                                 </p>
                               </div>
                             </div>
+                            {isSelected && <div className="absolute inset-0 border-2 border-primary pointer-events-none" />}
                           </div>
                         )
                       })}
@@ -147,20 +145,18 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
                 name="provider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <Building className="h-4 w-4" />
-                      <span>Service Provider</span>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                      <Building className="h-3 w-3" />
+                      Service Provider
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., Meralco, Manila Water, PLDT" 
+                        placeholder="E.G. MERALCO" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Name of the utility service provider
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -171,20 +167,18 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <Hash className="h-4 w-4" />
-                      <span>Account Number</span>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                      <Hash className="h-3 w-3" />
+                      Account Number
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Account or service number" 
+                        placeholder="ACCOUNT_ID" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Utility account or service number
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -198,17 +192,15 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
                 name="meterNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Meter Number (Optional)</FormLabel>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Meter Number (Optional)</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Physical meter number" 
+                        placeholder="METER_ID" 
                         {...field}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Physical meter identification number
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -218,66 +210,36 @@ export function CreateUtilityForm({ propertyId, onSuccess, onCancel }: CreateUti
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 border border-border px-4 h-10 bg-muted/5 mt-6">
                     <FormControl>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={field.value}
-                        onChange={field.onChange}
+                        onCheckedChange={field.onChange}
                         disabled={isLoading}
-                        className="mt-1"
+                        className="rounded-none h-4 w-4 border-muted-foreground"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Active Connection</FormLabel>
-                      <FormDescription>
-                        Check if this utility connection is currently active
-                      </FormDescription>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-foreground font-mono cursor-pointer">
+                        Active Connection
+                      </FormLabel>
                     </div>
                   </FormItem>
                 )}
               />
             </div>
 
-            {/* Utility Preview */}
-            <div className="bg-muted/50 rounded-lg p-4">
-              <h4 className="font-medium mb-2">Utility Connection Preview</h4>
-              <div className="flex items-center space-x-2 mb-2">
-                {selectedOption && (
-                  <Badge className={selectedOption.color}>
-                    {selectedOption.label}
-                  </Badge>
-                )}
-                <Badge variant={form.watch('isActive') ? "default" : "secondary"}>
-                  {form.watch('isActive') ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {selectedOption?.description}
-              </p>
-            </div>
-
             {/* Submit Buttons */}
-            <div className="flex items-center space-x-4 pt-6 border-t">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create Utility
-                  </>
-                )}
-              </Button>
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-border">
               {onCancel && (
-                <Button variant="outline" onClick={onCancel} disabled={isLoading}>
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide border-border">
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
               )}
+              <Button type="submit" disabled={isLoading} className="min-w-[140px] rounded-none h-10 font-mono text-xs uppercase tracking-wide bg-primary text-primary-foreground hover:bg-primary/90">
+                {isLoading ? "SAVING..." : <><Save className="h-4 w-4 mr-2" /> SAVE_UTILITY</>}
+              </Button>
             </div>
           </form>
         </Form>

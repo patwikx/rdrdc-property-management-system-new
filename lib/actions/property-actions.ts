@@ -63,6 +63,7 @@ export interface PropertyWithDetails {
   documents: {
     id: string
     name: string
+    description: string | null
     documentType: string
     fileUrl: string
     createdAt: Date
@@ -433,6 +434,7 @@ export async function getPropertyById(id: string): Promise<PropertyWithDetails |
         select: {
           id: true,
           name: true,
+          description: true,
           documentType: true,
           fileUrl: true,
           createdAt: true,
@@ -563,6 +565,7 @@ export async function getPropertyByCode(propertyCode: string): Promise<PropertyW
         select: {
           id: true,
           name: true,
+          description: true,
           documentType: true,
           fileUrl: true,
           createdAt: true,

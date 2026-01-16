@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { TitleMovementSchema, TitleMovementFormData } from "@/lib/validations/title-movement-schema"
 import { createTitleMovement } from "@/lib/actions/title-movement-actions"
-import { Save, X, MapPin, FileText, Calendar } from "lucide-react"
+import { Save, MapPin, FileText, Calendar, Activity } from "lucide-react"
 import { toast } from "sonner"
 import { TitleMovementStatus } from "@prisma/client"
 
@@ -60,8 +60,7 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
         form.reset()
         onSuccess?.()
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
@@ -69,7 +68,7 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Status */}
@@ -79,51 +78,24 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                      <Activity className="h-3 w-3" />
+                      Status
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                        <SelectTrigger className="rounded-none border-border h-10 font-mono text-sm">
+                          <SelectValue placeholder="SELECT_STATUS" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value={TitleMovementStatus.REQUESTED}>Requested</SelectItem>
-                        <SelectItem value={TitleMovementStatus.RELEASED}>Released</SelectItem>
-                        <SelectItem value={TitleMovementStatus.IN_TRANSIT}>In Transit</SelectItem>
-                        <SelectItem value={TitleMovementStatus.RETURNED}>Returned</SelectItem>
-                        <SelectItem value={TitleMovementStatus.LOST}>Lost</SelectItem>
+                      <SelectContent className="rounded-none border-border">
+                        <SelectItem value={TitleMovementStatus.REQUESTED} className="font-mono text-xs uppercase">Requested</SelectItem>
+                        <SelectItem value={TitleMovementStatus.RELEASED} className="font-mono text-xs uppercase">Released</SelectItem>
+                        <SelectItem value={TitleMovementStatus.IN_TRANSIT} className="font-mono text-xs uppercase">In Transit</SelectItem>
+                        <SelectItem value={TitleMovementStatus.RETURNED} className="font-mono text-xs uppercase">Returned</SelectItem>
+                        <SelectItem value={TitleMovementStatus.LOST} className="font-mono text-xs uppercase">Lost</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Current status of the title movement
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Location and Request Date */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>Location</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Current or destination location" 
-                        {...field}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Where the title is located or being sent
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -134,9 +106,9 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
                 name="requestDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Request Date</span>
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                      <Calendar className="h-3 w-3" />
+                      Request Date
                     </FormLabel>
                     <FormControl>
                       <Input 
@@ -145,16 +117,37 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
                         value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
                         onChange={(e) => field.onChange(new Date(e.target.value))}
                         disabled={isLoading}
+                        className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Date when the movement was requested
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            {/* Location */}
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    Location / Destination
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="ENTER_LOCATION..." 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary h-10"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Purpose */}
             <FormField
@@ -162,21 +155,19 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
               name="purpose"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4" />
-                    <span>Purpose</span>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono flex items-center gap-2">
+                    <FileText className="h-3 w-3" />
+                    Purpose
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe the purpose of this title movement"
+                      placeholder="STATE_PURPOSE..."
                       {...field}
                       disabled={isLoading}
                       rows={3}
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary resize-none"
                     />
                   </FormControl>
-                  <FormDescription>
-                    Reason for requesting the title movement
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -188,44 +179,31 @@ export function CreateMovementForm({ propertyId, onSuccess, onCancel }: CreateMo
               name="remarks"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Remarks</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Additional Remarks</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional notes or comments (optional)"
+                      placeholder="ADDITIONAL_NOTES..."
                       {...field}
                       disabled={isLoading}
                       rows={2}
+                      className="rounded-none font-mono text-sm border-border focus-visible:ring-0 focus-visible:border-primary resize-none"
                     />
                   </FormControl>
-                  <FormDescription>
-                    Optional additional information
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             {/* Submit Buttons */}
-            <div className="flex items-center space-x-4 pt-6 border-t">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create Movement
-                  </>
-                )}
-              </Button>
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-border">
               {onCancel && (
-                <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-                  <X className="h-4 w-4 mr-2" />
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="rounded-none h-10 font-mono text-xs uppercase tracking-wide border-border">
                   Cancel
                 </Button>
               )}
+              <Button type="submit" disabled={isLoading} className="min-w-[140px] rounded-none h-10 font-mono text-xs uppercase tracking-wide bg-primary text-primary-foreground hover:bg-primary/90">
+                {isLoading ? "SAVING..." : <><Save className="h-4 w-4 mr-2" /> CREATE_MOVEMENT</>}
+              </Button>
             </div>
           </form>
         </Form>

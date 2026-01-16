@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MaintenanceCategory, Priority } from "@prisma/client"
 
 /**
  * RWO Filters Component

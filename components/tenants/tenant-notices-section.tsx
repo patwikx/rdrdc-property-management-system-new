@@ -1,62 +1,51 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react"
 import { format } from "date-fns"
-import { getTenantNotices, getTenantNoticeStats, type TenantNotice, type TenantNoticeStats } from "@/lib/actions/tenant-notices-actions"
+
+// Define interface locally based on TenantWithDetails to avoid import cycles or missing types
+interface TenantNotice {
+  id: string
+  noticeType: string
+  noticeNumber: number
+  totalAmount: number
+  forMonth: string
+  forYear: number
+  dateIssued: Date
+  isSettled: boolean
+}
 
 interface TenantNoticesSectionProps {
-  tenantId: string
+  notices: TenantNotice[]
 }
 
-function getNoticeStatusVariant(isSettled: boolean, isOverdue: boolean) {
-  if (isSettled) return "default" as const
-  if (isOverdue) return "destructive" as const
-  return "secondary" as const
+function getNoticeStatusStyle(isSettled: boolean, isOverdue: boolean) {
+  if (isSettled) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+  if (isOverdue) return "bg-rose-500/10 text-rose-600 border-rose-500/20"
+  return "bg-amber-500/10 text-amber-600 border-amber-500/20"
 }
 
-function getNoticeTypeVariant(noticeType: string) {
-  switch (noticeType.toLowerCase()) {
-    case "demand_letter": return "destructive" as const
-    case "notice_to_quit": return "destructive" as const
-    case "payment_reminder": return "secondary" as const
-    case "lease_violation": return "destructive" as const
-    default: return "outline" as const
+export function TenantNoticesSection({ notices }: TenantNoticesSectionProps) {
+  // Calculate stats client-side
+  const now = new Date()
+
+  const isNoticeOverdue = (notice: TenantNotice) => {
+    if (notice.isSettled) return false
+    // Simplification for UI stats: 
+    return !notice.isSettled && new Date(notice.dateIssued) < new Date(now.setMonth(now.getMonth() - 1))
   }
-}
 
-export function TenantNoticesSection({ tenantId }: TenantNoticesSectionProps) {
-  const [notices, setNotices] = useState<TenantNotice[]>([])
-  const [stats, setStats] = useState<TenantNoticeStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      try {
-        const [noticesResult, statsResult] = await Promise.all([
-          getTenantNotices(tenantId),
-          getTenantNoticeStats(tenantId)
-        ])
-
-        if (noticesResult.success && noticesResult.data) {
-          setNotices(noticesResult.data)
-        }
-
-        if (statsResult.success && statsResult.data) {
-          setStats(statsResult.data)
-        }
-      } catch (error) {
-        console.error("Error fetching notices data:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [tenantId])
+  const stats = {
+    total: notices.length,
+    totalAmount: notices.reduce((sum, n) => sum + n.totalAmount, 0),
+    settled: notices.filter(n => n.isSettled).length,
+    settledAmount: notices.filter(n => n.isSettled).reduce((sum, n) => sum + n.totalAmount, 0),
+    outstanding: notices.filter(n => !n.isSettled && !isNoticeOverdue(n)).length,
+    outstandingAmount: notices.filter(n => !n.isSettled && !isNoticeOverdue(n)).reduce((sum, n) => sum + n.totalAmount, 0),
+    overdue: notices.filter(n => isNoticeOverdue(n)).length,
+    overdueAmount: notices.filter(n => isNoticeOverdue(n)).reduce((sum, n) => sum + n.totalAmount, 0),
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
@@ -66,197 +55,116 @@ export function TenantNoticesSection({ tenantId }: TenantNoticesSectionProps) {
   }
 
   const formatNoticeType = (type: string) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  }
-
-  const isNoticeOverdue = (notice: TenantNotice) => {
-    if (notice.isSettled) return false
-    
-    const now = new Date()
-    const currentMonth = now.getMonth() + 1
-    const currentYear = now.getFullYear()
-    const noticeYear = notice.forYear
-    const noticeMonth = parseInt(notice.forMonth)
-    
-    return noticeYear < currentYear || (noticeYear === currentYear && noticeMonth < currentMonth)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 bg-muted rounded animate-pulse" />
-          ))}
-        </div>
-        <div className="h-64 bg-muted rounded animate-pulse" />
-      </div>
-    )
+    return type.replace(/_/g, ' ').toUpperCase()
   }
 
   return (
     <div className="space-y-6">
-      {/* Notice Stats */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </div>
-                Total Notices
-              </CardTitle>
-              <Badge variant="secondary">{stats.total}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                All notices issued
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </div>
-                Settled
-              </CardTitle>
-              <Badge variant="default">{stats.settled}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.settledAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                Resolved notices
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
-                Outstanding
-              </CardTitle>
-              <Badge variant="secondary">{stats.outstanding}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.outstandingAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                Pending resolution
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                </div>
-                Overdue
-              </CardTitle>
-              <Badge variant="destructive">{stats.overdue}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.overdueAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                Past due notices
-              </p>
-            </CardContent>
-          </Card>
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="border border-border bg-background p-4 flex flex-col justify-between hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Total Notices</span>
+            <FileText className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter block">{stats.total}</span>
+            <span className="text-xs text-muted-foreground font-mono">{formatCurrency(stats.totalAmount)}</span>
+          </div>
         </div>
-      )}
+
+        <div className="border border-border bg-background p-4 flex flex-col justify-between hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Settled</span>
+            <CheckCircle className="h-4 w-4 text-emerald-500/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter block text-emerald-600">{stats.settled}</span>
+            <span className="text-xs text-muted-foreground font-mono">{formatCurrency(stats.settledAmount)}</span>
+          </div>
+        </div>
+
+        <div className="border border-border bg-background p-4 flex flex-col justify-between hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Outstanding</span>
+            <Clock className="h-4 w-4 text-amber-500/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter block text-amber-600">{stats.outstanding}</span>
+            <span className="text-xs text-muted-foreground font-mono">{formatCurrency(stats.outstandingAmount)}</span>
+          </div>
+        </div>
+
+        <div className="border border-border bg-background p-4 flex flex-col justify-between hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Overdue</span>
+            <AlertTriangle className="h-4 w-4 text-rose-500/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter block text-rose-600">{stats.overdue}</span>
+            <span className="text-xs text-muted-foreground font-mono">{formatCurrency(stats.overdueAmount)}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Notices List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            Tenant Notices
-          </CardTitle>
-          <CardDescription>
-            All notices issued to this tenant
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {notices.length > 0 ? (
-            <div className="space-y-4">
-              {notices.map((notice) => {
-                const isOverdue = isNoticeOverdue(notice)
-                return (
-                  <div key={notice.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-                          <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium">{formatNoticeType(notice.noticeType)}</h3>
-                            <Badge variant={getNoticeTypeVariant(notice.noticeType)}>
-                              #{notice.noticeNumber}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getNoticeStatusVariant(notice.isSettled, isOverdue)}>
-                              {notice.isSettled ? 'Settled' : isOverdue ? 'Overdue' : 'Outstanding'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {format(new Date(notice.dateIssued), 'MMM dd, yyyy')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Date issued
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-3 md:grid-cols-3 p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Amount</label>
-                        <p className="text-sm font-medium">{formatCurrency(notice.totalAmount)}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Period</label>
-                        <p className="text-sm">{notice.forMonth} {notice.forYear}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Status</label>
-                        <p className={`text-sm font-medium ${
-                          notice.isSettled 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : isOverdue 
-                              ? 'text-red-600 dark:text-red-400' 
-                              : 'text-yellow-600 dark:text-yellow-400'
-                        }`}>
-                          {notice.isSettled ? 'Settled' : isOverdue ? 'Overdue' : 'Outstanding'}
-                        </p>
-                      </div>
+      <div className="border border-border bg-background p-6">
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Notice History
+        </h3>
+        
+        {notices.length > 0 ? (
+          <div className="grid gap-2">
+            {notices.map((notice) => {
+              const isOverdue = isNoticeOverdue(notice)
+              const statusStyle = getNoticeStatusStyle(notice.isSettled, isOverdue)
+              
+              return (
+                <div key={notice.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-3 border border-border bg-muted/5 items-center hover:border-primary/30 transition-colors">
+                  {/* Status */}
+                  <div className="md:col-span-2">
+                    <Badge variant="outline" className={`rounded-none text-[9px] uppercase tracking-widest border-0 px-1.5 py-0.5 w-fit ${statusStyle}`}>
+                      {notice.isSettled ? 'SETTLED' : isOverdue ? 'OVERDUE' : 'PENDING'}
+                    </Badge>
+                  </div>
+
+                  {/* Type & ID */}
+                  <div className="md:col-span-4">
+                    <span className="text-[10px] text-muted-foreground uppercase block md:hidden mb-1">Notice Type</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold uppercase tracking-wide">{formatNoticeType(notice.noticeType)}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">REF#{notice.noticeNumber}</span>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No notices</h3>
-              <p className="mt-2 text-muted-foreground">
-                No notices have been issued to this tenant.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                  {/* Financials */}
+                  <div className="md:col-span-3">
+                    <span className="text-[10px] text-muted-foreground uppercase block md:hidden mb-1">Amount</span>
+                    <div className="flex flex-col">
+                      <span className="font-mono font-bold text-sm">{formatCurrency(notice.totalAmount)}</span>
+                      <span className="text-[10px] text-muted-foreground">FOR: {notice.forMonth} {notice.forYear}</span>
+                    </div>
+                  </div>
+
+                  {/* Date */}
+                  <div className="md:col-span-3 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase text-muted-foreground tracking-widest">Date Issued</span>
+                      <span className="font-mono text-xs">{format(new Date(notice.dateIssued), 'MMM dd, yyyy')}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 border border-dashed border-border bg-muted/5">
+            <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Notices Found</h3>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

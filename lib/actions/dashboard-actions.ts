@@ -4,79 +4,7 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { LeaseStatus, MaintenanceStatus, PaymentStatus, TenantStatus, UnitStatus } from "@prisma/client"
-
-export interface DashboardStats {
-  properties: {
-    total: number
-    totalLeasableArea: number
-    byType: {
-      RESIDENTIAL: number
-      COMMERCIAL: number
-      MIXED: number
-    }
-  }
-  units: {
-    total: number
-    occupied: number
-    vacant: number
-    maintenance: number
-    reserved: number
-    occupancyRate: number
-    totalArea: number
-    occupiedArea: number
-  }
-  occupancy: {
-    overallRate: number
-    unitBasedRate: number
-    areaBasedRate: number
-  }
-  tenants: {
-    total: number
-    active: number
-    inactive: number
-    pending: number
-  }
-  leases: {
-    active: number
-    expiringSoon: number
-    expired: number
-  }
-  financial: {
-    totalRentCollected: number
-    pendingPayments: number
-    overduePayments: number
-    pdcOpen: number
-    pdcDeposited: number
-  }
-  maintenance: {
-    pending: number
-    inProgress: number
-    completed: number
-    emergency: number
-  }
-  taxes: {
-    propertyTaxesDue: number
-    unitTaxesDue: number
-    propertyTaxesOverdue: number
-    unitTaxesOverdue: number
-  }
-}
-
-export interface RecentActivity {
-  id: string
-  type: string
-  description: string
-  timestamp: Date
-  user: string
-}
-
-export interface UpcomingTask {
-  id: string
-  title: string
-  dueDate: Date
-  priority: string
-  status: string
-}
+import type { UpcomingTask, DashboardStats, RecentActivity } from "@/lib/types/dashboard-types"
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const session = await auth()
@@ -371,7 +299,7 @@ export async function getUpcomingTasks(limit = 10): Promise<UpcomingTask[]> {
     id: task.id,
     title: task.title,
     dueDate: task.dueDate!,
-    priority: task.priority,
+    priority: task.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
     status: task.status,
   }))
 }
@@ -460,4 +388,73 @@ export async function getOverduePayments() {
   })
 
   return payments
+}
+
+export async function getUpcomingTenantAnniversaries(days = 30) {
+  const session = await auth()
+  
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
+  const activeLeases = await prisma.lease.findMany({
+    where: {
+      status: LeaseStatus.ACTIVE,
+    },
+    include: {
+      tenant: {
+        select: {
+          firstName: true,
+          lastName: true,
+          company: true,
+          bpCode: true,
+        },
+      },
+      leaseUnits: {
+        include: {
+          unit: {
+            select: {
+              unitNumber: true,
+              property: {
+                select: {
+                  propertyName: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  const today = new Date()
+  const future = new Date()
+  future.setDate(today.getDate() + days)
+
+  const anniversaries = activeLeases.filter(lease => {
+    const start = new Date(lease.startDate)
+    const currentYearAnniversary = new Date(today.getFullYear(), start.getMonth(), start.getDate())
+    const nextYearAnniversary = new Date(today.getFullYear() + 1, start.getMonth(), start.getDate())
+    
+    return (currentYearAnniversary >= today && currentYearAnniversary <= future) ||
+           (nextYearAnniversary >= today && nextYearAnniversary <= future)
+  }).map(lease => {
+    const start = new Date(lease.startDate)
+    const years = today.getFullYear() - start.getFullYear()
+    // Exact anniversary date for display
+    const anniversaryDate = new Date(today.getFullYear(), start.getMonth(), start.getDate())
+    if (anniversaryDate < today) {
+        anniversaryDate.setFullYear(today.getFullYear() + 1)
+    }
+
+    return {
+      id: lease.id,
+      tenant: lease.tenant,
+      unit: lease.leaseUnits[0]?.unit,
+      years: years === 0 ? 1 : years, // If it's their 0th year (just started), maybe exclude? Assuming 1st anniversary if years==0 but date matches
+      date: anniversaryDate
+    }
+  }).sort((a, b) => a.date.getTime() - b.date.getTime())
+
+  return anniversaries
 }

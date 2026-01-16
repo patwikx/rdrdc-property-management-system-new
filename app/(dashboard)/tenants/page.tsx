@@ -4,30 +4,19 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Plus, Search, Building, Phone, Mail, Calendar, X } from "lucide-react"
+import { User, Plus, Search, Building, Phone, Mail, X, Briefcase, ChevronRight } from "lucide-react"
 import { getAllTenants, TenantWithDetails } from "@/lib/actions/tenant-actions"
 import { TenantStatus, LeaseStatus } from "@prisma/client"
 import { format } from "date-fns"
 import Link from "next/link"
 
-function getTenantStatusColor(status: string) {
+function getTenantStatusStyle(status: string) {
   switch (status) {
-    case 'ACTIVE': return 'bg-green-600'
-    case 'PENDING': return 'bg-yellow-600'
-    case 'INACTIVE': return 'bg-gray-600'
-    default: return 'bg-gray-600'
-  }
-}
-
-function getLeaseStatusColor(status: string) {
-  switch (status) {
-    case 'ACTIVE': return 'bg-green-600'
-    case 'PENDING': return 'bg-yellow-600'
-    case 'TERMINATED': return 'bg-red-600'
-    case 'EXPIRED': return 'bg-gray-600'
-    default: return 'bg-gray-600'
+    case 'ACTIVE': return { border: 'border-l-emerald-500', badge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' }
+    case 'PENDING': return { border: 'border-l-amber-500', badge: 'bg-amber-500/10 text-amber-600 border-amber-500/20' }
+    case 'INACTIVE': return { border: 'border-l-slate-500', badge: 'bg-slate-500/10 text-slate-600 border-slate-500/20' }
+    default: return { border: 'border-l-muted', badge: 'bg-muted/10 text-muted-foreground border-border' }
   }
 }
 
@@ -47,7 +36,6 @@ export default function TenantsPage() {
     hasActiveLease: 'all'
   })
 
-
   useEffect(() => {
     async function fetchTenants() {
       try {
@@ -63,9 +51,7 @@ export default function TenantsPage() {
     fetchTenants()
   }, [])
 
-  // Filter tenants based on search query and filters
   const filteredTenants = tenants.filter(tenant => {
-    // Search filter
     const matchesSearch = !searchQuery || (
       tenant.bpCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       `${tenant.firstName} ${tenant.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,16 +60,13 @@ export default function TenantsPage() {
       tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    // Status filter
     const matchesStatus = filters.status === 'all' || tenant.status === filters.status
 
-    // Active lease filter
     const activeLease = tenant.leases.find(lease => lease.status === 'ACTIVE')
     const matchesActiveLease = filters.hasActiveLease === 'all' || 
       (filters.hasActiveLease === 'yes' && activeLease) ||
       (filters.hasActiveLease === 'no' && !activeLease)
 
-    // Lease status filter
     const matchesLeaseStatus = filters.leaseStatus === 'all' || 
       (activeLease && activeLease.status === filters.leaseStatus)
 
@@ -93,22 +76,25 @@ export default function TenantsPage() {
   const hasActiveFilters = Object.values(filters).some(value => value !== 'all') || searchQuery
 
   const clearAllFilters = () => {
-    setFilters({
-      status: 'all',
-      leaseStatus: 'all',
-      hasActiveLease: 'all'
-    })
+    setFilters({ status: 'all', leaseStatus: 'all', hasActiveLease: 'all' })
     setSearchQuery('')
   }
+
+  // Stats
+  const totalTenants = tenants.length
+  const activeTenants = tenants.filter(t => t.status === 'ACTIVE').length
+  const pendingTenants = tenants.filter(t => t.status === 'PENDING').length
+  const inactiveTenants = tenants.filter(t => t.status === 'INACTIVE').length
 
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
+          <div className="h-8 bg-muted/20 w-1/3" />
+          <div className="grid gap-4 md:grid-cols-4 h-24 bg-muted/10 border border-border" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 bg-muted rounded" />
+              <div key={i} className="h-48 bg-muted/10 border border-border" />
             ))}
           </div>
         </div>
@@ -117,244 +103,212 @@ export default function TenantsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8 pt-6 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Tenants</h2>
-          <p className="text-muted-foreground">
-            Manage tenant information, leases, and relationships
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Tenant Directory</h2>
+          <p className="text-sm text-muted-foreground font-mono mt-1">
+            Partner Relationship Management
           </p>
         </div>
         <Link href="/tenants/create">
-          <Button>
+          <Button className="rounded-none h-10 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Add Tenant
           </Button>
         </Link>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* Summary Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Total Tenants</span>
+            <User className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter">{totalTenants}</span>
+            <span className="text-xs text-muted-foreground ml-2">Records</span>
+          </div>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Active</span>
+            <Building className="h-4 w-4 text-emerald-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-600">{activeTenants}</span>
+            <span className="text-xs text-muted-foreground ml-2">Current</span>
+          </div>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Pending</span>
+            <Briefcase className="h-4 w-4 text-amber-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-amber-600">{pendingTenants}</span>
+            <span className="text-xs text-muted-foreground ml-2">Onboarding</span>
+          </div>
+        </div>
+        <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Inactive</span>
+            <X className="h-4 w-4 text-slate-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-medium tracking-tighter text-slate-600">{inactiveTenants}</span>
+            <span className="text-xs text-muted-foreground ml-2">Archived</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-4 p-4 border border-border bg-muted/5 items-start sm:items-center justify-between">
+        <div className="flex flex-1 gap-4 w-full">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search tenants..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 rounded-none border-border bg-background h-10 font-mono text-xs uppercase placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:border-primary"
             />
             {searchQuery && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
                 onClick={() => setSearchQuery('')}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </Button>
             )}
           </div>
 
-          <Select
-            value={filters.status}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value as TenantStatus | 'all' }))}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="INACTIVE">Inactive</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.leaseStatus}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, leaseStatus: value as LeaseStatus | 'all' }))}
-          >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Lease Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Leases</SelectItem>
-              <SelectItem value="ACTIVE">Active Lease</SelectItem>
-              <SelectItem value="PENDING">Pending Lease</SelectItem>
-              <SelectItem value="TERMINATED">Terminated</SelectItem>
-              <SelectItem value="EXPIRED">Expired</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.hasActiveLease}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, hasActiveLease: value as 'all' | 'yes' | 'no' }))}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Has Lease" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tenants</SelectItem>
-              <SelectItem value="yes">With Lease</SelectItem>
-              <SelectItem value="no">No Lease</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearAllFilters}
+          <div className="flex gap-2">
+            <Select
+              value={filters.status}
+              onValueChange={(value) => setFilters(prev => ({ ...prev, status: value as TenantStatus | 'all' }))}
             >
-              <X className="h-4 w-4 mr-2" />
-              Clear
-            </Button>
-          )}
-        </div>
+              <SelectTrigger className="w-[140px] rounded-none border-border bg-background h-10 font-mono text-xs uppercase">
+                <SelectValue placeholder="Status: All" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none border-border">
+                <SelectItem value="all" className="font-mono text-xs uppercase">All Status</SelectItem>
+                <SelectItem value="ACTIVE" className="font-mono text-xs uppercase">Active</SelectItem>
+                <SelectItem value="INACTIVE" className="font-mono text-xs uppercase">Inactive</SelectItem>
+                <SelectItem value="PENDING" className="font-mono text-xs uppercase">Pending</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          <span>{filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''}</span>
-          <span>•</span>
-          <span>{tenants.filter(t => t.status === 'ACTIVE').length} active</span>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                className="rounded-none h-10 border-border hover:bg-muted font-mono text-xs uppercase tracking-wider"
+              >
+                <X className="h-3 w-3 mr-2" />
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Tenants Grid */}
+      {/* Tenant Grid */}
       {filteredTenants.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredTenants.map((tenant) => {
             const activeLease = tenant.leases.find(lease => lease.status === 'ACTIVE')
-            const totalUnits = activeLease?.leaseUnits.length || 0
+            const statusStyle = getTenantStatusStyle(tenant.status)
             
             return (
-              <Card key={tenant.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-primary/10 p-2 rounded-lg">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {tenant.businessName}
-                        </CardTitle>
-                        <CardDescription className="font-mono text-xs">
-                          {tenant.bpCode}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge className={getTenantStatusColor(tenant.status)} variant="outline">
-                      {tenant.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  {/* Business Info */}
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">{tenant.company}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-6">
+              <div key={tenant.id} className={`group border border-border border-l-4 ${statusStyle.border} bg-background hover:border-primary/50 transition-all flex flex-col`}>
+                {/* Header */}
+                <div className="p-4 border-b border-dashed border-border/50 flex justify-between items-start">
+                  <div className="flex flex-col w-full pr-2">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Business Name</span>
+                    <h3 className="font-bold text-base truncate w-full" title={tenant.businessName}>
                       {tenant.businessName}
-                    </p>
+                    </h3>
+                    <span className="text-xs font-mono text-muted-foreground mt-1 bg-muted/30 px-1 w-fit">
+                      {tenant.bpCode}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className={`rounded-none text-xs uppercase tracking-widest border-0 ${statusStyle.badge} px-1.5 py-0.5`}>
+                    {tenant.status}
+                  </Badge>
+                </div>
+
+                {/* Body */}
+                <div className="p-4 flex-1 space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Briefcase className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{tenant.company}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{tenant.firstName} {tenant.lastName}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate font-mono text-xs">{tenant.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate font-mono text-xs">{tenant.phone}</span>
+                    </div>
                   </div>
 
-                  {/* Contact Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm truncate">{tenant.email}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{tenant.phone}</span>
-                    </div>
-                  </div>
-
-                  {/* Active Lease Info */}
                   {activeLease && (
-                    <div className="pt-3 border-t">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Active Lease</span>
-                        </div>
-                        <Badge className={getLeaseStatusColor(activeLease.status)} variant="outline">
-                          {activeLease.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div>Spaces: {totalUnits}</div>
-                        <div>Rent: ₱{activeLease.totalRentAmount.toLocaleString()}/month</div>
-                        <div>Until: {format(new Date(activeLease.endDate), 'MMM dd, yyyy')}</div>
+                    <div className="pt-3 border-t border-border/50">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Active Lease</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-mono text-emerald-600 font-medium">₱{activeLease.totalRentAmount.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs">Ends {format(new Date(activeLease.endDate), 'MMM yyyy')}</span>
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Quick Stats */}
-                  <div className="pt-3 border-t">
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div>
-                        <div className="text-lg font-semibold text-blue-600">
-                          {tenant.leases.length}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Leases</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-green-600">
-                          {tenant.documents.length}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Docs</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-orange-600">
-                          {tenant.maintenanceRequests.length}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Requests</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-purple-600">
-                          {tenant.pdcs.length}
-                        </div>
-                        <div className="text-xs text-muted-foreground">PDCs</div>
-                      </div>
-                    </div>
+                {/* Footer Metrics */}
+                <div className="grid grid-cols-4 divide-x divide-border border-t border-border bg-muted/5">
+                  <div className="p-2 text-center">
+                    <div className="text-xs font-mono font-bold">{tenant.leases.length}</div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Leases</div>
                   </div>
-
-                  {/* Action Button */}
-                  <div className="pt-3">
-                    <Link href={`/tenants/${tenant.id}`}>
-                      <Button variant="outline" className="w-full">
-                        View Details
-                      </Button>
-                    </Link>
+                  <div className="p-2 text-center">
+                    <div className="text-xs font-mono font-bold">{tenant.documents.length}</div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Docs</div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="p-2 text-center">
+                    <div className="text-xs font-mono font-bold">{tenant.maintenanceRequests.length}</div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Reqs</div>
+                  </div>
+                  <Link href={`/tenants/${tenant.id}`} className="flex items-center justify-center hover:bg-muted/20 transition-colors">
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </Link>
+                </div>
+              </div>
             )
           })}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <User className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">
-            {searchQuery ? 'No tenants found' : 'No tenants yet'}
-          </h3>
-          <p className="mt-2 text-muted-foreground">
-            {searchQuery 
-              ? 'Try adjusting your search terms'
-              : 'Get started by adding your first tenant'
-            }
+        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border bg-muted/5">
+          <User className="h-10 w-10 text-muted-foreground/30 mb-4" />
+          <h3 className="text-lg font-bold uppercase tracking-widest text-muted-foreground">No Tenants Found</h3>
+          <p className="text-sm text-muted-foreground mt-2 mb-6 font-mono">
+            {searchQuery ? 'Adjust your filters' : 'Database is empty'}
           </p>
           {!searchQuery && (
             <Link href="/tenants/create">
-              <Button className="mt-4">
+              <Button className="rounded-none h-10 text-xs font-mono uppercase tracking-wider">
                 <Plus className="h-4 w-4 mr-2" />
-                Add First Tenant
+                Add Tenant
               </Button>
             </Link>
           )}

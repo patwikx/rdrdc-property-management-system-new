@@ -752,7 +752,6 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
               {/* Rate history display */}
               {selectedUnitForHistory ? (
                 <RateHistory
-                  leaseUnitId={selectedUnitForHistory}
                   history={rateHistoryByUnit[selectedUnitForHistory] || []}
                 />
               ) : (

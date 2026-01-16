@@ -36,7 +36,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
 interface BreadcrumbSegment {
@@ -111,18 +110,12 @@ const getDynamicTitle = (segment: string, pathname: string): string => {
       const parentSegment = pathParts[segmentIndex - 1]
       
       switch (parentSegment) {
-        case 'properties':
-          return 'Property Details'
-        case 'tenants':
-          return 'Tenant Details'
-        case 'projects':
-          return 'Project Details'
-        case 'tasks':
-          return 'Task Details'
-        case 'users':
-          return 'User Details'
-        default:
-          return 'Details'
+        case 'properties': return 'Prop_ID'
+        case 'tenants': return 'Tenant_ID'
+        case 'projects': return 'Proj_ID'
+        case 'tasks': return 'Task_ID'
+        case 'users': return 'User_ID'
+        default: return 'ID'
       }
     }
   }
@@ -139,7 +132,7 @@ export function DynamicBreadcrumb() {
     
     // Always start with Dashboard as home
     breadcrumbSegments.push({
-      title: "Dashboard",
+      title: "HOME",
       href: "/dashboard",
       icon: LayoutDashboard
     })
@@ -165,13 +158,12 @@ export function DynamicBreadcrumb() {
       let icon: LucideIcon | undefined
       
       if (config) {
-        title = config.title
+        title = config.title.toUpperCase().replace(/\s+/g, '_') // Format for tech look
         icon = config.icon
       } else {
-        title = getDynamicTitle(segment, pathname)
-        // Try to infer icon based on context
+        title = getDynamicTitle(segment, pathname).toUpperCase()
         if (segment.match(/^[a-zA-Z0-9-_]{8,}$/)) {
-          icon = Eye // Default icon for detail pages
+          icon = Eye 
         }
       }
       
@@ -190,8 +182,8 @@ export function DynamicBreadcrumb() {
   }
   
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb className="hidden md:flex">
+      <BreadcrumbList className="gap-0 sm:gap-0">
         {breadcrumbs.map((breadcrumb, index) => {
           const isLast = index === breadcrumbs.length - 1
           const Icon = breadcrumb.icon
@@ -201,19 +193,26 @@ export function DynamicBreadcrumb() {
               <BreadcrumbItem>
                 {breadcrumb.href ? (
                   <BreadcrumbLink asChild>
-                    <Link href={breadcrumb.href} className="flex items-center gap-2">
-                      {Icon && <Icon className="h-4 w-4" />}
+                    <Link 
+                      href={breadcrumb.href} 
+                      className="flex items-center gap-2 px-2 py-1 hover:bg-primary/10 hover:text-primary transition-colors text-[10px] font-mono tracking-widest text-muted-foreground uppercase"
+                    >
+                      {Icon && <Icon className="h-3 w-3" />}
                       {breadcrumb.title}
                     </Link>
                   </BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage className="flex items-center gap-2">
-                    {Icon && <Icon className="h-4 w-4" />}
+                  <BreadcrumbPage className="flex items-center gap-2 px-2 py-1 text-[10px] font-mono tracking-widest font-bold text-foreground uppercase bg-muted/5">
+                    {Icon && <Icon className="h-3 w-3" />}
                     {breadcrumb.title}
                   </BreadcrumbPage>
                 )}
               </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
+              {!isLast && (
+                <li role="presentation" aria-hidden="true" className="[&>svg]:size-3.5 px-1 text-muted-foreground/40">
+                  <span className="font-mono text-xs">/</span>
+                </li>
+              )}
             </React.Fragment>
           )
         })}

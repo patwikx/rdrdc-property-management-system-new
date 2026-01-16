@@ -22,7 +22,6 @@ import { History, TrendingUp, TrendingDown, Minus, Bot, User } from "lucide-reac
 import { format } from "date-fns"
 
 interface RateHistoryProps {
-  leaseUnitId: string
   history: RateHistoryWithDetails[]
 }
 
@@ -56,7 +55,7 @@ function calculatePercentageChange(previousRate: number, newRate: number): strin
   return `${sign}${change.toFixed(2)}%`
 }
 
-export function RateHistory({ leaseUnitId, history }: RateHistoryProps) {
+export function RateHistory({ history }: RateHistoryProps) {
   if (history.length === 0) {
     return (
       <Card>

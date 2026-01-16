@@ -27,55 +27,50 @@ interface OverduePaymentsProps {
 
 export function OverduePayments({ payments }: OverduePaymentsProps) {
   return (
-    <Card className="col-span-1 lg:col-span-3">
-      <CardHeader>
+    <Card className="col-span-1 border-muted/60 shadow-sm transition-all hover:shadow-md flex flex-col">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Overdue Payments</CardTitle>
-            <CardDescription>Payments past due date</CardDescription>
+          <div className="space-y-0.5">
+            <CardTitle className="text-base tracking-tight">Overdue Payments</CardTitle>
+            <CardDescription className="text-[11px]">Outstanding collections</CardDescription>
           </div>
-          {payments.length > 0 && (
-            <Link href="/financial/payments?filter=overdue">
-              <Button variant="ghost" size="sm">
-                View All
-                <ArrowUpRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          )}
+          <Link href="/financial/payments?filter=overdue">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+              <ArrowUpRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <div className="space-y-4">
           {payments.length === 0 ? (
-            <div className="text-center py-8">
-              <DollarSign className="h-12 w-12 text-green-600 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">
-                No overdue payments
-              </p>
-              <p className="text-xs text-green-600 mt-1">
-                All payments are up to date
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center mb-3">
+                <DollarSign className="h-5 w-5 text-emerald-600/50" />
+              </div>
+              <p className="text-[11px] font-medium text-emerald-600 uppercase tracking-widest">
+                All collections current
               </p>
             </div>
           ) : (
             payments.slice(0, 5).map((payment) => (
               <div 
                 key={payment.id} 
-                className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0"
+                className="group relative flex items-start gap-3 pb-3 border-b border-muted/40 last:border-0 last:pb-0 transition-colors hover:bg-muted/5 -mx-1 px-1 rounded-lg"
               >
                 <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
+                  <p className="text-xs font-semibold leading-snug text-foreground/90 tracking-tight">
                     {payment.lease.tenant.company || `${payment.lease.tenant.firstName} ${payment.lease.tenant.lastName}`}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Amount: ₱{payment.amount.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-destructive font-medium">
-                    Due: {format(new Date(payment.paymentDate), 'MMM dd, yyyy')}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-foreground tracking-tighter">₱{payment.amount.toLocaleString()}</span>
+                    <span className="opacity-30 text-[10px]">•</span>
+                    <span className="text-[10px] font-medium text-rose-600 uppercase tracking-tight">Due {format(new Date(payment.paymentDate), 'MMM dd')}</span>
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <Badge variant="destructive" className="mb-1">OVERDUE</Badge>
-                  <p className="text-xs text-muted-foreground">{payment.lease.tenant.bpCode}</p>
+                <div className="text-right shrink-0 space-y-1">
+                  <Badge variant="destructive" className="text-[8px] font-black h-4 px-1 rounded-sm tracking-widest">OVERDUE</Badge>
+                  <p className="text-[9px] font-bold text-muted-foreground/60 uppercase">{payment.lease.tenant.bpCode}</p>
                 </div>
               </div>
             ))

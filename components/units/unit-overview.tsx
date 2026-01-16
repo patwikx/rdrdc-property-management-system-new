@@ -1,7 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Building2, User, Receipt, FileText, DollarSign, Ruler, Calendar, Clock } from "lucide-react"
+import { Building2, User, Receipt, FileText, DollarSign, Ruler, Calendar, Clock, Info, Layers, Phone, Mail, Building as CompanyIcon } from "lucide-react"
 import { UnitWithDetails } from "@/lib/actions/unit-actions"
 import { format, differenceInDays, isAfter } from "date-fns"
 
@@ -36,10 +35,10 @@ export function UnitOverview({ unit }: UnitOverviewProps) {
     const isExpiringSoon = remainingDays <= 30 && remainingDays > 0
     
     function getProgressColor() {
-      if (isExpired) return "bg-red-500"
-      if (isExpiringSoon) return "bg-yellow-500"
+      if (isExpired) return "bg-rose-500"
+      if (isExpiringSoon) return "bg-amber-500"
       if (progressPercentage > 75) return "bg-orange-500"
-      return "bg-green-500"
+      return "bg-emerald-500"
     }
     
     function getProgressStatus() {
@@ -63,220 +62,253 @@ export function UnitOverview({ unit }: UnitOverviewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Area</CardTitle>
-            <Ruler className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unit.totalArea.toLocaleString()} sqm</div>
-            <p className="text-xs text-muted-foreground">
-              {unit.unitFloors.length} floor{unit.unitFloors.length !== 1 ? 's' : ''} configured
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Rent</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₱{unit.totalRent.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              ₱{unit.unitFloors.length > 0 ? (unit.totalRent / unit.totalArea).toFixed(2) : '0'} per sqm
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Tenant</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-semibold">
-              {currentTenant ? (
-                <div>
-                  <p className="truncate">{currentTenant.firstName} {currentTenant.lastName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{currentTenant.company}</p>
-                </div>
-              ) : (
-                <span className="text-muted-foreground">Vacant</span>
-              )}
+      {/* MAIN SPEC SHEET */}
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Info className="h-3 w-3" />
+            Space Specification
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+          {/* LEFT COLUMN: IDENTITY */}
+          <div className="p-6 space-y-6">
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Space Number</label>
+              <div className="font-mono text-sm font-medium text-foreground">{unit.unitNumber}</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Property Title</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-semibold">
-              {unit.propertyTitle ? (
-                <div>
-                  <p className="truncate">{unit.propertyTitle.titleNo}</p>
-                  <p className="text-xs text-muted-foreground">Lot {unit.propertyTitle.lotNo}</p>
-                </div>
-              ) : (
-                <span className="text-muted-foreground">No title linked</span>
-              )}
+            
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Property</label>
+              <div className="flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm font-medium">{unit.property.propertyName}</span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Title Reference</label>
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                {unit.propertyTitle ? (
+                  <span className="text-sm font-mono">{unit.propertyTitle.titleNo}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">No title linked</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: METRICS */}
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Total Area</label>
+                <div className="flex items-center gap-2">
+                  <Ruler className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-mono">{unit.totalArea.toLocaleString()} sqm</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Monthly Rent</label>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-mono font-medium">₱{unit.totalRent.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1 pt-4 border-t border-dashed border-border">
+              <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Floor Count</label>
+              <div className="flex items-center gap-2 mt-1">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm">{unit.unitFloors.length} Floor Level{unit.unitFloors.length !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Floor Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Building2 className="h-5 w-5" />
-            <span>Floor Configuration</span>
-          </CardTitle>
-          <CardDescription>Breakdown of unit floors and rental rates</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {unit.unitFloors.length > 0 ? (
-            <div className="space-y-4">
-              {unit.unitFloors.map((floor) => (
-                <div key={floor.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="space-y-1">
-                    <h4 className="font-medium">{floor.floorType.replace('_', ' ')}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {floor.area.toLocaleString()} sqm × ₱{floor.rate.toLocaleString()}/sqm
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">₱{floor.rent.toLocaleString()}</p>
-                    <p className="text-sm text-muted-foreground">Monthly</p>
-                  </div>
-                </div>
-              ))}
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>Total Monthly Rent:</span>
-                  <span>₱{unit.totalRent.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
-              <h4 className="mt-2 text-sm font-semibold">No floor configuration</h4>
-              <p className="text-sm text-muted-foreground">
-                This unit has no floor configuration set up yet.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Current Lease Summary */}
+      {/* CURRENT LEASE & TENANT */}
       {currentLease && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Receipt className="h-5 w-5" />
-              <span>Current Lease</span>
-            </CardTitle>
-            <CardDescription>Active lease information and progress</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Lease Period</p>
-                <p className="text-lg font-semibold">
-                  {format(new Date(currentLease.startDate), 'MMM dd, yyyy')} - {format(new Date(currentLease.endDate), 'MMM dd, yyyy')}
-                </p>
+        <div className="border border-border bg-background">
+          <div className="border-b border-border bg-muted/10 p-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+              <Receipt className="h-3 w-3" />
+              Active Lease Agreement
+            </span>
+          </div>
+          
+          <div className="p-0 divide-y divide-border">
+            
+            {/* 1. TENANT PROFILE (Top Priority) */}
+            {currentTenant && (
+              <div className="p-6 bg-muted/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="h-4 w-4 text-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">Primary Tenant</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Identity */}
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 bg-primary/10 flex items-center justify-center rounded-none border border-primary/20">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-base font-medium">{currentTenant.firstName} {currentTenant.lastName}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                          <CompanyIcon className="h-3 w-3" />
+                          {currentTenant.company || "Individual"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="rounded-none font-mono text-[10px] uppercase">
+                        BP: {currentTenant.bpCode}
+                      </Badge>
+                      <Badge variant="outline" className="rounded-none font-mono text-[10px] uppercase bg-green-500/10 text-green-600 border-green-500/20">
+                        {currentTenant.status}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Contact */}
+                  <div className="space-y-3 text-sm border-l border-dashed border-border pl-6">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                      <a href={`mailto:${currentTenant.email}`} className="hover:text-primary transition-colors">
+                        {currentTenant.email}
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-mono">{currentTenant.phone}</span>
+                    </div>
+                    {currentTenant.emergencyContactName && (
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Emergency</span>
+                        <div className="flex justify-between items-center text-xs">
+                          <span>{currentTenant.emergencyContactName}</span>
+                          <span className="font-mono text-muted-foreground">{currentTenant.emergencyContactPhone}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Monthly Rent</p>
-                <p className="text-lg font-semibold">₱{currentLease.totalRentAmount.toLocaleString()}</p>
+            )}
+
+            {/* 2. LEASE TERMS & METRICS */}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Duration</label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-mono">
+                    {format(new Date(currentLease.startDate), 'MMM dd, yyyy')} - {format(new Date(currentLease.endDate), 'MMM dd, yyyy')}
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Security Deposit</p>
-                <p className="text-lg font-semibold">₱{currentLease.securityDeposit.toLocaleString()}</p>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Monthly Rent</label>
+                <span className="text-sm font-mono font-medium">₱{currentLease.totalRentAmount.toLocaleString()}</span>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <Badge className="bg-green-600">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Security Deposit</label>
+                <span className="text-sm font-mono">₱{currentLease.securityDeposit.toLocaleString()}</span>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground tracking-widest block">Status</label>
+                <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-emerald-500/50 text-emerald-600 bg-emerald-500/10">
                   {currentLease.status}
                 </Badge>
               </div>
             </div>
 
-            {/* Lease Progress */}
+            {/* 3. FLOOR CONFIGURATION */}
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Leased Floor Configuration</h3>
+              </div>
+              
+              {unit.unitFloors.length > 0 ? (
+                <div className="border border-border rounded-none divide-y divide-border">
+                  {unit.unitFloors.map((floor) => (
+                    <div key={floor.id} className="flex items-center justify-between p-3 bg-muted/5 hover:bg-muted/10 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 bg-background border border-border flex items-center justify-center rounded-none shadow-sm">
+                          <span className="text-[10px] font-mono font-bold">{floor.floorType.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-mono uppercase font-bold block text-foreground">{floor.floorType.replace(/_/g, ' ')}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            {floor.area.toLocaleString()} sqm
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-mono font-medium block">₱{floor.rent.toLocaleString()}</span>
+                        <span className="text-[9px] text-muted-foreground font-mono">₱{floor.rate.toLocaleString()}/sqm</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed border-border text-center bg-muted/5">
+                  <span className="text-[10px] text-muted-foreground italic">No floor configuration defined</span>
+                </div>
+              )}
+            </div>
+
+            {/* 4. LEASE TIMELINE */}
             {leaseProgress && (
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Lease Progress</span>
+              <div className="p-6 bg-muted/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Lease Timeline</h3>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className={`${leaseProgress.getProgressColor().replace('bg-', 'border-')} ${leaseProgress.getProgressColor().replace('bg-', 'text-')}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-medium">{Math.round(leaseProgress.progressPercentage)}% Complete</span>
+                    <Badge variant="outline" className={`rounded-none text-[9px] uppercase tracking-widest border-0 ${leaseProgress.getProgressColor().replace('bg-', 'text-')}`}>
                       {leaseProgress.getProgressStatus()}
                     </Badge>
-                    <span className="text-sm font-medium">{Math.round(leaseProgress.progressPercentage)}%</span>
                   </div>
                 </div>
                 
                 <Progress 
                   value={leaseProgress.progressPercentage} 
-                  className="h-2"
+                  className="h-1.5 rounded-none bg-border/50" 
+                  indicatorClassName={leaseProgress.getProgressColor()}
                 />
                 
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{format(leaseProgress.startDate, 'MMM dd, yyyy')}</span>
-                  <span>{format(leaseProgress.endDate, 'MMM dd, yyyy')}</span>
-                </div>
-
-                <div className="grid gap-2 md:grid-cols-3 text-center">
-                  <div className="p-2 border rounded">
-                    <p className="text-lg font-bold text-green-600">{Math.max(differenceInDays(new Date(), leaseProgress.startDate), 0)}</p>
-                    <p className="text-xs text-muted-foreground">Days Elapsed</p>
-                  </div>
-                  <div className="p-2 border rounded">
-                    <p className={`text-lg font-bold ${leaseProgress.remainingDays <= 0 ? 'text-red-600' : leaseProgress.remainingDays <= 30 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {Math.max(leaseProgress.remainingDays, 0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Days Remaining</p>
-                  </div>
-                  <div className="p-2 border rounded">
-                    <p className="text-lg font-bold text-blue-600">{differenceInDays(leaseProgress.endDate, leaseProgress.startDate)}</p>
-                    <p className="text-xs text-muted-foreground">Total Days</p>
-                  </div>
-                </div>
-
-                {leaseProgress.isExpiringSoon && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm font-medium text-yellow-800">
-                        Lease expires in {leaseProgress.remainingDays} days
-                      </span>
+                <div className="grid gap-4 md:grid-cols-3 pt-6">
+                  <div className="border border-border p-3 bg-background">
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Elapsed</div>
+                    <div className="text-lg font-mono font-bold text-foreground">
+                      {Math.max(differenceInDays(new Date(), leaseProgress.startDate), 0)} <span className="text-xs font-normal text-muted-foreground">days</span>
                     </div>
                   </div>
-                )}
-
-                {leaseProgress.isExpired && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-red-600" />
-                      <span className="text-sm font-medium text-red-800">
-                        Lease expired {Math.abs(leaseProgress.remainingDays)} days ago
-                      </span>
+                  <div className="border border-border p-3 bg-background">
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Remaining</div>
+                    <div className={`text-lg font-mono font-bold ${leaseProgress.remainingDays <= 30 ? 'text-amber-600' : 'text-foreground'}`}>
+                      {Math.max(leaseProgress.remainingDays, 0)} <span className="text-xs font-normal text-muted-foreground">days</span>
                     </div>
                   </div>
-                )}
+                  <div className="border border-border p-3 bg-background">
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Total Term</div>
+                    <div className="text-lg font-mono font-bold text-foreground">
+                      {differenceInDays(leaseProgress.endDate, leaseProgress.startDate)} <span className="text-xs font-normal text-muted-foreground">days</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )

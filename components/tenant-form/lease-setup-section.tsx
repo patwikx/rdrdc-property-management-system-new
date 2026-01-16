@@ -1,6 +1,6 @@
 // components/tenant-form/LeaseSetupSection.tsx
 import { useState } from "react"
-import { Calendar as CalendarIcon, Home, Search, Check, ChevronsUpDown } from "lucide-react"
+import { Calendar as CalendarIcon, Home, Search, Check, ChevronsUpDown, Key } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -36,13 +36,13 @@ interface LeaseSetupSectionProps {
 const leaseStatusOptions = [
   {
     value: "PENDING",
-    label: "Pending",
-    color: "bg-yellow-500"
+    label: "PENDING",
+    color: "bg-amber-500"
   },
   {
     value: "ACTIVE",
-    label: "Active",
-    color: "bg-green-500"
+    label: "ACTIVE",
+    color: "bg-emerald-500"
   }
 ]
 
@@ -72,7 +72,7 @@ export function LeaseSetupSection({
 
   const getPropertyDisplayText = (propertyId: string) => {
     const property = properties.find(p => p.id === propertyId)
-    return property ? property.propertyName : "Select property"
+    return property ? property.propertyName : "SELECT_PROPERTY"
   }
 
   const getStatusOption = (value: string) => {
@@ -80,387 +80,366 @@ export function LeaseSetupSection({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2 pb-2 border-b">
-        <CalendarIcon className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Lease Setup (Optional)</h3>
-      </div>
-      
-      <FormField
-        control={form.control}
-        name="createLease"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={isLoading}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel className="font-medium">
-                Create lease agreement during tenant setup
-              </FormLabel>
-              <FormDescription>
-                You can set up the tenant&apos;s first lease agreement now, or add it later from their profile.
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
-      />
-
-      {createLease && (
-        <div className="space-y-6 p-4 border rounded-lg bg-muted/20">
-          <h4 className="font-medium flex items-center space-x-2">
-            <Home className="h-4 w-4" />
-            <span>Lease Details</span>
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="propertyId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-sm font-medium">Property *</FormLabel>
-                  <Popover open={openPropertySelect} onOpenChange={setOpenPropertySelect}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openPropertySelect}
-                          className={cn(
-                            "w-full justify-between h-10",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          disabled={isLoading}
-                        >
-                          {field.value ? getPropertyDisplayText(field.value) : "Select property"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search property..." />
-                        <CommandList>
-                          <CommandEmpty>No property found.</CommandEmpty>
-                          <CommandGroup>
-                            {properties.map((property) => (
-                              <CommandItem
-                                key={property.id}
-                                value={property.propertyName}
-                                onSelect={() => {
-                                  form.setValue("propertyId", property.id)
-                                  setOpenPropertySelect(false)
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === property.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {property.propertyName}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription className="text-xs">
-                    Choose the property for this lease
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border border-border bg-background">
+        <div className="border-b border-border bg-muted/10 p-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Key className="h-3 w-3" />
+            Lease Agreement
+          </span>
+        </div>
+        
+        <div className="p-6">
+          <FormField
+            control={form.control}
+            name="createLease"
+            render={({ field }) => (
+              <FormItem className={`flex flex-row items-start space-x-3 space-y-0 p-4 border transition-all cursor-pointer ${field.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                    className="rounded-none mt-1"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="font-bold text-xs uppercase tracking-wide cursor-pointer">
+                    Initialize Lease
+                  </FormLabel>
+                  <FormDescription className="text-[10px] font-mono">
+                    Create initial lease agreement now
                   </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </div>
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="leaseStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Lease Status *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select status">
-                          {field.value && getStatusOption(field.value) && (
-                            <div className="flex items-center gap-2">
-                              <div className={cn("w-2 h-2 rounded-full", getStatusOption(field.value)?.color)} />
-                              <span>{getStatusOption(field.value)?.label}</span>
-                            </div>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {leaseStatusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex items-center gap-2">
-                            <div className={cn("w-2 h-2 rounded-full", option.color)} />
-                            <span>{option.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription className="text-xs">
-                    Initial lease status
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {createLease && (
+            <div className="mt-6 space-y-6 pt-6 border-t border-dashed border-border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="propertyId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Property *</FormLabel>
+                      <Popover open={openPropertySelect} onOpenChange={setOpenPropertySelect}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openPropertySelect}
+                              className={cn(
+                                "w-full justify-between h-10 rounded-none border-border font-mono text-sm",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              disabled={isLoading}
+                            >
+                              {field.value ? getPropertyDisplayText(field.value) : "SELECT_PROPERTY"}
+                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 rounded-none border-border" align="start">
+                          <Command>
+                            <CommandInput placeholder="SEARCH_PROPERTIES..." className="font-mono text-xs uppercase" />
+                            <CommandList>
+                              <CommandEmpty>NO_PROPERTY_FOUND</CommandEmpty>
+                              <CommandGroup>
+                                {properties.map((property) => (
+                                  <CommandItem
+                                    key={property.id}
+                                    value={property.propertyName}
+                                    onSelect={() => {
+                                      form.setValue("propertyId", property.id)
+                                      setOpenPropertySelect(false)
+                                    }}
+                                    className="font-mono text-xs uppercase"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-3 w-3",
+                                        field.value === property.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {property.propertyName}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {selectedProperty && (
-            <div className="space-y-4">
-              <FormLabel className="text-sm font-medium">Available Spaces</FormLabel>
-              <FormDescription className="text-xs">
-                Select one or more spaces for this lease. Click on spaces to select them.
-              </FormDescription>
-              
-              {/* Unit Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search spaces by number, area, or rent..."
-                  value={unitSearchQuery}
-                  onChange={(e) => setUnitSearchQuery(e.target.value)}
-                  className="pl-10 h-10"
+                <FormField
+                  control={form.control}
+                  name="leaseStatus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Lease Status *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                        <FormControl>
+                          <SelectTrigger className="h-10 rounded-none border-border font-mono text-xs uppercase">
+                            <SelectValue placeholder="SELECT_STATUS">
+                              {field.value && getStatusOption(field.value) && (
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-2 h-2 rounded-full", getStatusOption(field.value)?.color)} />
+                                  <span>{getStatusOption(field.value)?.label}</span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-none border-border">
+                          {leaseStatusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="font-mono text-xs uppercase">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              
-              {/* Available Units Count */}
-              {(() => {
-                const allUnits = selectedProperty.units || []
-                const availableUnits = allUnits.filter((unit: UnitData) => 
-                  (unit.status === 'VACANT' || unit.status === 'MAINTENANCE') &&
-                  (unitSearchQuery === '' || 
-                   unit.unitNumber?.toLowerCase().includes(unitSearchQuery.toLowerCase()) ||
-                   unit.totalArea?.toString().includes(unitSearchQuery) ||
-                   unit.totalRent?.toString().includes(unitSearchQuery))
-                )
-                
-                return (
-                  <div className="text-sm text-muted-foreground">
-                    {availableUnits.length} available space{availableUnits.length !== 1 ? 's' : ''} found 
-                    (of {allUnits.length} total spaces)
-                    {selectedUnitsData.length > 0 && (
-                      <span className="ml-2">• {selectedUnitsData.length} selected</span>
-                    )}
+
+              {selectedProperty && (
+                <div className="space-y-4 pt-6 border-t border-dashed border-border">
+                  <div className="flex justify-between items-center">
+                    <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Select Spaces</FormLabel>
+                    {/* Available Units Count */}
+                    {(() => {
+                      const allUnits = selectedProperty.units || []
+                      const availableUnits = allUnits.filter((unit: UnitData) => 
+                        (unit.status === 'VACANT' || unit.status === 'MAINTENANCE') &&
+                        (unitSearchQuery === '' || 
+                         unit.unitNumber?.toLowerCase().includes(unitSearchQuery.toLowerCase()) ||
+                         unit.totalArea?.toString().includes(unitSearchQuery) ||
+                         unit.totalRent?.toString().includes(unitSearchQuery))
+                      )
+                      
+                      return (
+                        <div className="text-[10px] font-mono text-muted-foreground">
+                          {availableUnits.length} AVAILABLE / {allUnits.length} TOTAL
+                          {selectedUnitsData.length > 0 && (
+                            <span className="ml-2 font-bold text-primary">• {selectedUnitsData.length} SELECTED</span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
-                )
-              })()}
-              
-              {/* Unit Grid */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-                {selectedProperty.units
-                  ?.filter((unit: UnitData) => 
+                  
+                  {/* Unit Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="SEARCH SPACES..."
+                      value={unitSearchQuery}
+                      onChange={(e) => setUnitSearchQuery(e.target.value)}
+                      className="pl-10 h-10 rounded-none border-border font-mono text-xs uppercase focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </div>
+                  
+                  {/* Unit Grid */}
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+                    {selectedProperty.units
+                      ?.filter((unit: UnitData) => 
+                        (unit.status === 'VACANT' || unit.status === 'MAINTENANCE') &&
+                        (unitSearchQuery === '' || 
+                         unit.unitNumber?.toLowerCase().includes(unitSearchQuery.toLowerCase()) ||
+                         unit.totalArea?.toString().includes(unitSearchQuery) ||
+                         unit.totalRent?.toString().includes(unitSearchQuery))
+                      )
+                      .map((unit: UnitData) => (
+                        <UnitCard
+                          key={unit.id}
+                          unit={unit}
+                          isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
+                          onToggle={onToggleUnit}
+                        />
+                      )) || []}
+                  </div>
+
+                  {/* No Units Found */}
+                  {selectedProperty.units?.filter((unit: UnitData) => 
                     (unit.status === 'VACANT' || unit.status === 'MAINTENANCE') &&
                     (unitSearchQuery === '' || 
                      unit.unitNumber?.toLowerCase().includes(unitSearchQuery.toLowerCase()) ||
                      unit.totalArea?.toString().includes(unitSearchQuery) ||
                      unit.totalRent?.toString().includes(unitSearchQuery))
-                  )
-                  .map((unit: UnitData) => (
-                    <UnitCard
-                      key={unit.id}
-                      unit={unit}
-                      isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
-                      onToggle={onToggleUnit}
-                    />
-                  )) || []}
-              </div>
+                  ).length === 0 && (
+                    <div className="text-center py-8 border border-dashed border-border">
+                      <Home className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                      <h4 className="mt-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        {unitSearchQuery ? 'NO MATCHING SPACES' : 'NO AVAILABLE SPACES'}
+                      </h4>
+                    </div>
+                  )}
 
-              {/* No Units Found */}
-              {selectedProperty.units?.filter((unit: UnitData) => 
-                (unit.status === 'VACANT' || unit.status === 'MAINTENANCE') &&
-                (unitSearchQuery === '' || 
-                 unit.unitNumber?.toLowerCase().includes(unitSearchQuery.toLowerCase()) ||
-                 unit.totalArea?.toString().includes(unitSearchQuery) ||
-                 unit.totalRent?.toString().includes(unitSearchQuery))
-              ).length === 0 && (
-                <div className="text-center py-8">
-                  <Home className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <h4 className="mt-2 text-sm font-semibold">
-                    {unitSearchQuery ? 'No spaces found' : 'No available spaces'}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {unitSearchQuery 
-                      ? 'Try adjusting your search terms'
-                      : 'All spaces in this property are currently occupied'
-                    }
-                  </p>
+                  {/* Selected Units Configuration */}
+                  {selectedUnitsData.length > 0 && (
+                    <UnitConfiguration
+                      selectedUnitsData={selectedUnitsData}
+                      onUpdateUnitRent={onUpdateUnitRent}
+                      onUpdateFloorRate={onUpdateFloorRate}
+                      onRemoveUnit={handleRemoveUnit}
+                    />
+                  )}
                 </div>
               )}
 
-              {/* Selected Units Configuration */}
-              <UnitConfiguration
-                selectedUnitsData={selectedUnitsData}
-                onUpdateUnitRent={onUpdateUnitRent}
-                onUpdateFloorRate={onUpdateFloorRate}
-                onRemoveUnit={handleRemoveUnit}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed border-border">
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Start Date *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-10 w-full justify-start text-left font-normal rounded-none border-border font-mono text-sm",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              disabled={isLoading}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            captionLayout="dropdown"
+                            disabled={isLoading}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">End Date *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-10 w-full justify-start text-left font-normal rounded-none border-border font-mono text-sm",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              disabled={isLoading}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            captionLayout="dropdown"
+                            disabled={isLoading}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="totalRentAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Monthly Rent *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm font-mono text-muted-foreground">₱</span>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            disabled={isLoading}
+                            className="h-10 pl-8 rounded-none border-border font-mono text-sm focus-visible:ring-0 focus-visible:border-primary"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="securityDeposit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Security Deposit *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm font-mono text-muted-foreground">₱</span>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            disabled={isLoading}
+                            className="h-10 pl-8 rounded-none border-border font-mono text-sm focus-visible:ring-0 focus-visible:border-primary"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-sm font-medium">Start Date *</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "h-10 w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          disabled={isLoading}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        captionLayout="dropdown"
-                        disabled={isLoading}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription className="text-xs">
-                    Lease start date
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-sm font-medium">End Date *</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "h-10 w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          disabled={isLoading}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        captionLayout="dropdown"
-                        disabled={isLoading}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription className="text-xs">
-                    Lease end date
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="totalRentAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Total Monthly Rent *</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">₱</span>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        disabled={isLoading}
-                        className="h-10 pl-8"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Total monthly rent amount
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="securityDeposit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Security Deposit *</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">₱</span>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        disabled={isLoading}
-                        className="h-10 pl-8"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Security deposit amount
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { notFound } from "next/navigation"
-import { Edit, Trash2, Save } from "lucide-react"
+import { Edit, Trash2, Save, X, Building, Home, Ruler, DollarSign, Activity } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,6 @@ import { UnitSchema, UnitFormData } from "@/lib/validations/unit-schema"
 import { getUnitById, updateUnitWithFloorsAction } from "@/lib/actions/unit-server-actions"
 import { UnitTabs } from "@/components/units/unit-tabs"
 import { UnitOverview } from "@/components/units/unit-overview"
-import { UnitTenant } from "@/components/units/unit-tenant"
 import { UnitHistory } from "@/components/units/unit-history"
 import { UnitTaxes } from "@/components/units/unit-taxes"
 import { UnitUtilities } from "@/components/units/unit-utilities"
@@ -20,6 +19,7 @@ import { UnitMaintenance } from "@/components/units/unit-maintenance"
 import { UnitDocuments } from "@/components/units/unit-documents"
 import { UnitEditForm } from "@/components/units/unit-edit-form"
 import { toast } from "sonner"
+import { format } from "date-fns"
 
 interface UnitPageProps {
   params: Promise<{
@@ -28,13 +28,13 @@ interface UnitPageProps {
   }>
 }
 
-function getStatusColor(status: string) {
+function getStatusStyle(status: string) {
   switch (status) {
-    case 'OCCUPIED': return 'bg-red-600'
-    case 'VACANT': return 'bg-green-600'
-    case 'MAINTENANCE': return 'bg-yellow-600'
-    case 'RESERVED': return 'bg-blue-600'
-    default: return 'bg-green-600'
+    case 'OCCUPIED': return { border: 'border-blue-500', text: 'text-blue-600', bg: 'bg-blue-500/10' }
+    case 'VACANT': return { border: 'border-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-500/10' }
+    case 'MAINTENANCE': return { border: 'border-rose-500', text: 'text-rose-600', bg: 'bg-rose-500/10' }
+    case 'RESERVED': return { border: 'border-amber-500', text: 'text-amber-600', bg: 'bg-amber-500/10' }
+    default: return { border: 'border-muted', text: 'text-muted-foreground', bg: 'bg-muted/10' }
   }
 }
 
@@ -51,8 +51,7 @@ export default function UnitPage({ params }: UnitPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [propertyId, setPropertyId] = useState<string>("")
+  const [, setPropertyId] = useState<string>("")
   const [unitId, setUnitId] = useState<string>("")
   const [activeTab, setActiveTab] = useState("overview")
   const [floors, setFloors] = useState<FloorConfig[]>([])
@@ -126,14 +125,12 @@ export default function UnitPage({ params }: UnitPageProps) {
       } else {
         toast.success("Unit updated successfully")
         setIsEditing(false)
-        // Reload unit data
         const updatedUnit = await getUnitById(unitId)
         if (updatedUnit) {
           setUnit(updatedUnit)
         }
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsSaving(false)
@@ -144,97 +141,162 @@ export default function UnitPage({ params }: UnitPageProps) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-muted rounded" />
-            ))}
-          </div>
+          <div className="h-8 bg-muted/20 w-1/3" />
+          <div className="h-4 bg-muted/20 w-1/2" />
+          <div className="grid gap-4 md:grid-cols-4 h-24 bg-muted/10 border border-border" />
         </div>
       </div>
     )
   }
 
-  if (!unit) {
-    return null
-  }
+  if (!unit) return null
+
+  const statusStyle = getStatusStyle(unit.status)
+  
+  // Calculate current lease
+  const currentLease = unit.leaseUnits.find(lu => lu.lease.status === 'ACTIVE')?.lease
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8 pt-6 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col space-y-6">
+        <div className="flex items-center justify-between border-b border-border pb-6">
           <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="text-3xl font-bold tracking-tight">Unit {unit.unitNumber}</h2>
-              <Badge className={getStatusColor(unit.status)}>
+            <h2 className="text-2xl font-bold tracking-tight font-mono uppercase flex items-center gap-3">
+              Unit {unit.unitNumber}
+              <Badge variant="outline" className={`rounded-none text-xs uppercase tracking-widest border ${statusStyle.border} ${statusStyle.text} bg-transparent`}>
                 {unit.status}
               </Badge>
+            </h2>
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground font-mono">
+              <Building className="h-3 w-3" />
+              <span className="uppercase tracking-wide">{unit.property.propertyName}</span>
+              <span className="text-border">|</span>
+              <span>{unit.property.address}</span>
             </div>
-            <p className="text-muted-foreground">
-              {unit.property.propertyName} • {unit.property.address}
-            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            {!isEditing ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted"
+                >
+                  <Edit className="h-3 w-3 mr-2" />
+                  Edit Unit
+                </Button>
+                <Button 
+                  variant="destructive"
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-rose-600 hover:bg-rose-700"
+                >
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border"
+                >
+                  <X className="h-3 w-3 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={form.handleSubmit(onSubmit)} 
+                  disabled={isSaving}
+                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isSaving ? "Saving..." : <><Save className="h-3 w-3 mr-2" /> Save Changes</>}
+                </Button>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {!isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button variant="destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </>
-          )}
+
+        {/* Stats Strip */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Current Rate</span>
+              <DollarSign className="h-4 w-4 text-muted-foreground/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter">
+                ₱{unit.totalRent.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">/ month</span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Total Area</span>
+              <Ruler className="h-4 w-4 text-muted-foreground/50" />
+            </div>
+            <div>
+              <span className="text-2xl font-mono font-medium tracking-tighter">
+                {unit.totalArea.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-muted-foreground ml-2">sqm</span>
+            </div>
+          </div>
+          <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Status</span>
+              <Activity className={`h-4 w-4 ${statusStyle.text}`} />
+            </div>
+            <div>
+              <span className={`text-xl font-mono font-medium tracking-tighter ${statusStyle.text}`}>
+                {unit.status}
+              </span>
+            </div>
+          </div>
+          <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Tenant</span>
+              <Home className="h-4 w-4 text-muted-foreground/50" />
+            </div>
+            <div>
+              <span className="text-lg font-mono font-medium tracking-tight truncate block" title={currentLease?.tenant.company || "Vacant"}>
+                {currentLease 
+                  ? (currentLease.tenant.company || `${currentLease.tenant.firstName} ${currentLease.tenant.lastName}`)
+                  : "VACANT"}
+              </span>
+              {currentLease && (
+                <span className="text-[10px] text-muted-foreground">
+                  Ends {format(new Date(currentLease.endDate), 'MMM yyyy')}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Unit Tabs */}
-      <UnitTabs unit={unit} activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Tabs & Content */}
+      <div className="mt-8">
+        {!isEditing && <UnitTabs unit={unit} activeTab={activeTab} setActiveTab={setActiveTab} />}
 
-      {/* Edit Form or Tab Content */}
-      <div className="mt-6">
-        {isEditing ? (
-          <UnitEditForm 
-            unit={unit} 
-            form={form} 
-            isSaving={isSaving} 
-            onFloorsChange={setFloors}
-          />
-        ) : (
-          <>
-            {activeTab === 'overview' && <UnitOverview unit={unit} />}
-            {activeTab === 'tenant' && <UnitTenant unit={unit} />}
-            {activeTab === 'history' && <UnitHistory unit={unit} />}
-            {activeTab === 'taxes' && <UnitTaxes unit={unit} />}
-            {activeTab === 'utilities' && <UnitUtilities unit={unit} />}
-            {activeTab === 'maintenance' && <UnitMaintenance unit={unit} />}
-            {activeTab === 'documents' && <UnitDocuments unit={unit} />}
-          </>
-        )}
+        <div className="mt-6 border border-border bg-background p-6 min-h-[400px]">
+          {isEditing ? (
+            <UnitEditForm 
+              unit={unit} 
+              form={form} 
+              isSaving={isSaving} 
+              onFloorsChange={setFloors}
+            />
+          ) : (
+            <>
+              {activeTab === 'overview' && <UnitOverview unit={unit} />}
+              {activeTab === 'history' && <UnitHistory unit={unit} />}
+              {activeTab === 'taxes' && <UnitTaxes unit={unit} />}
+              {activeTab === 'utilities' && <UnitUtilities unit={unit} />}
+              {activeTab === 'maintenance' && <UnitMaintenance unit={unit} />}
+              {activeTab === 'documents' && <UnitDocuments unit={unit} />}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -42,6 +42,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PrismaAdapter type mismatch with NextAuth v5
   adapter: PrismaAdapter(prisma) as any,
   session: { 
     strategy: "jwt",
