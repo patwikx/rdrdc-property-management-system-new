@@ -1,12 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell } from "lucide-react"
+import { Bell, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import {
@@ -18,24 +16,24 @@ import {
 import { cn } from "@/lib/utils"
 
 const priorityColors = {
-  URGENT: "text-red-500",
-  HIGH: "text-orange-500",
-  MEDIUM: "text-yellow-500",
+  URGENT: "text-rose-600 font-bold",
+  HIGH: "text-orange-600 font-bold",
+  MEDIUM: "text-amber-600",
   LOW: "text-muted-foreground",
 }
 
 const typeIcons = {
-  SYSTEM: "🔔",
-  MAINTENANCE: "🔧",
-  LEASE: "📄",
-  PAYMENT: "💰",
-  DOCUMENT: "📁",
-  SECURITY: "🔒",
-  UTILITY: "⚡",
-  TAX: "📊",
-  PROPERTY: "🏢",
-  UNIT: "🏠",
-  TENANT: "👤",
+  SYSTEM: "SYSTEM",
+  MAINTENANCE: "RWO",
+  LEASE: "LEASE",
+  PAYMENT: "PAYMENT",
+  DOCUMENT: "DOCS",
+  SECURITY: "SEC",
+  UTILITY: "UTIL",
+  TAX: "TAX",
+  PROPERTY: "PROP",
+  UNIT: "UNIT",
+  TENANT: "TENANT",
 }
 
 export function NotificationsMenu() {
@@ -51,9 +49,7 @@ export function NotificationsMenu() {
   const fetchNotifications = async () => {
     setIsLoading(true)
     try {
-      console.log("[v0] Fetching notifications...")
       const data = await getAllNotifications()
-      console.log("[v0] Notifications fetched:", data.length)
       setNotifications(data)
     } catch (error) {
       console.error("[v0] Error fetching notifications:", error)
@@ -67,7 +63,6 @@ export function NotificationsMenu() {
 
     fetchNotifications()
 
-    // Refresh notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
 
     return () => clearInterval(interval)
@@ -93,7 +88,7 @@ export function NotificationsMenu() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none text-muted-foreground">
         <Bell className="h-4 w-4" />
       </Button>
     )
@@ -102,51 +97,51 @@ export function NotificationsMenu() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted/10">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
+            <div className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-none animate-pulse" />
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[380px] p-0" align="end" sideOffset={8}>
-        <div className="flex items-center justify-between p-4 pb-2">
-          <h3 className="font-semibold text-sm">Notifications</h3>
+      <PopoverContent className="w-[400px] p-0 rounded-none border-border" align="end" sideOffset={8}>
+        <div className="flex items-center justify-between p-3 border-b border-border bg-muted/5">
+          <div className="flex items-center gap-2">
+             <Bell className="h-4 w-4" />
+             <span className="font-bold text-xs uppercase tracking-widest">System Logs</span>
+             {unreadCount > 0 && (
+               <span className="bg-rose-500 text-white text-[10px] px-1 font-mono">{unreadCount} NEW</span>
+             )}
+          </div>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+              className="h-6 rounded-none px-2 text-[10px] uppercase font-mono tracking-wider text-muted-foreground hover:text-foreground"
               onClick={handleMarkAllAsRead}
             >
-              Mark all as read
+              Mark all read
             </Button>
           )}
         </div>
-        <Separator />
         <ScrollArea className="h-[400px]">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">Loading...</div>
+              <div className="text-xs font-mono text-muted-foreground uppercase">Loading logs...</div>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 px-4">
-              <Bell className="h-8 w-8 text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground text-center">No notifications</p>
+            <div className="flex flex-col items-center justify-center py-12 px-4 gap-2">
+              <Check className="h-8 w-8 text-muted-foreground/20" />
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">System Nominal</p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="flex flex-col">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-4 hover:bg-muted/50 transition-colors cursor-pointer",
-                    notification.isRead && "opacity-60 bg-muted/20",
+                    "p-3 border-b border-border/50 hover:bg-muted/5 transition-colors cursor-pointer group",
+                    notification.isRead ? "opacity-60 bg-muted/10" : "bg-background border-l-2 border-l-primary"
                   )}
                   onClick={() => handleMarkAsRead(notification.id, notification.actionUrl)}
                 >
@@ -163,16 +158,13 @@ export function NotificationsMenu() {
           )}
         </ScrollArea>
         {notifications.length > 0 && (
-          <>
-            <Separator />
-            <div className="p-2">
-              <Link href="/dashboard/system/notifications">
-                <Button variant="ghost" className="w-full text-xs" size="sm">
-                  View all notifications
-                </Button>
-              </Link>
-            </div>
-          </>
+          <div className="p-0 border-t border-border">
+            <Link href="/dashboard/system/notifications">
+              <Button variant="ghost" className="w-full rounded-none h-9 text-[10px] uppercase tracking-widest font-semibold hover:bg-muted/10">
+                View Full Log
+              </Button>
+            </Link>
+          </div>
         )}
       </PopoverContent>
     </Popover>
@@ -180,36 +172,36 @@ export function NotificationsMenu() {
 }
 
 function NotificationItem({ notification }: { notification: NotificationData }) {
-  const typeIcon = typeIcons[notification.type as keyof typeof typeIcons] || "🔔"
+  const typeLabel = typeIcons[notification.type as keyof typeof typeIcons] || "SYS"
   const priorityColor = priorityColors[notification.priority as keyof typeof priorityColors] || "text-muted-foreground"
 
   return (
     <div className="space-y-1">
-      <div className="flex items-start gap-2">
-        <span className="text-base mt-0.5">{typeIcon}</span>
-        <div className="flex-1 space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium leading-none flex-1">{notification.title}</p>
-            <Badge
-              variant={notification.isRead ? "secondary" : "default"}
-              className={cn(
-                "text-[10px] h-5 px-2",
-                notification.isRead 
-                  ? "bg-muted text-muted-foreground" 
-                  : "bg-blue-500 text-white"
-              )}
-            >
-              {notification.isRead ? "Read" : "New"}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
-          <div className="flex items-center gap-2 pt-1">
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-            </span>
-            <span className={cn("text-xs font-medium", priorityColor)}>{notification.priority}</span>
-          </div>
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex items-center gap-2">
+           <span className="text-[10px] font-mono font-bold bg-muted/20 px-1 text-muted-foreground">{typeLabel}</span>
+           {!notification.isRead && (
+             <span className="h-1.5 w-1.5 bg-emerald-500 rounded-none animate-pulse" />
+           )}
         </div>
+        <span className="text-[9px] font-mono text-muted-foreground uppercase">
+          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+        </span>
+      </div>
+      
+      <div className="space-y-0.5">
+        <p className={cn("text-xs font-semibold uppercase tracking-wide leading-tight", notification.isRead ? "text-muted-foreground" : "text-foreground")}>
+          {notification.title}
+        </p>
+        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 font-mono">
+          {notification.message}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 pt-1">
+        <span className={cn("text-[9px] uppercase tracking-wider", priorityColor)}>
+          {notification.priority} PRIORITY
+        </span>
       </div>
     </div>
   )

@@ -255,16 +255,16 @@ export default function BulkUpdatePreviewPage() {
       {preview && (
         <>
           {/* Summary */}
-          <div className="border border-border rounded-none p-6 bg-muted/5">
+          <div className="border border-border rounded-none p-6 bg-white text-black">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-2">
+                <p className="text-xs text-gray-600 font-mono uppercase tracking-wider mb-2">
                   Total Tenants to Update
                 </p>
-                <p className="text-4xl font-bold font-mono">
+                <p className="text-4xl font-bold font-mono text-black">
                   {preview.totalTenants}
                 </p>
-                <p className="text-xs text-muted-foreground font-mono mt-1">
+                <p className="text-xs text-gray-600 font-mono mt-1">
                   {preview.changes.reduce((acc, t) => acc + t.fieldChanges.length, 0)} total field changes
                 </p>
               </div>
@@ -276,31 +276,31 @@ export default function BulkUpdatePreviewPage() {
 
           {/* Changes Table */}
           {preview.changes.length === 0 ? (
-            <div className="border border-border rounded-none p-12 text-center bg-muted/5">
-              <p className="text-sm text-muted-foreground font-mono">
+            <div className="border border-border rounded-none p-12 text-center bg-white">
+              <p className="text-sm text-gray-600 font-mono">
                 No changes detected. All values match current database records.
               </p>
             </div>
           ) : (
-            <div className="border border-border rounded-none bg-background">
+            <div className="border border-border rounded-none bg-white">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border hover:bg-muted/5">
-                    <TableHead className="font-mono text-xs uppercase tracking-wider">Tenant</TableHead>
-                    <TableHead className="font-mono text-xs uppercase tracking-wider">BP Code</TableHead>
-                    <TableHead className="font-mono text-xs uppercase tracking-wider">Field</TableHead>
-                    <TableHead className="font-mono text-xs uppercase tracking-wider">Current Value</TableHead>
+                  <TableRow className="border-border hover:bg-gray-50">
+                    <TableHead className="font-mono text-xs uppercase tracking-wider text-black">Tenant</TableHead>
+                    <TableHead className="font-mono text-xs uppercase tracking-wider text-black">BP Code</TableHead>
+                    <TableHead className="font-mono text-xs uppercase tracking-wider text-black">Field</TableHead>
+                    <TableHead className="font-mono text-xs uppercase tracking-wider text-black">Current Value</TableHead>
                     <TableHead className="w-12"></TableHead>
-                    <TableHead className="font-mono text-xs uppercase tracking-wider">New Value</TableHead>
+                    <TableHead className="font-mono text-xs uppercase tracking-wider text-black">New Value</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {preview.changes.map((tenantChange) => (
                     tenantChange.fieldChanges.map((fieldChange, fieldIndex) => (
-                      <TableRow key={`${tenantChange.tenantId}-${fieldIndex}`} className="border-border hover:bg-muted/5">
+                      <TableRow key={`${tenantChange.tenantId}-${fieldIndex}`} className="border-border hover:bg-gray-50">
                         {fieldIndex === 0 ? (
                           <>
-                            <TableCell rowSpan={tenantChange.fieldChanges.length} className="font-medium font-mono align-top border-r border-border">
+                            <TableCell rowSpan={tenantChange.fieldChanges.length} className="font-medium font-mono align-top border-r border-border text-black">
                               <div className="py-2">
                                 <p className="font-bold">{tenantChange.tenantName}</p>
                                 <Badge variant="outline" className="mt-2 rounded-none text-xs font-mono">
@@ -308,14 +308,14 @@ export default function BulkUpdatePreviewPage() {
                                 </Badge>
                               </div>
                             </TableCell>
-                            <TableCell rowSpan={tenantChange.fieldChanges.length} className="font-mono text-xs text-muted-foreground align-top border-r border-border">
+                            <TableCell rowSpan={tenantChange.fieldChanges.length} className="font-mono text-xs text-gray-600 align-top border-r border-border">
                               <div className="py-2">
                                 {tenantChange.bpCode}
                               </div>
                             </TableCell>
                           </>
                         ) : null}
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-mono text-xs text-black">
                           {formatFieldName(fieldChange.fieldName)}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
@@ -324,7 +324,7 @@ export default function BulkUpdatePreviewPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center">
-                          <ArrowRight className="h-4 w-4 text-muted-foreground inline-block" />
+                          <ArrowRight className="h-4 w-4 text-gray-400 inline-block" />
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-none px-2 py-1 inline-block max-w-xs">

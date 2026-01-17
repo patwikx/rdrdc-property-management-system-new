@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Edit, Save, Trash2, FileCheck, Building, Users, Calendar, DollarSign, AlertTriangle, History, TrendingUp, Shield, CreditCard, ChevronRight, X, User } from "lucide-react"
+import { Edit, Save, Trash2, FileCheck, Building, Calendar, DollarSign, AlertTriangle, History, ChevronRight, X, User } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react"

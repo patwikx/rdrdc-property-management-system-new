@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,6 @@ import {
   FileText,
   Filter,
   X,
-  TrendingUp,
   CheckCircle
 } from "lucide-react"
 
@@ -167,12 +166,10 @@ export default function ARAgingPage() {
 
   const getStatusInfo = (monthsOverdue: number): { status: TenantStatus; color: string } => {
     if (monthsOverdue < 1) {
-      return { status: "OK", color: "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600" }
-    } else if (monthsOverdue >= 1 && monthsOverdue < 2) {
-      return { status: "FOR NOTICE", color: "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600" }
+      return { status: "OK", color: "border-green-500 text-green-600 bg-green-500/10" }
+    } else {
+      return { status: "FOR NOTICE", color: "border-yellow-500 text-yellow-600 bg-yellow-500/10" }
     }
-    // Default/fallback value
-    return { status: "FOR NOTICE", color: "bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600" }
   }
 
   const formatCurrency = (amount: number): string => {
@@ -206,36 +203,28 @@ export default function ARAgingPage() {
       <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64 mt-2" />
+            <Skeleton className="h-8 w-48 rounded-none" />
+            <Skeleton className="h-4 w-64 mt-2 rounded-none" />
           </div>
-          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-9 w-24 rounded-none" />
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
-              </CardContent>
-            </Card>
+            <div key={i} className="border border-border p-4 h-24">
+              <Skeleton className="h-4 w-20 mb-2 rounded-none" />
+              <Skeleton className="h-8 w-16 rounded-none" />
+            </div>
           ))}
         </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="border border-border p-6">
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-none" />
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -243,9 +232,9 @@ export default function ARAgingPage() {
   if (error) {
     return (
       <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="rounded-none border-destructive/50 bg-destructive/10">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="font-mono text-xs uppercase">{error}</AlertDescription>
         </Alert>
       </div>
     )
@@ -254,122 +243,122 @@ export default function ARAgingPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">AR Aging Report</h2>
-          <p className="text-muted-foreground">
-            Manage and track tenant receivables and payment status
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">AR Aging Report</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1 uppercase tracking-wide">
+            Receivables analysis & aging buckets
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border">
+                <Filter className="h-3 w-3 mr-2" />
                 Filters
                 {hasActiveFilters && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  <Badge variant="secondary" className="ml-2 h-4 w-4 rounded-none p-0 flex items-center justify-center font-mono text-[10px]">
                     !
                   </Badge>
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Filter AR Aging Report</SheetTitle>
-                <SheetDescription>
-                  Apply filters to narrow down the tenant receivables data
+            <SheetContent className="rounded-none border-l border-border">
+              <SheetHeader className="text-left border-b border-border pb-4">
+                <SheetTitle className="uppercase font-bold tracking-widest text-sm">Filter Report</SheetTitle>
+                <SheetDescription className="font-mono text-xs">
+                  Configure view parameters
                 </SheetDescription>
               </SheetHeader>
               
-              <div className="space-y-6 py-6 ml-4 mr-4">
+              <div className="space-y-6 py-6">
                 {/* Status Filter */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Status</label>
                   <Select
                     value={filters.status}
                     onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Statuses" />
+                    <SelectTrigger className="rounded-none font-mono text-xs border-border">
+                      <SelectValue placeholder="ALL STATUSES" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="OK">OK</SelectItem>
-                      <SelectItem value="1ST NOTICE">1ST NOTICE</SelectItem>
-                      <SelectItem value="2ND NOTICE">2ND NOTICE</SelectItem>
-                      <SelectItem value="3RD NOTICE">3RD NOTICE</SelectItem>
-                      <SelectItem value="EVICTION">EVICTION</SelectItem>
-                      <SelectItem value="DEMAND LETTER">DEMAND LETTER</SelectItem>
+                    <SelectContent className="rounded-none border-border">
+                      <SelectItem value="all" className="font-mono text-xs">ALL STATUSES</SelectItem>
+                      <SelectItem value="OK" className="font-mono text-xs">OK</SelectItem>
+                      <SelectItem value="FOR NOTICE" className="font-mono text-xs">FOR NOTICE</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Balance Range */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Balance Range</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Balance Range</label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="number"
-                      placeholder="Min balance"
+                      placeholder="MIN"
                       value={filters.minBalance}
                       onChange={(e) => setFilters(prev => ({ ...prev, minBalance: e.target.value }))}
+                      className="rounded-none font-mono text-xs border-border"
                     />
                     <Input
                       type="number"
-                      placeholder="Max balance"
+                      placeholder="MAX"
                       value={filters.maxBalance}
                       onChange={(e) => setFilters(prev => ({ ...prev, maxBalance: e.target.value }))}
+                      className="rounded-none font-mono text-xs border-border"
                     />
                   </div>
                 </div>
 
                 {/* Months Overdue Range */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Months Overdue Range</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Months Overdue</label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="number"
-                      placeholder="Min months"
+                      placeholder="MIN"
                       value={filters.minMonths}
                       onChange={(e) => setFilters(prev => ({ ...prev, minMonths: e.target.value }))}
+                      className="rounded-none font-mono text-xs border-border"
                     />
                     <Input
                       type="number"
-                      placeholder="Max months"
+                      placeholder="MAX"
                       value={filters.maxMonths}
                       onChange={(e) => setFilters(prev => ({ ...prev, maxMonths: e.target.value }))}
+                      className="rounded-none font-mono text-xs border-border"
                     />
                   </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Quick Actions</label>
+                <div className="space-y-2 pt-4 border-t border-border">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Quick Filters</label>
                   <div className="space-y-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-start"
+                      className="w-full justify-start rounded-none h-8 text-xs font-mono uppercase border-border"
                       onClick={() => {
-                        setFilters(prev => ({ ...prev, status: "EVICTION" }))
+                        setFilters(prev => ({ ...prev, minMonths: "4" }))
                         setIsFilterOpen(false)
                       }}
                     >
-                      <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
-                      Critical Tenants Only
+                      <AlertTriangle className="h-3 w-3 mr-2 text-red-600" />
+                      Critical (&gt;4 Months)
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-start"
+                      className="w-full justify-start rounded-none h-8 text-xs font-mono uppercase border-border"
                       onClick={() => {
                         setFilters(prev => ({ ...prev, status: "OK" }))
                         setIsFilterOpen(false)
                       }}
                     >
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Current Tenants Only
+                      <CheckCircle className="h-3 w-3 mr-2 text-green-600" />
+                      Current Only
                     </Button>
                   </div>
                 </div>
@@ -381,165 +370,130 @@ export default function ARAgingPage() {
                       clearFilters()
                       setIsFilterOpen(false)
                     }}
-                    className="w-full"
+                    className="w-full mt-4 rounded-none h-9 text-xs font-mono uppercase border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
                   >
-                    <X className="h-4 w-4 mr-2" />
-                    Clear All Filters
+                    <X className="h-3 w-3 mr-2" />
+                    Reset Filters
                   </Button>
                 )}
               </div>
             </SheetContent>
           </Sheet>
           
-          <Button onClick={fetchARAgingData} size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+          <Button onClick={fetchARAgingData} size="sm" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+            <RefreshCw className="h-3 w-3 mr-2" />
+            Refresh Data
           </Button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-blue-600/10 flex items-center justify-center">
-              <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalTenants}</div>
-            <p className="text-xs text-muted-foreground">
-              All tenants tracked
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Total Tenants</span>
+            <Building2 className="h-4 w-4 text-blue-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-blue-600">{totalTenants}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Records</span>
+          </div>
+        </div>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Tenants</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-green-600/10 flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{okTenants}</div>
-            <p className="text-xs text-muted-foreground">
-              No outstanding balance
-            </p>
-          </CardContent>
-        </Card>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Current</span>
+            <CheckCircle className="h-4 w-4 text-emerald-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-emerald-600">{okTenants}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Up to Date</span>
+          </div>
+        </div>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-purple-600/10 flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatCurrency(totalAmount)}</div>
-            <p className="text-xs text-muted-foreground">
-              Outstanding receivables
-            </p>
-          </CardContent>
-        </Card>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Receivables</span>
+            <DollarSign className="h-4 w-4 text-purple-600/50" />
+          </div>
+          <div>
+            <span className="text-xl font-mono font-bold tracking-tighter text-purple-600">{formatCurrency(totalAmount)}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Total</span>
+          </div>
+        </div>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Tenants</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-red-600/10 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{criticalTenants}</div>
-            <p className="text-xs text-muted-foreground">
-              Require immediate attention
-            </p>
-          </CardContent>
-        </Card>
+        <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Critical</span>
+            <AlertTriangle className="h-4 w-4 text-rose-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-rose-600">{criticalTenants}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">&gt;4 Months</span>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tenants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+      <div className="flex items-center gap-4 border border-border bg-muted/5 p-1">
+        <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
+          <Search className="h-4 w-4" />
         </div>
-
+        <Input
+          placeholder="SEARCH TENANT NAME OR CODE..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus-visible:ring-0 placeholder:text-muted-foreground/50 flex-1"
+        />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 hover:bg-transparent rounded-none mr-2"
+            onClick={() => setSearchQuery("")}
+          >
+            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+          </Button>
+        )}
+        
         {hasActiveFilters && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={clearFilters}
+            className="h-8 rounded-none px-3 text-[10px] font-mono uppercase hover:text-destructive hover:bg-destructive/10 border-l border-border/50"
           >
-            <X className="h-4 w-4 mr-2" />
             Clear Filters
           </Button>
         )}
       </div>
 
       {/* Data Table */}
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5" />
-                <span>Tenant Receivables</span>
-              </CardTitle>
-              <CardDescription>
-                {filteredTenants.length} of {tenants.length} tenants shown
-              </CardDescription>
-            </div>
-            {filteredTenants.length > 0 && (
-              <Badge variant="outline">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                {formatCurrency(totalAmount)} Total
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
+      <div className="border border-border bg-background">
+        <CardContent className="p-0">
           {filteredTenants.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No tenants found</h3>
-              <p className="mt-2 text-muted-foreground">
-                {hasActiveFilters ? "Try adjusting your filters." : "No tenant data available."}
+              <FileText className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Records Found</h3>
+              <p className="mt-1 text-[10px] font-mono text-muted-foreground/70">
+                ADJUST FILTERS TO VIEW DATA
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Tenant</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Monthly Rent</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Security Deposit</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Total Balance</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">1-30 Days</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">31-60 Days</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">61-90 Days</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Over 90</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Months Overdue</th>
+                  <tr className="border-b border-border hover:bg-transparent">
+                    <th className="h-9 px-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Tenant</th>
+                    <th className="h-9 px-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Status</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Rent</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Deposit</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Balance</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">1-30 Days</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">31-60 Days</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">61-90 Days</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">&gt;90 Days</th>
+                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Months</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -550,38 +504,35 @@ export default function ARAgingPage() {
                     return (
                       <tr 
                         key={tenant.cardCode}
-                        className="border-b hover:bg-muted/50 transition-colors"
+                        className="border-b border-border hover:bg-muted/5 transition-colors group"
                       >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">{tenant.cardName}</div>
-                              <div className="text-xs text-muted-foreground">{tenant.cardCode}</div>
-                            </div>
+                        <td className="px-4 py-2">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs uppercase">{tenant.cardName}</span>
+                            <span className="text-[10px] font-mono text-muted-foreground">{tenant.cardCode}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
-                          <Badge className={`${color} text-xs`}>{status}</Badge>
+                        <td className="px-4 py-2">
+                          <Badge variant="outline" className={`rounded-none font-mono text-[10px] uppercase border ${color}`}>
+                            {status}
+                          </Badge>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm">{formatCurrency(tenant.monthlyRent)}</td>
-                        <td className="px-4 py-3 text-right text-sm">{formatCurrency(tenant.securityDeposit)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="font-semibold text-red-600 dark:text-red-400 text-sm">
+                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.monthlyRent)}</td>
+                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.securityDeposit)}</td>
+                        <td className="px-4 py-2 text-right">
+                          <span className="font-mono text-xs font-bold text-foreground">
                             {formatCurrency(tenant.totalBalance)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm">{formatCurrency(tenant.days1To30)}</td>
-                        <td className="px-4 py-3 text-right text-sm">{formatCurrency(tenant.days31To60)}</td>
-                        <td className="px-4 py-3 text-right text-sm">{formatCurrency(tenant.days61To90)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className={`text-sm ${tenant.over90Days > 0 ? "text-red-600 dark:text-red-400 font-semibold" : ""}`}>
+                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days1To30)}</td>
+                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days31To60)}</td>
+                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days61To90)}</td>
+                        <td className="px-4 py-2 text-right">
+                          <span className={`text-xs font-mono ${tenant.over90Days > 0 ? "text-rose-600 font-bold" : "text-muted-foreground"}`}>
                             {formatCurrency(tenant.over90Days)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-medium">
+                        <td className="px-4 py-2 text-right text-xs font-mono font-medium">
                           {formatNumber(monthsOverdue)}
                         </td>
                       </tr>
@@ -592,8 +543,9 @@ export default function ARAgingPage() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }
+
 
