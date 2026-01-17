@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { Plus, FolderKanban, Users, Calendar, MoreHorizontal, Clock, Target } from "lucide-react"
+import { Plus, FolderKanban, Users, Calendar, MoreHorizontal, Clock, Target, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getProjects, ProjectListItem } from "@/lib/actions/project-actions"
@@ -8,15 +8,16 @@ import Link from "next/link"
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 function ProjectCard({ project }: { project: ProjectListItem }) {
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
-      case 'COMPLETED': return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-      case 'ON_HOLD': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300'
-      case 'ARCHIVED': return 'bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300'
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300'
+      case 'ACTIVE': return 'border-emerald-500 text-emerald-600 bg-emerald-500/10'
+      case 'COMPLETED': return 'border-blue-500 text-blue-600 bg-blue-500/10'
+      case 'ON_HOLD': return 'border-amber-500 text-amber-600 bg-amber-500/10'
+      case 'ARCHIVED': return 'border-muted text-muted-foreground bg-muted/10'
+      default: return 'border-muted text-muted-foreground bg-muted/10'
     }
   }
 
@@ -29,105 +30,101 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
   const daysRemaining = getDaysRemaining()
 
   return (
-    <div className="group relative p-4 rounded-lg border border-border/50 bg-background hover:shadow-sm hover:border-border transition-all duration-200">
+    <div className="group relative border border-border bg-background hover:shadow-none hover:border-primary/50 transition-all flex flex-col h-full rounded-none">
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+      <div className="p-4 flex-1">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0 pr-2">
             <Link 
               href={`/projects/${project.id}`}
-              className="text-lg font-semibold hover:text-primary transition-colors truncate"
+              className="text-base font-bold uppercase tracking-tight hover:text-primary transition-colors block truncate mb-1"
             >
               {project.name}
             </Link>
-            <div className={cn(
-              "px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0",
-              getStatusColor(project.status)
+            <Badge variant="outline" className={cn(
+              "rounded-none text-[10px] uppercase tracking-widest font-mono",
+              getStatusStyle(project.status)
             )}>
               {project.status.replace('_', ' ')}
+            </Badge>
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-none hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-none border-border">
+              <DropdownMenuItem asChild className="rounded-none cursor-pointer text-xs font-mono uppercase">
+                <Link href={`/projects/${project.id}`}>View Project</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="rounded-none cursor-pointer text-xs font-mono uppercase">
+                <Link href={`/projects/${project.id}/settings`}>Settings</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {project.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 font-mono leading-relaxed">
+            {project.description}
+          </p>
+        )}
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-px bg-border border border-border">
+          <div className="bg-background p-2 flex items-center justify-between">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Tasks</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-bold">{project._count.tasks}</span>
+              <Target className="h-3 w-3 text-muted-foreground" />
             </div>
           </div>
-          {project.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-              {project.description}
-            </p>
+          <div className="bg-background p-2 flex items-center justify-between">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Team</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-bold">{project._count.members + 1}</span>
+              <Users className="h-3 w-3 text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-3 bg-muted/5 border-t border-border mt-auto">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono uppercase tracking-wide mb-2">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>Start: {format(new Date(project.startDate), 'MM/dd/yy')}</span>
+          </div>
+          
+          {daysRemaining !== null && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span className={cn(
+                "font-bold",
+                daysRemaining < 0 ? "text-red-600" :
+                daysRemaining <= 7 ? "text-orange-600" : "text-foreground"
+              )}>
+                {daysRemaining < 0 
+                  ? `${Math.abs(daysRemaining)}D OVER`
+                  : daysRemaining === 0 
+                  ? "DUE TODAY"
+                  : `${daysRemaining}D LEFT`
+                }
+              </span>
+            </div>
           )}
         </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}`}>View Project</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}/settings`}>Settings</Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/30">
-          <div className="p-1 rounded bg-blue-100 dark:bg-blue-950">
-            <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center justify-between pt-2 border-t border-border/50 border-dashed">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono truncate max-w-[150px]">
+            <span className="font-bold">OWNER:</span> {project.owner.firstName} {project.owner.lastName}
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Tasks</p>
-            <p className="text-sm font-medium">{project._count.tasks}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/30">
-          <div className="p-1 rounded bg-purple-100 dark:bg-purple-950">
-            <Users className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Team</p>
-            <p className="text-sm font-medium">{project._count.members + 1}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Timeline */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Calendar className="h-3 w-3" />
-          <span>Started {format(new Date(project.startDate), 'MMM dd, yyyy')}</span>
-        </div>
-        
-        {daysRemaining !== null && (
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span className={cn(
-              daysRemaining < 0 && "text-red-600 dark:text-red-400",
-              daysRemaining <= 7 && daysRemaining >= 0 && "text-orange-600 dark:text-orange-400"
-            )}>
-              {daysRemaining < 0 
-                ? `${Math.abs(daysRemaining)} days overdue`
-                : daysRemaining === 0 
-                ? "Due today"
-                : `${daysRemaining} days left`
-              }
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Owner */}
-      <div className="mt-3 pt-3 border-t border-border/50">
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">
-            Owner: <span className="font-medium text-foreground">{project.owner.firstName} {project.owner.lastName}</span>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Updated {format(new Date(project.updatedAt), 'MMM dd')}
-          </div>
+          <Link href={`/projects/${project.id}`} className="group/link flex items-center gap-1 text-[10px] font-bold uppercase hover:text-primary transition-colors">
+            Access <ArrowRight className="h-3 w-3 transition-transform group-hover/link:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </div>
@@ -139,22 +136,20 @@ async function ProjectsList() {
 
   if (projects.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md">
-          <div className="p-4 rounded-full bg-muted/30 w-fit mx-auto mb-4">
-            <FolderKanban className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-            Create your first project to start organizing your tasks with kanban boards and collaborate with your team.
-          </p>
-          <CreateProjectDialog>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Project
-            </Button>
-          </CreateProjectDialog>
+      <div className="flex flex-col items-center justify-center min-h-[400px] border border-dashed border-border bg-muted/5">
+        <div className="p-4 bg-background border border-border mb-4">
+          <FolderKanban className="h-8 w-8 text-muted-foreground/50" />
         </div>
+        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">No Projects Found</h3>
+        <p className="text-xs text-muted-foreground font-mono mb-6 uppercase tracking-wide">
+          Initialize a new project board
+        </p>
+        <CreateProjectDialog>
+          <Button className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+            <Plus className="h-3 w-3 mr-2" />
+            Initialize Project
+          </Button>
+        </CreateProjectDialog>
       </div>
     )
   }
@@ -172,33 +167,28 @@ function ProjectsLoading() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {[...Array(8)].map((_, i) => (
-        <div key={i} className="p-4 rounded-lg border border-border/50 bg-background">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-              <Skeleton className="h-6 w-16" />
+        <div key={i} className="border border-border bg-background p-4 h-[280px] flex flex-col rounded-none">
+          <div className="space-y-3 flex-1">
+            <div className="flex justify-between items-start">
+              <Skeleton className="h-5 w-3/4 rounded-none" />
+              <Skeleton className="h-5 w-16 rounded-none" />
             </div>
+            <Skeleton className="h-4 w-full rounded-none" />
+            <Skeleton className="h-4 w-2/3 rounded-none" />
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-2 rounded-md bg-muted/30">
-                <Skeleton className="h-8 w-full" />
+            <div className="grid grid-cols-2 gap-px bg-border border border-border mt-4">
+              <div className="bg-background p-2">
+                <Skeleton className="h-8 w-full rounded-none" />
               </div>
-              <div className="p-2 rounded-md bg-muted/30">
-                <Skeleton className="h-8 w-full" />
+              <div className="bg-background p-2">
+                <Skeleton className="h-8 w-full rounded-none" />
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-2/3" />
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex justify-between">
-                  <Skeleton className="h-3 w-1/3" />
-                  <Skeleton className="h-3 w-1/4" />
-                </div>
-              </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-border">
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-1/3 rounded-none" />
+              <Skeleton className="h-3 w-1/4 rounded-none" />
             </div>
           </div>
         </div>
@@ -209,18 +199,18 @@ function ProjectsLoading() {
 
 export default function ProjectsPage() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 h-[calc(100vh-4rem)] overflow-y-auto">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border/50">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your projects and track progress with kanban boards
+          <h1 className="text-2xl font-bold uppercase tracking-tight">Projects</h1>
+          <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mt-1">
+            Project Kanban workflow & task management
           </p>
         </div>
         <CreateProjectDialog>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+            <Plus className="h-3 w-3 mr-2" />
             New Project
           </Button>
         </CreateProjectDialog>

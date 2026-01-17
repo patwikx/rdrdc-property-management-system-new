@@ -18,9 +18,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <ProjectHeader project={project} />
-      <KanbanBoard project={project} />
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-full overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-border bg-background px-6 py-4">
+        <ProjectHeader project={project} />
+      </div>
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden bg-muted/5 p-6">
+        <KanbanBoard project={project} />
+      </div>
     </div>
   )
 }

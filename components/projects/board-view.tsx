@@ -222,9 +222,9 @@ export function BoardView({ board }: BoardViewProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-border/50">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-background">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {isEditingBoard ? (
@@ -232,7 +232,7 @@ export function BoardView({ board }: BoardViewProps) {
                 <Input
                   value={boardName}
                   onChange={(e) => setBoardName(e.target.value)}
-                  className="text-xl font-semibold h-auto py-1 px-2"
+                  className="text-lg font-bold uppercase h-auto py-1 px-2 rounded-none border-border"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleUpdateBoardName()
@@ -248,6 +248,7 @@ export function BoardView({ board }: BoardViewProps) {
                   size="sm"
                   onClick={handleUpdateBoardName}
                   disabled={isLoading || !boardName.trim()}
+                  className="rounded-none h-8 w-8 p-0"
                 >
                   <Save className="h-4 w-4" />
                 </Button>
@@ -259,81 +260,82 @@ export function BoardView({ board }: BoardViewProps) {
                     setBoardName(board.name)
                   }}
                   disabled={isLoading}
+                  className="rounded-none h-8 w-8 p-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <>
-                <h1 className="text-2xl font-semibold">{board.name}</h1>
+                <h1 className="text-xl font-bold uppercase tracking-tight">{board.name}</h1>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsEditingBoard(true)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity rounded-none h-6 w-6 p-0"
                 >
-                  <Edit3 className="h-4 w-4" />
+                  <Edit3 className="h-3 w-3" />
                 </Button>
               </>
             )}
           </div>
           
-          <div className="text-sm text-muted-foreground">
-            in <Link href={`/projects/${board.project.id}`} className="hover:text-foreground transition-colors">
+          <div className="text-xs font-mono text-muted-foreground uppercase">
+            PROJECT: <Link href={`/projects/${board.project.id}`} className="hover:text-foreground transition-colors underline decoration-dotted">
               {board.project.name}
             </Link>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="rounded-none h-8 text-xs font-mono uppercase border-border">
             <Link href={`/projects/${board.project.id}/settings`}>
-              <Settings className="h-4 w-4 mr-2" />
-              Project Settings
+              <Settings className="h-3 w-3 mr-2" />
+              Settings
             </Link>
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="rounded-none h-8 w-8 p-0 border border-transparent hover:border-border">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setIsAddingColumn(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+            <DropdownMenuContent align="end" className="rounded-none border-border">
+              <DropdownMenuItem onClick={() => setIsAddingColumn(true)} className="rounded-none font-mono text-xs uppercase">
+                <Plus className="h-3 w-3 mr-2" />
                 Add Column
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsEditingBoard(true)}>
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit Board Name
+              <DropdownMenuItem onClick={() => setIsEditingBoard(true)} className="rounded-none font-mono text-xs uppercase">
+                <Edit3 className="h-3 w-3 mr-2" />
+                Rename Board
               </DropdownMenuItem>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
                     onSelect={(e) => e.preventDefault()}
-                    className="text-destructive"
+                    className="text-destructive rounded-none font-mono text-xs uppercase"
                     disabled={isLoading}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-3 w-3 mr-2" />
                     Delete Board
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-none border-border">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Board</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete &apos;{board.name}&apos;? This action cannot be undone and will permanently delete all columns and tasks in this board.
+                    <AlertDialogTitle className="font-bold uppercase tracking-widest text-sm">Delete Board</AlertDialogTitle>
+                    <AlertDialogDescription className="font-mono text-xs">
+                      Are you sure you want to delete &apos;{board.name}&apos;? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={isLoading} className="rounded-none border-border font-mono text-xs uppercase">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDeleteBoard}
                       disabled={isLoading}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="bg-destructive hover:bg-destructive/90 rounded-none font-mono text-xs uppercase"
                     >
-                      {isLoading ? "Deleting..." : "Delete Board"}
+                      {isLoading ? "Deleting..." : "Delete"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -344,21 +346,21 @@ export function BoardView({ board }: BoardViewProps) {
       </div>
 
       {/* Column Management Bar */}
-      <div className="flex items-center gap-4 p-4 bg-muted/30 border-b border-border/50">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>{board.columns.length} columns</span>
-          <span>•</span>
-          <span>{board.columns.reduce((total, col) => total + col.tasks.length, 0)} tasks</span>
+      <div className="flex items-center gap-4 p-3 bg-muted/5 border-b border-border">
+        <div className="flex items-center gap-2 text-xs font-mono uppercase text-muted-foreground">
+          <Users className="h-3 w-3" />
+          <span>{board.columns.length} COLS</span>
+          <span className="text-border">|</span>
+          <span>{board.columns.reduce((total, col) => total + col.tasks.length, 0)} TASKS</span>
         </div>
 
         {isAddingColumn && (
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Enter column name"
+              placeholder="COL NAME"
               value={newColumnName}
               onChange={(e) => setNewColumnName(e.target.value)}
-              className="h-8 text-sm"
+              className="h-7 text-xs font-mono uppercase rounded-none border-border w-40"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleAddColumn()
@@ -374,6 +376,7 @@ export function BoardView({ board }: BoardViewProps) {
               size="sm"
               onClick={handleAddColumn}
               disabled={isLoading || !newColumnName.trim()}
+              className="h-7 rounded-none px-3 text-xs font-mono uppercase"
             >
               Add
             </Button>
@@ -385,8 +388,9 @@ export function BoardView({ board }: BoardViewProps) {
                 setNewColumnName("")
               }}
               disabled={isLoading}
+              className="h-7 rounded-none px-2"
             >
-              Cancel
+              <X className="h-3 w-3" />
             </Button>
           </div>
         )}
@@ -396,21 +400,22 @@ export function BoardView({ board }: BoardViewProps) {
             variant="outline"
             size="sm"
             onClick={() => setIsAddingColumn(true)}
+            className="h-7 rounded-none text-xs font-mono uppercase border-border"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Column
+            <Plus className="h-3 w-3 mr-2" />
+            New Column
           </Button>
         )}
 
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-center gap-1 ml-auto overflow-x-auto">
           {board.columns.map((column) => (
-            <div key={column.id} className="flex items-center gap-1">
+            <div key={column.id} className="flex items-center gap-1 border border-border bg-background px-1">
               {isEditingColumn === column.id ? (
                 <div className="flex items-center gap-1">
                   <Input
                     value={editColumnName}
                     onChange={(e) => setEditColumnName(e.target.value)}
-                    className="h-6 text-xs w-24"
+                    className="h-6 text-xs w-24 rounded-none border-none focus-visible:ring-0 font-mono uppercase"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleUpdateColumn(column.id)
@@ -424,11 +429,11 @@ export function BoardView({ board }: BoardViewProps) {
                   />
                   <Button
                     size="sm"
-                    className="h-6 px-2"
+                    className="h-5 px-1 rounded-none"
                     onClick={() => handleUpdateColumn(column.id)}
                     disabled={isLoading || !editColumnName.trim()}
                   >
-                    ✓
+                    <Save className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
@@ -437,47 +442,48 @@ export function BoardView({ board }: BoardViewProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 text-xs"
+                      className="h-6 px-2 text-[10px] font-mono uppercase rounded-none hover:bg-muted"
                     >
-                      {column.name} ({column.tasks.length})
+                      {column.name} <span className="ml-1 text-muted-foreground">({column.tasks.length})</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="rounded-none border-border">
                     <DropdownMenuItem
                       onClick={() => {
                         setIsEditingColumn(column.id)
                         setEditColumnName(column.name)
                       }}
+                      className="rounded-none font-mono text-xs uppercase"
                     >
                       <Edit3 className="h-3 w-3 mr-2" />
-                      Edit Name
+                      Rename
                     </DropdownMenuItem>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <DropdownMenuItem
                           onSelect={(e) => e.preventDefault()}
-                          className="text-destructive"
+                          className="text-destructive rounded-none font-mono text-xs uppercase"
                           disabled={isLoading}
                         >
                           <Trash2 className="h-3 w-3 mr-2" />
                           Delete
                         </DropdownMenuItem>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="rounded-none border-border">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Column</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete the &apos;{column.name}&apos; column? This action cannot be undone and will permanently delete all tasks in this column.
+                          <AlertDialogTitle className="font-bold uppercase tracking-widest text-sm">Delete Column</AlertDialogTitle>
+                          <AlertDialogDescription className="font-mono text-xs">
+                            This will permanently delete the &apos;{column.name}&apos; column and its tasks.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel disabled={isLoading} className="rounded-none border-border font-mono text-xs uppercase">Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDeleteColumn(column.id)}
                             disabled={isLoading}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="bg-destructive hover:bg-destructive/90 rounded-none font-mono text-xs uppercase"
                           >
-                            {isLoading ? "Deleting..." : "Delete Column"}
+                            {isLoading ? "Deleting..." : "Delete"}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -491,7 +497,7 @@ export function BoardView({ board }: BoardViewProps) {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-muted/5 p-4">
         <KanbanBoard 
           project={{
             id: board.project.id,

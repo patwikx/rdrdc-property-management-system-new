@@ -1,12 +1,12 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Calendar, Clock } from "lucide-react"
 import { format } from "date-fns"
 
 export function DateTimeDisplay() {
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
 
   useEffect(() => {
+    setCurrentTime(new Date())
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -14,17 +14,30 @@ export function DateTimeDisplay() {
     return () => clearInterval(timer)
   }, [])
 
-  return (
-    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-      <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4" />
-        <span className="font-medium">{format(currentTime, "MMM dd, yyyy")}</span>
+  if (!currentTime) {
+    return (
+      <div className="flex items-center h-full border-l border-border pl-4 ml-2">
+        <div className="flex flex-col items-end gap-0.5 min-w-[120px]">
+           <div className="h-2 w-16 bg-muted/20 animate-pulse rounded-none" />
+           <div className="h-3 w-24 bg-muted/20 animate-pulse rounded-none" />
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4" />
-        <span className="font-medium" suppressHydrationWarning>
-          {format(currentTime, "h:mm:ss a")}
+    )
+  }
+
+  return (
+    <div className="flex items-center h-full border-l border-border pl-4 ml-2">
+      <div className="flex flex-col items-end gap-0.5">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-none">
+          System Time
         </span>
+        <div className="flex items-center gap-2 font-mono text-xs font-medium leading-none">
+          <span className="uppercase">{format(currentTime, "MMM dd, yyyy")}</span>
+          <span className="text-border">|</span>
+          <span suppressHydrationWarning>
+            {format(currentTime, "HH:mm:ss")}
+          </span>
+        </div>
       </div>
     </div>
   )

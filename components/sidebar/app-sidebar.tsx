@@ -49,31 +49,31 @@ const getNavigationItems = (userRole: string) => {
       isActive: true,
     },
     {
-      title: "Properties",
+      title: "Property Management",
       url: "/properties",
       icon: Building2,
       items: [
         {
-          title: "All Properties",
+          title: "• All Properties",
           url: "/properties",
         },
                 {
-          title: "Spaces",
+          title: "• All Spaces",
           url: "/properties/units",
         },
       ],
     },
     {
-      title: "Tenants",
+      title: "Leasing Operations",
       url: "/tenants",
       icon: Users,
       items: [
         {
-          title: "All Tenants",
+          title: "Tenants",
           url: "/tenants",
         },
         {
-          title: "Leases",
+          title: "Leases Agreements",
           url: "/tenants/leases",
         },
         {
@@ -101,21 +101,7 @@ const getNavigationItems = (userRole: string) => {
         },
       ],
     },
-    {
-      title: "Taxes",
-      url: "/taxes",
-      icon: Receipt,
-      items: [
-        {
-          title: "Property Taxes",
-          url: "/taxes/property-taxes",
-        },
-        {
-          title: "Space Taxes",
-          url: "/taxes/space-taxes",
-        },
-      ],
-    },
+   
     {
       title: "Billing Monitoring",
       url: "/billing-monitoring",
@@ -127,7 +113,7 @@ const getNavigationItems = (userRole: string) => {
       icon: Wrench,
     },
     {
-      title: "Projects",
+      title: "Project Kanban",
       url: "/projects",
       icon: FolderKanban,
       items: [

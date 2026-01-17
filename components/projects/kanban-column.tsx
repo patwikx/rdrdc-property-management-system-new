@@ -60,29 +60,29 @@ export function KanbanColumn({ column, projectId, projectMembers, isReceiving }:
   })
 
   return (
-    <div className="w-80 flex-shrink-0">
+    <div className="w-80 flex-shrink-0 flex flex-col h-full border border-border bg-background/50">
       {/* Column Header */}
-      <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex items-center justify-between p-3 border-b border-border bg-muted/10">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+          <h3 className="font-bold text-xs uppercase tracking-widest text-foreground">
             {column.name}
           </h3>
-          <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-1">
+          <span className="text-[10px] font-mono text-muted-foreground bg-muted/20 px-1.5 py-0.5 border border-border">
             {column.tasks?.length || 0}
           </span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-none hover:bg-muted/20">
               <MoreHorizontal className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsCreateTaskOpen(true)}>
+          <DropdownMenuContent align="end" className="rounded-none border-border">
+            <DropdownMenuItem onClick={() => setIsCreateTaskOpen(true)} className="rounded-none text-xs font-mono uppercase">
               Add Task
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit Column</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="rounded-none text-xs font-mono uppercase">Edit Column</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive rounded-none text-xs font-mono uppercase">
               Delete Column
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -93,8 +93,8 @@ export function KanbanColumn({ column, projectId, projectMembers, isReceiving }:
       <div
         ref={setNodeRef}
         className={cn(
-          "space-y-3 min-h-[400px] pb-2 rounded-lg transition-all duration-200",
-          isReceiving && "ring-2 ring-primary ring-offset-2 bg-primary/5 ring-offset-background"
+          "flex-1 overflow-y-auto p-2 space-y-2 transition-colors duration-200 scrollbar-thin scrollbar-thumb-border",
+          isReceiving && "bg-primary/5"
         )}
       >
         <SortableContext items={(column.tasks || []).filter(task => task && task.id).map(task => task.id)} strategy={verticalListSortingStrategy}>
@@ -106,11 +106,11 @@ export function KanbanColumn({ column, projectId, projectMembers, isReceiving }:
         {/* Add New Card Button */}
         <Button
           variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50 border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 h-auto py-3"
+          className="w-full justify-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/10 border border-dashed border-border hover:border-foreground/50 h-9 rounded-none"
           onClick={() => setIsCreateTaskOpen(true)}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add new card
+          <Plus className="h-3 w-3 mr-2" />
+          Add Task
         </Button>
       </div>
      
