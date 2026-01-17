@@ -32,6 +32,11 @@ interface ARAgingTenant {
   over90Days: number;
   monthlyRent: number;
   securityDeposit: number;
+  // Matched tenant data from database
+  tenantId?: string;
+  firstNoticeDate?: Date | null;
+  secondNoticeDate?: Date | null;
+  finalNoticeDate?: Date | null;
 }
 
 interface ARAgingResponse {
@@ -489,17 +494,25 @@ export default function ARAgingPage() {
                     <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Rent</th>
                     <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Deposit</th>
                     <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Balance</th>
-                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">1-30 Days</th>
-                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">31-60 Days</th>
-                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">61-90 Days</th>
-                    <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">&gt;90 Days</th>
                     <th className="h-9 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Months</th>
+                    <th className="h-9 px-4 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">1st Notice</th>
+                    <th className="h-9 px-4 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">2nd Notice</th>
+                    <th className="h-9 px-4 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/5">Final Notice</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTenants.map((tenant) => {
                     const monthsOverdue = calculateMonthsOverdue(tenant.totalBalance, tenant.monthlyRent)
                     const { status, color } = getStatusInfo(monthsOverdue)
+
+                    const formatNoticeDate = (date: Date | null | undefined) => {
+                      if (!date) return "-"
+                      return new Date(date).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })
+                    }
 
                     return (
                       <tr 
@@ -524,16 +537,23 @@ export default function ARAgingPage() {
                             {formatCurrency(tenant.totalBalance)}
                           </span>
                         </td>
-                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days1To30)}</td>
-                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days31To60)}</td>
-                        <td className="px-4 py-2 text-right text-xs font-mono text-muted-foreground">{formatCurrency(tenant.days61To90)}</td>
-                        <td className="px-4 py-2 text-right">
-                          <span className={`text-xs font-mono ${tenant.over90Days > 0 ? "text-rose-600 font-bold" : "text-muted-foreground"}`}>
-                            {formatCurrency(tenant.over90Days)}
-                          </span>
-                        </td>
                         <td className="px-4 py-2 text-right text-xs font-mono font-medium">
                           {formatNumber(monthsOverdue)}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-[10px] font-mono ${tenant.firstNoticeDate ? 'text-yellow-600 font-semibold' : 'text-muted-foreground'}`}>
+                            {formatNoticeDate(tenant.firstNoticeDate)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-[10px] font-mono ${tenant.secondNoticeDate ? 'text-orange-600 font-semibold' : 'text-muted-foreground'}`}>
+                            {formatNoticeDate(tenant.secondNoticeDate)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-[10px] font-mono ${tenant.finalNoticeDate ? 'text-red-600 font-semibold' : 'text-muted-foreground'}`}>
+                            {formatNoticeDate(tenant.finalNoticeDate)}
+                          </span>
                         </td>
                       </tr>
                     )
