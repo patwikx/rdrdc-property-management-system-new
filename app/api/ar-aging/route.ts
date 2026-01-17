@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConnection } from '@/lib/database';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/auth';
 
 export interface ARAgingTenant {
   cardCode: string;
@@ -29,6 +30,19 @@ export interface ARAgingResponse {
 
 export async function GET(request: NextRequest) {
   try {
+    // Authentication check - only logged-in users can access full AR data
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          data: [],
+          error: 'Unauthorized. Please log in to access this data.',
+        },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const cardCodeFilter = searchParams.get('cardCode') || '';
     const pool = await getConnection();
