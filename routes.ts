@@ -6,7 +6,8 @@
 export const publicRoutes = [
   "/",
   "/auth/new-verification",
-  "/api/uploadthing"
+  "/api/uploadthing",
+  "/api/ar-aging/simple", // Public API for Google Sheets integration
 ];
 
 /**
