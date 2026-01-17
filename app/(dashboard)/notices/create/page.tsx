@@ -66,14 +66,14 @@ const NOTICE_STATUSES = [
   { value: "CRITICAL", label: "CRITICAL", icon: AlertTriangle, color: "text-destructive" },
   { value: "PENDING", label: "PENDING", icon: Clock, color: "text-muted-foreground" },
   { value: "UNPAID", label: "UNPAID", icon: CreditCard, color: "text-muted-foreground" },
-  { value: "CUSTOM", label: "Custom (Enter manually)", icon: Edit3, color: "text-primary" }
+  { value: "CUSTOM", label: "CUSTOM", icon: Edit3, color: "text-primary" }
 ];
 
 const ITEM_TYPES = [
-  { value: "space_rental", label: "Space Rental", icon: Building },
-  { value: "bir_forms", label: "BIR 2307 Forms", icon: FileCheck },
-  { value: "utilities", label: "Utilities", icon: Receipt },
-  { value: "other", label: "Other Charges", icon: DollarSign}
+  { value: "space_rental", label: "SPACE RENTAL", icon: Building },
+  { value: "bir_forms", label: "BIR 2307 FORMS", icon: FileCheck },
+  { value: "utilities", label: "UTILITIES", icon: Receipt },
+  { value: "other", label: "OTHER CHARGES", icon: DollarSign}
 ];
 
 export default function CreateNoticePage() {
@@ -153,7 +153,6 @@ export default function CreateNoticePage() {
     try {
       const tenantsData = await getTenants();
       setTenants(tenantsData);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to load tenants");
     }
@@ -164,29 +163,29 @@ export default function CreateNoticePage() {
       case "FIRST_NOTICE":
         return {
           label: "FIRST NOTICE",
-          color: "border-2",
-          icon: <div className="w-2 h-2 bg-primary rounded-full"></div>,
-          description: count === 0 ? "This will be the first notice for this tenant" : "No unsettled notices found"
+          color: "border-l-4 border-primary bg-primary/5",
+          icon: <div className="w-2 h-2 bg-primary rounded-none"></div>,
+          description: count === 0 ? "INITIAL NOTICE ISSUANCE" : "NO PENDING NOTICES"
         };
       case "SECOND_NOTICE":
         return {
           label: "SECOND NOTICE",
-          color: "border-2 border-orange-500 dark:border-orange-400",
-          icon: <div className="w-2 h-2 bg-orange-500 dark:bg-orange-400 rounded-full"></div>,
-          description: `Tenant has ${count} unsettled notice(s). This will be their second notice.`
+          color: "border-l-4 border-orange-500 bg-orange-500/5",
+          icon: <div className="w-2 h-2 bg-orange-500 rounded-none"></div>,
+          description: `${count} PENDING NOTICES DETECTED`
         };
       case "FINAL_NOTICE":
         return {
           label: "FINAL NOTICE",
-          color: "border-2 border-destructive",
+          color: "border-l-4 border-destructive bg-destructive/5",
           icon: <AlertTriangle className="h-4 w-4 text-destructive" />,
-          description: `Tenant has ${count} unsettled notice(s). This will be their final notice.`
+          description: `${count} PENDING NOTICES - FINAL WARNING`
         };
       default:
         return {
-          label: "Unknown",
-          color: "border-2",
-          icon: <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>,
+          label: "UNKNOWN",
+          color: "border-l-4 border-muted",
+          icon: <div className="w-2 h-2 bg-muted-foreground rounded-none"></div>,
           description: ""
         };
     }
@@ -195,7 +194,7 @@ export default function CreateNoticePage() {
   const addItem = () => {
     setItems([...items, {
       description: "",
-      itemType: "", // Changed from "space_rental" to ""
+      itemType: "",
       status: "PAST_DUE",
       customStatus: "",
       amount: "",
@@ -300,7 +299,7 @@ export default function CreateNoticePage() {
       const hasDescription = item.description.trim();
       const hasAmount = item.amount && parseFloat(item.amount) > 0;
       const hasValidStatus = item.status !== "CUSTOM" || (item.status === "CUSTOM" && item.customStatus.trim());
-      const hasItemType = item.itemType.trim(); // New validation for item type
+      const hasItemType = item.itemType.trim(); 
       return hasDescription && hasAmount && hasValidStatus && hasItemType;
     });
 
@@ -339,7 +338,6 @@ export default function CreateNoticePage() {
       } else {
         router.push("/notices");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to create notice");
     } finally {
@@ -369,42 +367,34 @@ export default function CreateNoticePage() {
             margin: 0.25in;
             size: 8.5in 11in;
           }
-          /* Print spacing adjustments */
           .print-area {
             padding: 0.1in 0.15in !important;
           }
-          /* Force colors to print */
           * {
             -webkit-print-color-adjust: exact !important;
             color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          /* Ensure yellow background prints */
           .print-yellow {
             background-color: #fef08a !important;
             -webkit-print-color-adjust: exact !important;
           }
-          /* Ensure red text prints */
           .print-red {
             color: #dc2626 !important;
             -webkit-print-color-adjust: exact !important;
           }
-          /* Ensure blue text prints */
           .print-blue {
             color: #2563eb !important;
             -webkit-print-color-adjust: exact !important;
           }
-          /* Ensure light blue text prints */
           .print-light-blue {
             color: #60a5fa !important;
             -webkit-print-color-adjust: exact !important;
           }
-          /* Ensure navy blue text prints */
           .print-navy-blue {
             color: #1e3a8a !important;
             -webkit-print-color-adjust: exact !important;
           }
-          /* Signature styling for print */
           .signature-container {
             position: relative;
           }
@@ -426,7 +416,6 @@ export default function CreateNoticePage() {
           }
         }
 
-        /* Custom text justification styles */
         .text-justify-full {
           text-align: justify;
           text-justify: inter-word;
@@ -441,7 +430,6 @@ export default function CreateNoticePage() {
           width: 100%;
         }
 
-        /* Signature styling for screen (preview) */
         .signature-container {
           position: relative;
         }
@@ -467,27 +455,27 @@ export default function CreateNoticePage() {
         <div className="flex gap-6">
           {/* Form Section - Left Side */}
           <div className="w-1/2 space-y-6">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <FileText className="h-6 w-6" />
-                  Create Tenant Notice
+            <Card className="rounded-none border border-border shadow-none">
+              <CardHeader className="pb-4 border-b border-border bg-muted/5">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                  <FileText className="h-4 w-4" />
+                  Generate Notice
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                   {/* Basic Information Section */}
                   <div className="space-y-4">
-                    <div className="border-l-4 border-primary pl-4">
-                      <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                    <div className="border border-border p-4 bg-background">
+                      <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-muted-foreground border-b border-border pb-2">Tenant Details</h3>
 
                       <div className="grid grid-cols-1 gap-4">
                         {/* Tenant Selection with Combobox */}
                         <div className="space-y-1.5">
-                          <Label htmlFor="tenant" className="flex items-center gap-2 text-sm font-medium">
-                            <User2 className="h-4 w-4" />
-                            Select Tenant <span className="text-destructive">*</span>
+                          <Label htmlFor="tenant" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                            <User2 className="h-3 w-3" />
+                            Target Tenant <span className="text-destructive">*</span>
                           </Label>
                           <Popover open={openTenantCombobox} onOpenChange={setOpenTenantCombobox}>
                             <PopoverTrigger asChild>
@@ -495,24 +483,24 @@ export default function CreateNoticePage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={openTenantCombobox}
-                                className="w-full justify-between h-11"
+                                className="w-full justify-between h-9 rounded-none border-border font-mono text-xs uppercase"
                               >
                                 {formData.tenantId
                                   ? (() => {
                                     const tenant = tenants.find((t) => t.id === formData.tenantId);
-                                    return tenant ? `${tenant.bpCode} — ${tenant.businessName}` : "Select tenant...";
+                                    return tenant ? `${tenant.bpCode} — ${tenant.businessName}` : "SELECT TENANT...";
                                   })()
-                                  : "Select tenant..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  : "SELECT TENANT..."}
+                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-full p-0">
-                              <Command>
+                            <PopoverContent className="w-full p-0 rounded-none border-border">
+                              <Command className="rounded-none">
                                 <CommandInput
-                                  placeholder="Search tenant..."
-                                  className="h-9"
+                                  placeholder="SEARCH TENANT..."
+                                  className="h-9 rounded-none font-mono text-xs uppercase"
                                 />
-                                <CommandEmpty>No tenant found.</CommandEmpty>
+                                <CommandEmpty className="p-2 font-mono text-xs">NO TENANT FOUND.</CommandEmpty>
                                 <CommandGroup className="max-h-64 overflow-y-auto">
                                   {tenants.map((tenant) => (
                                     <CommandItem
@@ -522,18 +510,18 @@ export default function CreateNoticePage() {
                                         setFormData({ ...formData, tenantId: tenant.id });
                                         setOpenTenantCombobox(false);
                                       }}
-                                      className="cursor-pointer"
+                                      className="cursor-pointer rounded-none font-mono text-xs"
                                     >
                                       <Check
                                         className={cn(
-                                          "mr-2 h-4 w-4",
+                                          "mr-2 h-3 w-3",
                                           formData.tenantId === tenant.id ? "opacity-100" : "opacity-0"
                                         )}
                                       />
                                       <div className="flex flex-col">
-                                        <span className="font-medium">{tenant.bpCode} — {tenant.businessName}</span>
+                                        <span className="font-bold">{tenant.bpCode} — {tenant.businessName}</span>
                                         {(tenant.firstName || tenant.lastName) && (
-                                          <span className="text-sm text-muted-foreground">
+                                          <span className="text-[10px] text-muted-foreground uppercase">
                                             {[tenant.firstName, tenant.lastName].filter(Boolean).join(' ')}
                                           </span>
                                         )}
@@ -548,24 +536,24 @@ export default function CreateNoticePage() {
 
                         {/* Notice Type - Auto-determined with status info */}
                         <div className="space-y-1.5">
-                          <Label htmlFor="noticeType" className="flex items-center gap-2 text-sm font-medium">
-                            <FileText className="h-4 w-4" />
-                            Notice Type {loadingNoticeCount && <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>}
+                          <Label htmlFor="noticeType" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                            <FileText className="h-3 w-3" />
+                            Notice Class {loadingNoticeCount && <div className="animate-spin rounded-full h-2 w-2 border-b-2 border-primary"></div>}
                           </Label>
-                          <div className={`rounded-lg p-3 ${noticeTypeInfo.color}`}>
+                          <div className={`p-3 rounded-none border border-border ${noticeTypeInfo.color}`}>
                             <div className="flex items-center gap-2 mb-1">
                               {noticeTypeInfo.icon}
-                              <span className="font-semibold text-sm">{noticeTypeInfo.label}</span>
+                              <span className="font-mono text-sm font-bold uppercase">{noticeTypeInfo.label}</span>
                             </div>
                             {formData.tenantId && (
-                              <div className="flex items-start gap-1 text-xs">
+                              <div className="flex items-start gap-1 text-[10px] font-mono text-muted-foreground uppercase">
                                 <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                                 <span>{noticeTypeInfo.description}</span>
                               </div>
                             )}
                             {!formData.tenantId && (
-                              <div className="text-xs opacity-75">
-                                Select a tenant to determine notice type
+                              <div className="text-[10px] font-mono text-muted-foreground uppercase opacity-75">
+                                TENANT SELECTION REQUIRED
                               </div>
                             )}
                           </div>
@@ -576,42 +564,42 @@ export default function CreateNoticePage() {
 
                   {/* Notice Items Section */}
                   <div className="space-y-4">
-                    <div className="border-l-4 border-primary pl-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">Notice Items</h3>
+                    <div className="border border-border p-4 bg-background">
+                      <div className="flex justify-between items-center mb-4 border-b border-border pb-2">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Notice Items</h3>
                         <Button
                           type="button"
                           onClick={addItem}
                           variant="outline"
                           size="sm"
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 rounded-none h-7 text-[10px] font-mono uppercase border-border"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3" />
                           Add Item
                         </Button>
                       </div>
 
                       <div className="space-y-4">
                         {items.map((item, index) => (
-                          <div key={index} className="bg-muted/50 rounded-lg p-4 border">
+                          <div key={index} className="bg-muted/5 border border-border p-4 rounded-none">
                             <div className="flex justify-between items-center mb-3">
-                              <h4 className="font-medium flex items-center gap-2">
+                              <h4 className="font-mono text-xs font-bold uppercase flex items-center gap-2">
                                 {(() => {
                                   const itemType = ITEM_TYPES.find(type => type.value === item.itemType);
                                   const IconComponent = itemType?.icon;
-                                  return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
+                                  return IconComponent ? <IconComponent className="h-3 w-3" /> : null;
                                 })()}
-                                Item {index + 1}
+                                LINE ITEM {index + 1}
                               </h4>
                               {items.length > 1 && (
                                 <Button
                                   type="button"
                                   onClick={() => removeItem(index)}
-                                  variant="outline"
+                                  variant="ghost"
                                   size="sm"
-                                  className="text-destructive"
+                                  className="text-destructive h-7 w-7 p-0 rounded-none hover:bg-destructive/10"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3 w-3" />
                                 </Button>
                               )}
                             </div>
@@ -619,10 +607,10 @@ export default function CreateNoticePage() {
                             <div className="space-y-3">
                               {/* First Row: Item Type and Description */}
                               <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <FileText className="h-4 w-4" />
-                                    Item Type <span className="text-destructive">*</span>
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <FileText className="h-3 w-3" />
+                                    Type <span className="text-destructive">*</span>
                                   </Label>
                                   <Select
                                     value={item.itemType}
@@ -641,15 +629,15 @@ export default function CreateNoticePage() {
                                       setItems(updatedItems);
                                     }}
                                   >
-                                    <SelectTrigger className="h-11">
+                                    <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
                                       {/* Use a placeholder when the value is an empty string */}
-                                      <SelectValue placeholder="Select item type..." />
+                                      <SelectValue placeholder="SELECT TYPE" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="rounded-none border-border">
                                       {ITEM_TYPES.map((type) => (
-                                        <SelectItem key={type.value} value={type.value}>
+                                        <SelectItem key={type.value} value={type.value} className="font-mono text-xs rounded-none cursor-pointer uppercase">
                                           <div className="flex items-center gap-2">
-                                            <type.icon className="h-4 w-4" />
+                                            <type.icon className="h-3 w-3" />
                                             {type.label}
                                           </div>
                                         </SelectItem>
@@ -658,40 +646,40 @@ export default function CreateNoticePage() {
                                   </Select>
                                 </div>
 
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <Edit3 className="h-4 w-4" />
-                                    Description <span className="text-destructive">*</span>
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <Edit3 className="h-3 w-3" />
+                                    Desc <span className="text-destructive">*</span>
                                   </Label>
                                   <Input
-                                    className="h-11"
+                                    className="h-9 rounded-none font-mono text-xs uppercase border-border"
                                     value={item.description}
                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                    placeholder="Enter item description..."
+                                    placeholder="DESCRIPTION"
                                   />
                                 </div>
                               </div>
 
                               {/* Second Row: Months, Year, and Amount */}
                               <div className="grid grid-cols-3 gap-3">
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <Calendar className="h-4 w-4" />
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <Calendar className="h-3 w-3" />
                                     Month(s) <span className="text-destructive">*</span>
                                   </Label>
                                   <Select>
-                                    <SelectTrigger className="h-11">
+                                    <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
                                       <SelectValue placeholder={
                                         item.months.length === 0
-                                          ? "Select months..."
-                                          : `${item.months.length} month${item.months.length > 1 ? 's' : ''} selected`
+                                          ? "SELECT MONTHS"
+                                          : `${item.months.length} SELECTED`
                                       } />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="rounded-none border-border">
                                       {MONTHS.map((month) => (
                                         <div
                                           key={month}
-                                          className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded-sm"
+                                          className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-muted/10 rounded-none"
                                           onClick={(e) => {
                                             e.preventDefault();
                                             const currentMonths = item.months || [];
@@ -706,34 +694,33 @@ export default function CreateNoticePage() {
                                             type="checkbox"
                                             checked={item.months.includes(month)}
                                             onChange={() => {}}
-                                            className="rounded"
+                                            className="rounded-none accent-primary"
                                           />
-                                          <span className="text-sm">{month}</span>
+                                          <span className="text-xs font-mono uppercase">{month}</span>
                                         </div>
                                       ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
 
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <Calendar className="h-4 w-4" />
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <Calendar className="h-3 w-3" />
                                     Year <span className="text-destructive">*</span>
                                   </Label>
                                   <Select
                                     key={`year-${index}-${item.year}`}
                                     value={item.year}
                                     onValueChange={(value) => {
-                                      console.log('Year changing from', item.year, 'to', value);
                                       updateItem(index, 'year', value);
                                     }}
                                   >
-                                    <SelectTrigger className="h-11">
-                                      <SelectValue placeholder="Select year..." />
+                                    <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
+                                      <SelectValue placeholder="YEAR" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="rounded-none border-border">
                                       {YEARS.map((year) => (
-                                        <SelectItem key={year} value={year.toString()}>
+                                        <SelectItem key={year} value={year.toString()} className="font-mono text-xs rounded-none cursor-pointer">
                                           {year}
                                         </SelectItem>
                                       ))}
@@ -741,17 +728,17 @@ export default function CreateNoticePage() {
                                   </Select>
                                 </div>
 
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <span className="font-semibold text-sm">₱</span>
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <span className="font-bold text-[10px]">₱</span>
                                     Amount <span className="text-destructive">*</span>
                                   </Label>
                                   <div className="relative">
-                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                                    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs font-mono">₱</span>
                                     <Input
                                       type="number"
                                       step="0.01"
-                                      className="h-11 pl-8"
+                                      className="h-9 pl-6 rounded-none font-mono text-xs border-border"
                                       value={item.amount}
                                       onChange={(e) => updateItem(index, 'amount', e.target.value)}
                                       placeholder="0.00"
@@ -762,26 +749,26 @@ export default function CreateNoticePage() {
 
                               {/* Third Row: Status */}
                               <div className="grid grid-cols-1 gap-3">
-                                <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <AlertCircle className="h-4 w-4" />
-                                    Payment Status
+                                <div className="space-y-1">
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Status
                                   </Label>
                                   <div className="grid grid-cols-2 gap-4">
                                     <Select
                                       value={item.status}
                                       onValueChange={(value) => updateItem(index, 'status', value)}
                                     >
-                                      <SelectTrigger className="h-11">
+                                      <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
                                         <SelectValue />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="rounded-none border-border">
                                         {NOTICE_STATUSES.map((status) => {
                                           const IconComponent = status.icon;
                                           return (
-                                            <SelectItem key={status.value} value={status.value}>
+                                            <SelectItem key={status.value} value={status.value} className="font-mono text-xs rounded-none cursor-pointer uppercase">
                                               <div className="flex items-center gap-2">
-                                                <IconComponent className={`h-4 w-4 ${status.color}`} />
+                                                <IconComponent className={`h-3 w-3 ${status.color}`} />
                                                 {status.label}
                                               </div>
                                             </SelectItem>
@@ -793,10 +780,10 @@ export default function CreateNoticePage() {
                                     {/* Custom Status Input */}
                                     {item.status === "CUSTOM" && (
                                       <Input
-                                        className="h-11"
+                                        className="h-9 rounded-none font-mono text-xs uppercase border-border"
                                         value={item.customStatus}
                                         onChange={(e) => updateItem(index, 'customStatus', e.target.value)}
-                                        placeholder="Enter custom status..."
+                                        placeholder="ENTER CUSTOM STATUS"
                                       />
                                     )}
                                   </div>
@@ -812,8 +799,8 @@ export default function CreateNoticePage() {
                   {/* Signatories Section */}
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <UserCheck className="h-5 w-5" />
+                      <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                        <UserCheck className="h-4 w-4" />
                         Signatories
                       </h3>
                       <Button
@@ -821,49 +808,49 @@ export default function CreateNoticePage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setShowSignatories(!showSignatories)}
-                        className=""
+                        className="rounded-none h-7 text-[10px] font-mono uppercase border-border"
                       >
-                        {showSignatories ? 'Hide' : 'Edit'} Signatories
+                        {showSignatories ? 'HIDE' : 'EDIT'}
                       </Button>
                     </div>
 
                     {showSignatories && (
-                      <div className="border rounded-lg p-4 bg-muted/50">
+                      <div className="border border-border p-4 bg-muted/5">
                         <div className="grid grid-cols-2 gap-8">
                           {/* Primary Signatory */}
-                          <div className="bg-blue-50 rounded-lg p-4 space-y-4">
-                            <h4 className="font-medium text-blue-900 flex items-center gap-2">
-                              <UserCheck className="h-4 w-4" />
+                          <div className="bg-blue-50/10 border border-blue-200 p-4 space-y-4 rounded-none">
+                            <h4 className="font-bold text-xs uppercase tracking-wide text-blue-900 flex items-center gap-2">
+                              <UserCheck className="h-3 w-3" />
                               Credit & Collection Officer
                             </h4>
 
                             <div className="grid grid-cols-1 gap-3">
-                              <div className="space-y-2">
-                                <Label className="text-xs font-medium text-gray-700">Full Name</Label>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Full Name</Label>
                                 <Input
-                                  className="h-10"
+                                  className="h-8 rounded-none font-mono text-xs uppercase border-blue-200"
                                   value={formData.primarySignatory}
                                   onChange={(e) => setFormData({ ...formData, primarySignatory: e.target.value })}
-                                  placeholder="Enter full name..."
+                                  placeholder="ENTER FULL NAME"
                                 />
                               </div>
                               <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                  <Label className="text-xs font-medium text-gray-700">Job Title</Label>
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Job Title</Label>
                                   <Input
-                                    className="h-10"
+                                    className="h-8 rounded-none font-mono text-xs uppercase border-blue-200"
                                     value={formData.primaryTitle}
                                     onChange={(e) => setFormData({ ...formData, primaryTitle: e.target.value })}
-                                    placeholder="Enter job title..."
+                                    placeholder="ENTER TITLE"
                                   />
                                 </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs font-medium text-gray-700">Contact Number</Label>
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Contact</Label>
                                   <Input
-                                    className="h-10"
+                                    className="h-8 rounded-none font-mono text-xs uppercase border-blue-200"
                                     value={formData.primaryContact}
                                     onChange={(e) => setFormData({ ...formData, primaryContact: e.target.value })}
-                                    placeholder="Enter contact number..."
+                                    placeholder="ENTER CONTACT"
                                   />
                                 </div>
                               </div>
@@ -871,29 +858,29 @@ export default function CreateNoticePage() {
                           </div>
 
                           {/* Secondary Signatory */}
-                          <div className="bg-green-50 rounded-lg p-4 space-y-4">
-                            <h4 className="font-medium text-green-900 flex items-center gap-2">
-                              <User className="h-4 w-4" />
+                          <div className="bg-green-50/10 border border-green-200 p-4 space-y-4 rounded-none">
+                            <h4 className="font-bold text-xs uppercase tracking-wide text-green-900 flex items-center gap-2">
+                              <User className="h-3 w-3" />
                               AVP - Finance/Controller
                             </h4>
 
                             <div className="grid grid-cols-1 gap-3">
-                              <div className="space-y-2">
-                                <Label className="text-xs font-medium text-gray-700">Full Name</Label>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Full Name</Label>
                                 <Input
-                                  className="h-10"
+                                  className="h-8 rounded-none font-mono text-xs uppercase border-green-200"
                                   value={formData.secondarySignatory}
                                   onChange={(e) => setFormData({ ...formData, secondarySignatory: e.target.value })}
-                                  placeholder="Enter full name..."
+                                  placeholder="ENTER FULL NAME"
                                 />
                               </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs font-medium text-gray-700">Job Title</Label>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Job Title</Label>
                                 <Input
-                                  className="h-10"
+                                  className="h-8 rounded-none font-mono text-xs uppercase border-green-200"
                                   value={formData.secondaryTitle}
                                   onChange={(e) => setFormData({ ...formData, secondaryTitle: e.target.value })}
-                                  placeholder="Enter job title..."
+                                  placeholder="ENTER TITLE"
                                 />
                               </div>
                             </div>
@@ -904,27 +891,27 @@ export default function CreateNoticePage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                  <div className="flex justify-end space-x-4 pt-6 border-t border-border">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => router.back()}
-                      className="px-6"
+                      className="px-6 rounded-none uppercase text-xs font-bold tracking-wider border-border"
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
                       disabled={loading || !formData.tenantId}
-                      className="px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                      className="px-6 bg-primary hover:bg-primary/90 text-primary-foreground rounded-none uppercase text-xs font-bold tracking-wider disabled:opacity-50"
                     >
                       {loading ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating...
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                          PROCESSING...
                         </>
                       ) : (
-                        "Create Notice"
+                        "GENERATE NOTICE"
                       )}
                     </Button>
                   </div>
@@ -935,14 +922,14 @@ export default function CreateNoticePage() {
 
           {/* Preview Section - Right Side */}
           <div className="w-[1000px]">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Preview
+            <Card className="rounded-none border border-border shadow-none h-full">
+              <CardHeader className="border-b border-border bg-muted/5 py-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                  <Eye className="h-4 w-4" />
+                  Live Preview
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="bg-white">
                 <div className="print-area max-w-4xl mx-auto print:shadow-none print:max-w-none print:mx-0">
                   <div className="p-8 print:p-1 print:pt-6">
                     {/* Header with embedded content */}
@@ -950,26 +937,26 @@ export default function CreateNoticePage() {
                       {/* Left side - Date, Company, and Content */}
                       <div className="flex-1 print:pl-0">
                         {/* Date and Company Info */}
-                        <div className="text-sm mb-3">{new Date().toLocaleDateString('en-US', {
+                        <div className="text-sm mb-3 font-mono">{new Date().toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
                           day: '2-digit'
                         })}</div>
-                        <div className="font-bold text-lg mb-1">
-                          {selectedTenant ? selectedTenant.businessName.toUpperCase() : 'SELECT TENANT'}
+                        <div className="font-bold text-lg mb-1 uppercase tracking-tight">
+                          {selectedTenant ? selectedTenant.businessName : 'SELECT TENANT'}
                         </div>
-                        <div className="text-sm mb-6">General Santos City</div>
+                        <div className="text-sm mb-6 font-mono text-muted-foreground">General Santos City</div>
 
                         {/* Title - now positioned at the same level as Philippines */}
                         <div className="text-center mb-4 mt-16">
-                          <h2 className="text-base font-bold underline ml-48">
+                          <h2 className="text-base font-bold underline ml-48 uppercase tracking-widest">
                             {getNoticeTitle(formData.noticeType)}
                           </h2>
                         </div>
 
                         {/* Salutation */}
                         <div className="mt-6">
-                          <p className="text-sm">Dear Sir/Ma&apos;am:</p>
+                          <p className="text-sm font-mono">Dear Sir/Ma&apos;am:</p>
                         </div>
                       </div>
 
@@ -981,16 +968,16 @@ export default function CreateNoticePage() {
                             alt="RD Realty Development Corporation Logo"
                             width={80}
                             height={80}
-                            className="object-contain"
+                            className="object-contain grayscale contrast-125"
                             unoptimized={true}
                             onError={(e) => {
                               console.error('Logo failed to load:', e);
                             }}
                           />
                         </div>
-                        <div className="text-sm font-bold mb-1 text-center">RD Realty Development Corporation</div>
-                        <div className="border-b border-gray-400 mb-1"></div>
-                        <div className="text-xs text-gray-500 leading-tight text-left">
+                        <div className="text-sm font-bold mb-1 text-center uppercase tracking-tight">RD Realty Development Corporation</div>
+                        <div className="border-b border-black mb-1"></div>
+                        <div className="text-[10px] text-gray-500 leading-tight text-left font-mono">
                           Cagampang Ext., Santiago Subdivision<br />
                           Brgy. Bula, General Santos City 9500<br />
                           Philippines<br />
@@ -998,15 +985,15 @@ export default function CreateNoticePage() {
                           Fax +6383 301 2386<br />
                           www.rdrealty.ph
                         </div>
-                        <div className="border-b border-gray-400 mt-1"></div>
+                        <div className="border-b border-black mt-1"></div>
                       </div>
                     </div>
 
                     {/* Content - Full Width Outside Flex Container */}
-                    <div className="leading-normal text-sm" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
+                    <div className="leading-normal text-sm font-serif" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                       <p style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                         {getNoticeContent(formData.noticeType).beforeAmount}
-                        <span className="font-bold underline">
+                        <span className="font-bold underline font-mono">
                           {getNoticeContent(formData.noticeType).amount}
                         </span>
                         {getNoticeContent(formData.noticeType).afterAmount}
@@ -1015,7 +1002,15 @@ export default function CreateNoticePage() {
 
                     {/* Amount Table */}
                     <div className="mb-3 mt-3">
-                      <table className="w-full border-collapse">
+                      <table className="w-full border-collapse border border-black">
+                        <thead className="bg-gray-100">
+                          <tr className="border-b border-black">
+                            <th className="px-2 py-1 text-left text-xs font-bold uppercase border-r border-black">Description</th>
+                            <th className="px-2 py-1 text-center text-xs font-bold uppercase border-r border-black">Status</th>
+                            <th className="px-2 py-1 text-center text-xs font-bold uppercase border-r border-black">Period</th>
+                            <th className="px-2 py-1 text-right text-xs font-bold uppercase">Amount</th>
+                          </tr>
+                        </thead>
                         <tbody>
                           {items.filter(item => item.description || item.amount).map((item, index) => {
                             const displayStatus = item.status === "CUSTOM" ? item.customStatus : item.status.replace('_', ' ');
@@ -1023,16 +1018,16 @@ export default function CreateNoticePage() {
 
                             return (
                               <tr key={index} className="border-b border-black">
-                                <td className="px-1 py-1 font-semibold text-xs">{item.description || 'Description'}</td>
-                                <td className="px-1 py-1 font-semibold text-center text-xs">{displayStatus}</td>
-                                <td className="px-1 py-1 font-semibold text-center text-xs">{displayMonths} {item.year}</td>
-                                <td className="px-1 py-1 font-semibold text-right text-xs">₱{(parseFloat(item.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td className="px-2 py-1 text-xs font-mono border-r border-black">{item.description || 'Description'}</td>
+                                <td className="px-2 py-1 text-center text-xs font-mono uppercase border-r border-black">{displayStatus}</td>
+                                <td className="px-2 py-1 text-center text-xs font-mono uppercase border-r border-black">{displayMonths} {item.year}</td>
+                                <td className="px-2 py-1 text-right text-xs font-mono">₱{(parseFloat(item.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                               </tr>
                             );
                           })}
-                          <tr className="bg-yellow-200 print-yellow border-b border-black">
-                            <td className="px-1 py-1 font-bold text-xs" colSpan={3}>Total Outstanding Balance</td>
-                            <td className="px-1 py-1 font-bold text-right text-xs">₱{totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <tr className="bg-yellow-200 print-yellow border-t-2 border-black">
+                            <td className="px-2 py-1 font-bold text-xs uppercase border-r border-black" colSpan={3}>Total Outstanding Balance</td>
+                            <td className="px-2 py-1 font-bold text-right text-xs font-mono">₱{totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -1040,14 +1035,14 @@ export default function CreateNoticePage() {
 
                     {/* Second paragraph for first/second notices */}
                     {formData.noticeType !== "FINAL_NOTICE" && (
-                      <div className="mb-3 text-justify-full leading-normal text-sm" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
+                      <div className="mb-3 text-justify-full leading-normal text-sm font-serif" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                         <p style={{ textAlign: 'justify', textJustify: 'inter-word' }}>We kindly request that you make immediate payment to prevent the imposition of interest and penalty charges. If you have any questions or concerns about your account, please don&apos;t hesitate to reach out to us. Your prompt attention to this matter is greatly appreciated. Thank you.</p>
                       </div>
                     )}
 
                     {/* Final notice warning - appears after table */}
                     {formData.noticeType === "FINAL_NOTICE" && (
-                      <div className="mb-3 text-justify-full leading-normal text-xs" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
+                      <div className="mb-3 text-justify-full leading-normal text-xs font-serif" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                         <p style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                           {getFinalNoticeWarning().beforeWarning}
                           <span className="font-bold">
@@ -1060,7 +1055,7 @@ export default function CreateNoticePage() {
 
                     {/* Closing */}
                     <div className="mb-6">
-                      <p className="text-sm">Very truly yours,</p>
+                      <p className="text-sm font-mono">Very truly yours,</p>
                     </div>
 
                     {/* Signatories with E-Signatures */}
@@ -1080,13 +1075,13 @@ export default function CreateNoticePage() {
                             }}
                           />
                         )}
-                        <div className="font-bold underline text-xs signatory-name">{formData.primarySignatory}</div>
-                        <div className="text-xs">{formData.primaryTitle}</div>
-                        <div className="text-xs">Mobile: {formData.primaryContact}</div>
+                        <div className="font-bold underline text-xs signatory-name uppercase">{formData.primarySignatory}</div>
+                        <div className="text-xs font-mono">{formData.primaryTitle}</div>
+                        <div className="text-xs font-mono">Mobile: {formData.primaryContact}</div>
                       </div>
 
                       <div className="mb-1">
-                        <div className="text-xs">Noted By:</div>
+                        <div className="text-xs font-mono">Noted By:</div>
                       </div>
 
                       {/* Secondary Signatory */}
@@ -1104,28 +1099,28 @@ export default function CreateNoticePage() {
                             }}
                           />
                         )}
-                        <div className="font-bold underline text-xs signatory-name">{formData.secondarySignatory}</div>
-                        <div className="text-xs">{formData.secondaryTitle}</div>
+                        <div className="font-bold underline text-xs signatory-name uppercase">{formData.secondarySignatory}</div>
+                        <div className="text-xs font-mono">{formData.secondaryTitle}</div>
                       </div>
                     </div>
 
                     {/* Received Section */}
-                    <div className="mb-3">
+                    <div className="mb-3 border-t border-black pt-2">
                       <div className="flex justify-between items-end">
                         <div className="flex-1 mr-4">
-                          <div className="text-xs">Received by: ____________________</div>
-                          <div className="text-center text-[10px] mt-1">Printed Name/ Signature/ CP No.</div>
+                          <div className="text-xs font-mono">Received by: ____________________</div>
+                          <div className="text-center text-[10px] mt-1 font-mono uppercase">Printed Name/ Signature/ CP No.</div>
                         </div>
                         <div className="flex-1 text-center">
-                          <div className="text-xs">____________________</div>
-                          <div className="text-[10px] mt-1">Date/Time</div>
+                          <div className="text-xs font-mono">____________________</div>
+                          <div className="text-[10px] mt-1 font-mono uppercase">Date/Time</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Footer Note */}
-                    <div className="mt-10 text-[10px] text-destructive print-red leading-tight">
-                      <p className="font-semibold">NOTE: PLEASE SUBMIT BIR FORM 2307 SO WE CAN DEDUCT IT FROM YOUR ACCOUNT.</p>
+                    <div className="mt-10 text-[10px] text-destructive print-red leading-tight font-mono border-t border-dashed border-gray-300 pt-2">
+                      <p className="font-semibold uppercase">NOTE: PLEASE SUBMIT BIR FORM 2307 SO WE CAN DEDUCT IT FROM YOUR ACCOUNT.</p>
                       <p className="text-primary print-light-blue">Should payment have been made thru the bank, kindly send proof of payment to <span className="underline text-primary print-navy-blue">collectiongroup@rdrealty.com.ph</span></p>
                       <p className="italic text-blue-900 print-navy-blue">Thank you!</p>
                     </div>

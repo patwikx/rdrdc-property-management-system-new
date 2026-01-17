@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { FileCheck, Plus, Search, X, Calendar, Building, DollarSign, Activity } from "lucide-react"
+import { FileCheck, Plus, Search, X, Calendar, Building, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"

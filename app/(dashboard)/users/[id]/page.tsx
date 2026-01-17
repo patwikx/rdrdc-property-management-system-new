@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Save, Trash2, User, Shield, Calendar, Building, FileText, Wrench, Settings, Key, Eye, EyeOff, CheckCircle } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, User, Shield, Calendar, Building, FileText, Wrench, Settings, Key, Eye, EyeOff, CheckCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,6 +20,7 @@ import { UserRole } from "@prisma/client"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 interface UserPageProps {
   params: Promise<{
@@ -27,20 +28,13 @@ interface UserPageProps {
   }>
 }
 
-function getUserRoleColor(role: UserRole) {
+function getUserRoleStyle(role: UserRole) {
   switch (role) {
-    case 'ADMIN': return 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'
-    case 'MANAGER': return 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-    case 'STAFF': return 'bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'
-    case 'TENANT': return 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600'
-    case 'TREASURY': return 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600'
-    case 'PURCHASER': return 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600'
-    case 'ACCTG': return 'bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600'
-    case 'VIEWER': return 'bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600'
-    case 'OWNER': return 'bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600'
-    case 'STOCKROOM': return 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600'
-    case 'MAINTENANCE': return 'bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600'
-    default: return 'bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600'
+    case 'ADMIN': return 'border-red-500 text-red-600 bg-red-500/10'
+    case 'MANAGER': return 'border-blue-500 text-blue-600 bg-blue-500/10'
+    case 'STAFF': return 'border-green-500 text-green-600 bg-green-500/10'
+    case 'TENANT': return 'border-purple-500 text-purple-600 bg-purple-500/10'
+    default: return 'border-muted text-muted-foreground bg-muted/10'
   }
 }
 
@@ -136,7 +130,6 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to update user")
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to update user")
     } finally {
@@ -157,7 +150,6 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to delete user")
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to delete user")
     } finally {
@@ -183,7 +175,6 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to reset password")
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to reset password")
     } finally {
@@ -195,11 +186,11 @@ export default function UserPage({ params }: UserPageProps) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
+          <div className="h-8 bg-muted rounded-none w-1/3" />
+          <div className="h-4 bg-muted rounded-none w-1/2" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-muted rounded" />
+              <div key={i} className="h-24 bg-muted rounded-none" />
             ))}
           </div>
         </div>
@@ -210,16 +201,13 @@ export default function UserPage({ params }: UserPageProps) {
   if (!user) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="text-center py-12">
-          <User className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">User not found</h3>
-          <p className="mt-2 text-muted-foreground">
-            The user you&apos;re looking for doesn&apos;t exist.
-          </p>
+        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border bg-muted/5">
+          <User className="h-10 w-10 text-muted-foreground/30 mb-4" />
+          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">User Not Found</h3>
           <Link href="/users">
-            <Button className="mt-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Users
+            <Button variant="outline" className="mt-4 rounded-none h-9 text-xs font-mono uppercase tracking-wider">
+              <ArrowLeft className="h-3 w-3 mr-2" />
+              Return to Directory
             </Button>
           </Link>
         </div>
@@ -230,71 +218,67 @@ export default function UserPage({ params }: UserPageProps) {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="text-3xl font-bold tracking-tight">
-                {user.firstName} {user.lastName}
-              </h2>
-              <Badge className={getUserRoleColor(user.role)}>
-                {user.role}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">
+              {user.firstName} {user.lastName}
+            </h2>
+            <Badge variant="outline" className={cn("rounded-none text-[10px] uppercase tracking-widest border", getUserRoleStyle(user.role))}>
+              {user.role}
+            </Badge>
+            {user.emailVerified && (
+              <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest border-emerald-500 text-emerald-600 bg-emerald-50/10">
+                Verified
               </Badge>
-              {user.emailVerified && (
-                <Badge variant="outline" className="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400">
-                  Verified
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">
-              {user.email}
-            </p>
+            )}
           </div>
+          <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            ID: {user.id} • {user.email}
+          </p>
         </div>
-        <div className="flex items-center space-x-2">
+        
+        <div className="flex items-center gap-2">
           {!isEditing ? (
             <>
               <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Key className="h-4 w-4 mr-2" />
-                    Reset Password
+                  <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase border-border">
+                    <Key className="h-3 w-3 mr-2" />
+                    Reset Key
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Reset Password</DialogTitle>
-                    <DialogDescription>
-                      Set a new password for {user?.firstName} {user?.lastName}. As an admin, you can reset passwords without knowing the current one.
+                <DialogContent className="sm:max-w-[425px] rounded-none border-border">
+                  <DialogHeader className="border-b border-border pb-4">
+                    <DialogTitle className="uppercase tracking-widest font-bold text-sm">Reset Password</DialogTitle>
+                    <DialogDescription className="font-mono text-xs">
+                      Set a new password for {user?.firstName} {user?.lastName}.
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...passwordForm}>
-                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 pt-4">
                       <FormField
                         control={passwordForm.control}
                         name="newPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>New Password</FormLabel>
+                            <FormLabel className="text-[10px] uppercase font-bold tracking-widest">New Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
                                   type={showNewPassword ? "text" : "password"}
-                                  placeholder="Enter new password" 
+                                  placeholder="ENTER NEW PASSWORD" 
+                                  className="rounded-none font-mono text-sm pr-10"
                                   {...field} 
                                 />
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-none"
                                   onClick={() => setShowNewPassword(!showNewPassword)}
                                 >
-                                  {showNewPassword ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <Eye className="h-4 w-4" />
-                                  )}
+                                  {showNewPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                                 </Button>
                               </div>
                             </FormControl>
@@ -308,26 +292,23 @@ export default function UserPage({ params }: UserPageProps) {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Confirm New Password</FormLabel>
+                            <FormLabel className="text-[10px] uppercase font-bold tracking-widest">Confirm</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
                                   type={showConfirmPassword ? "text" : "password"}
-                                  placeholder="Confirm new password" 
+                                  placeholder="CONFIRM PASSWORD" 
+                                  className="rounded-none font-mono text-sm pr-10"
                                   {...field} 
                                 />
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-none"
                                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 >
-                                  {showConfirmPassword ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <Eye className="h-4 w-4" />
-                                  )}
+                                  {showConfirmPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                                 </Button>
                               </div>
                             </FormControl>
@@ -336,23 +317,17 @@ export default function UserPage({ params }: UserPageProps) {
                         )}
                       />
                       
-                      <DialogFooter>
+                      <DialogFooter className="gap-2">
                         <Button 
                           type="button" 
                           variant="outline" 
                           onClick={() => setIsPasswordDialogOpen(false)}
+                          className="rounded-none uppercase text-xs font-bold"
                         >
                           Cancel
                         </Button>
-                        <Button type="submit" disabled={isChangingPassword}>
-                          {isChangingPassword ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Resetting...
-                            </>
-                          ) : (
-                            "Reset Password"
-                          )}
+                        <Button type="submit" disabled={isChangingPassword} className="rounded-none uppercase text-xs font-bold">
+                          {isChangingPassword ? "Resetting..." : "Confirm Reset"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -360,30 +335,30 @@ export default function UserPage({ params }: UserPageProps) {
                 </DialogContent>
               </Dialog>
               
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
+              <Button variant="outline" onClick={() => setIsEditing(true)} className="rounded-none h-9 text-xs font-mono uppercase border-border">
+                <Edit className="h-3 w-3 mr-2" />
                 Edit
               </Button>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={isDeleting}>
-                    <Trash2 className="h-4 w-4 mr-2" />
+                  <Button variant="destructive" disabled={isDeleting} className="rounded-none h-9 text-xs font-mono uppercase">
+                    <Trash2 className="h-3 w-3 mr-2" />
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-none border-border">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the user account and remove all associated data.
+                    <AlertDialogTitle className="uppercase tracking-widest font-bold text-sm">Confirm Deletion</AlertDialogTitle>
+                    <AlertDialogDescription className="font-mono text-xs">
+                      This action cannot be undone. This will permanently delete the user account.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel className="rounded-none uppercase text-xs font-bold">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
-                      className="bg-destructive hover:bg-destructive/90"
+                      className="bg-destructive hover:bg-destructive/90 rounded-none uppercase text-xs font-bold"
                     >
                       Delete User
                     </AlertDialogAction>
@@ -393,108 +368,72 @@ export default function UserPage({ params }: UserPageProps) {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-none h-9 text-xs font-mono uppercase border-border">
                 Cancel
               </Button>
-              <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
+              <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving} className="rounded-none h-9 text-xs font-mono uppercase">
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Properties</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{user._count.createdProperties}</div>
-            <p className="text-xs text-muted-foreground">
-              Created properties
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasks</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{user._count.assignedTasks}</div>
-            <p className="text-xs text-muted-foreground">
-              Assigned tasks
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{user._count.uploadedDocuments}</div>
-            <p className="text-xs text-muted-foreground">
-              Uploaded documents
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{user._count.assignedMaintenance}</div>
-            <p className="text-xs text-muted-foreground">
-              Assigned requests
-            </p>
-          </CardContent>
-        </Card>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 bg-background">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Properties</span>
+            <Building className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <span className="text-2xl font-mono font-bold">{user._count.createdProperties}</span>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 bg-background">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Tasks</span>
+            <Settings className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <span className="text-2xl font-mono font-bold">{user._count.assignedTasks}</span>
+        </div>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 bg-background">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Documents</span>
+            <FileText className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <span className="text-2xl font-mono font-bold">{user._count.uploadedDocuments}</span>
+        </div>
+        <div className="p-4 flex flex-col justify-between h-24 bg-background">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Maintenance</span>
+            <Wrench className="h-4 w-4 text-muted-foreground/50" />
+          </div>
+          <span className="text-2xl font-mono font-bold">{user._count.assignedMaintenance}</span>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
           {/* User Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>User Information</span>
+          <Card className="rounded-none border-border shadow-none">
+            <CardHeader className="border-b border-border bg-muted/5 py-3">
+              <CardTitle className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest">
+                <User className="h-4 w-4" />
+                <span>Profile Data</span>
               </CardTitle>
-              <CardDescription>
-                {isEditing ? "Edit user details and role" : "View user account information"}
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6">
               {isEditing ? (
                 <Form {...form}>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2 mb-6">
                     <FormField
                       control={form.control}
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold tracking-widest">First Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter first name" {...field} />
+                            <Input placeholder="FIRST NAME" {...field} className="rounded-none font-mono text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -506,9 +445,9 @@ export default function UserPage({ params }: UserPageProps) {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Last Name</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold tracking-widest">Last Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter last name" {...field} />
+                            <Input placeholder="LAST NAME" {...field} className="rounded-none font-mono text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -516,15 +455,15 @@ export default function UserPage({ params }: UserPageProps) {
                     />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2 mb-6">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold tracking-widest">Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="Enter email" {...field} />
+                            <Input type="email" placeholder="EMAIL" {...field} className="rounded-none font-mono text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -536,9 +475,9 @@ export default function UserPage({ params }: UserPageProps) {
                       name="contactNo"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contact Number</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold tracking-widest">Contact</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter contact number" {...field} />
+                            <Input placeholder="CONTACT NO" {...field} className="rounded-none font-mono text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -550,26 +489,21 @@ export default function UserPage({ params }: UserPageProps) {
                     control={form.control}
                     name="role"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="text-[10px] uppercase font-bold tracking-widest">Role</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select user role" />
+                            <SelectTrigger className="rounded-none font-mono text-sm">
+                              <SelectValue placeholder="SELECT ROLE" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                            <SelectItem value={UserRole.MANAGER}>Manager</SelectItem>
-                            <SelectItem value={UserRole.STAFF}>Staff</SelectItem>
-                            <SelectItem value={UserRole.TENANT}>Tenant</SelectItem>
-                            <SelectItem value={UserRole.TREASURY}>Treasury</SelectItem>
-                            <SelectItem value={UserRole.PURCHASER}>Purchaser</SelectItem>
-                            <SelectItem value={UserRole.ACCTG}>Accounting</SelectItem>
-                            <SelectItem value={UserRole.VIEWER}>Viewer</SelectItem>
-                            <SelectItem value={UserRole.OWNER}>Owner</SelectItem>
-                            <SelectItem value={UserRole.STOCKROOM}>Stockroom</SelectItem>
-                            <SelectItem value={UserRole.MAINTENANCE}>Maintenance</SelectItem>
+                          <SelectContent className="rounded-none border-border">
+                            <SelectItem value={UserRole.ADMIN} className="font-mono text-xs uppercase">Admin</SelectItem>
+                            <SelectItem value={UserRole.MANAGER} className="font-mono text-xs uppercase">Manager</SelectItem>
+                            <SelectItem value={UserRole.STAFF} className="font-mono text-xs uppercase">Staff</SelectItem>
+                            <SelectItem value={UserRole.TENANT} className="font-mono text-xs uppercase">Tenant</SelectItem>
+                            <SelectItem value={UserRole.MAINTENANCE} className="font-mono text-xs uppercase">Maintenance</SelectItem>
+                            <SelectItem value={UserRole.VIEWER} className="font-mono text-xs uppercase">Viewer</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -578,111 +512,92 @@ export default function UserPage({ params }: UserPageProps) {
                   />
 
                   {/* Rate Change Approval Permissions */}
-                  <div className="space-y-4 pt-4 border-t">
+                  <div className="space-y-4 pt-4 border-t border-border">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-medium">Rate Change Approval Permissions</h4>
+                      <h4 className="text-xs font-bold uppercase tracking-widest">Approval Authority</h4>
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="isRecommendingApprover"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Recommending Approver</FormLabel>
-                            <FormDescription>
-                              Can recommend rate changes for final approval
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="isRecommendingApprover"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 border border-border p-3 bg-muted/5">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="rounded-none"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Recommending Approver</FormLabel>
+                              <FormDescription className="text-[10px] font-mono">
+                                Endorse rate changes
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="isFinalApprover"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Final Approver</FormLabel>
-                            <FormDescription>
-                              Can give final approval for rate changes
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="isFinalApprover"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 border border-border p-3 bg-muted/5">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="rounded-none"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Final Approver</FormLabel>
+                              <FormDescription className="text-[10px] font-mono">
+                                Approve rate changes
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </Form>
               ) : (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2 mb-6">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">First Name</label>
-                      <p className="text-sm">{user.firstName}</p>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest block mb-1">First Name</label>
+                      <p className="text-sm font-mono border-b border-border pb-1">{user.firstName}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Last Name</label>
-                      <p className="text-sm">{user.lastName}</p>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest block mb-1">Last Name</label>
+                      <p className="text-sm font-mono border-b border-border pb-1">{user.lastName}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Email</label>
-                      <p className="text-sm">{user.email}</p>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest block mb-1">Email</label>
+                      <p className="text-sm font-mono border-b border-border pb-1">{user.email}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Contact Number</label>
-                      <p className="text-sm">{user.contactNo || "Not provided"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Role</label>
-                      <div className="mt-1">
-                        <Badge className={getUserRoleColor(user.role)}>
-                          {user.role}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Email Status</label>
-                      <div className="mt-1">
-                        <Badge variant={user.emailVerified ? "default" : "secondary"}>
-                          {user.emailVerified ? "Verified" : "Unverified"}
-                        </Badge>
-                      </div>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest block mb-1">Contact</label>
+                      <p className="text-sm font-mono border-b border-border pb-1">{user.contactNo || "---"}</p>
                     </div>
                   </div>
 
-                  {/* Rate Change Approval Permissions - View Mode */}
-                  <div className="space-y-3 pt-4 border-t mt-4">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-medium">Rate Change Approval Permissions</h4>
-                    </div>
+                  <div className="pt-4 border-t border-dashed border-border">
                     <div className="grid gap-4 md:grid-cols-2">
-                      <div className="flex items-center space-x-2 p-3 rounded-md border">
-                        <Checkbox checked={user.isRecommendingApprover} disabled />
+                      <div className="flex items-center space-x-2 p-3 border border-border bg-muted/5">
+                        <Checkbox checked={user.isRecommendingApprover} disabled className="rounded-none opacity-100" />
                         <div>
-                          <p className="text-sm font-medium">Recommending Approver</p>
-                          <p className="text-xs text-muted-foreground">Can recommend rate changes</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wide">Recommending Approver</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2 p-3 rounded-md border">
-                        <Checkbox checked={user.isFinalApprover} disabled />
+                      <div className="flex items-center space-x-2 p-3 border border-border bg-muted/5">
+                        <Checkbox checked={user.isFinalApprover} disabled className="rounded-none opacity-100" />
                         <div>
-                          <p className="text-sm font-medium">Final Approver</p>
-                          <p className="text-xs text-muted-foreground">Can give final approval</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wide">Final Approver</p>
                         </div>
                       </div>
                     </div>
@@ -694,32 +609,29 @@ export default function UserPage({ params }: UserPageProps) {
 
           {/* Tenant Information */}
           {user.tenant && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="h-5 w-5" />
-                  <span>Linked Tenant Account</span>
+            <Card className="rounded-none border-border shadow-none">
+              <CardHeader className="border-b border-border bg-muted/5 py-3">
+                <CardTitle className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest">
+                  <Building className="h-4 w-4" />
+                  <span>Linked Tenant Profile</span>
                 </CardTitle>
-                <CardDescription>
-                  This user is linked to a tenant account
-                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between p-3 border border-border bg-background">
                   <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-                      <Building className="h-5 w-5 text-muted-foreground" />
+                    <div className="h-8 w-8 bg-muted/20 flex items-center justify-center border border-border">
+                      <Building className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium">{user.tenant.businessName}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-mono text-sm font-bold">{user.tenant.businessName}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground">
                         {user.tenant.bpCode} • {user.tenant.status}
                       </p>
                     </div>
                   </div>
                   <Link href={`/tenants/${user.tenant.id}`}>
-                    <Button variant="outline" size="sm">
-                      View Tenant
+                    <Button variant="outline" size="sm" className="rounded-none h-7 text-[10px] font-mono uppercase border-border">
+                      View Profile
                     </Button>
                   </Link>
                 </div>
@@ -731,63 +643,64 @@ export default function UserPage({ params }: UserPageProps) {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Account Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Account Details</span>
+          <Card className="rounded-none border-border shadow-none">
+            <CardHeader className="border-b border-border bg-muted/5 py-3">
+              <CardTitle className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest">
+                <Shield className="h-4 w-4" />
+                <span>System Metadata</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                <p className="text-sm font-mono">{user.id}</p>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block mb-1">User ID</label>
+                <p className="text-xs font-mono break-all bg-muted/10 p-1 border border-border/50">{user.id}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Created</label>
-                <p className="text-sm">{format(new Date(user.createdAt), 'MMM dd, yyyy')}</p>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block mb-1">Created</label>
+                <p className="text-xs font-mono">{format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm:ss')}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
-                <p className="text-sm">{format(new Date(user.updatedAt), 'MMM dd, yyyy')}</p>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block mb-1">Last Updated</label>
+                <p className="text-xs font-mono">{format(new Date(user.updatedAt), 'yyyy-MM-dd HH:mm:ss')}</p>
               </div>
-              {user.emailVerified && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email Verified</label>
-                  <p className="text-sm">{format(new Date(user.emailVerified), 'MMM dd, yyyy')}</p>
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block mb-1">Email Status</label>
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-2 h-2 rounded-none", user.emailVerified ? "bg-emerald-500" : "bg-amber-500")} />
+                  <span className="text-xs font-mono uppercase">{user.emailVerified ? "Verified" : "Unverified"}</span>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
           {/* Activity Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>Activity Summary</span>
+          <Card className="rounded-none border-border shadow-none">
+            <CardHeader className="border-b border-border bg-muted/5 py-3">
+              <CardTitle className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest">
+                <Calendar className="h-4 w-4" />
+                <span>Activity Log</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Properties Created</span>
-                <Badge variant="outline">{user._count.createdProperties}</Badge>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">PROPERTIES_CREATED</span>
+                <span className="font-bold">{user._count.createdProperties}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Tasks Assigned</span>
-                <Badge variant="outline">{user._count.assignedTasks}</Badge>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">TASKS_ASSIGNED</span>
+                <span className="font-bold">{user._count.assignedTasks}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Documents Uploaded</span>
-                <Badge variant="outline">{user._count.uploadedDocuments}</Badge>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">DOCS_UPLOADED</span>
+                <span className="font-bold">{user._count.uploadedDocuments}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Projects Owned</span>
-                <Badge variant="outline">{user._count.ownedProjects}</Badge>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">PROJECTS_OWNED</span>
+                <span className="font-bold">{user._count.ownedProjects}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Notices Created</span>
-                <Badge variant="outline">{user._count.createdNotices}</Badge>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">NOTICES_SENT</span>
+                <span className="font-bold">{user._count.createdNotices}</span>
               </div>
             </CardContent>
           </Card>

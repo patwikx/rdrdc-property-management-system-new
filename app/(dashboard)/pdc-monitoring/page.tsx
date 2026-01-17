@@ -1,8 +1,5 @@
 import { Suspense } from "react"
 import { Metadata } from "next"
-
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPDCs, getTenants } from "@/lib/actions/pdc-actions"
 import { PDCStats } from "./components/pdc-stats"
@@ -10,39 +7,32 @@ import { PDCForm } from "./components/pdc-form"
 import { PDCTable } from "./components/pdc-table"
 
 export const metadata: Metadata = {
-  title: "RD Realty Group - Credit & Collection",
+  title: "PDC Monitoring | RDRDC",
   description: "Manage post-dated checks and credit collection",
 }
 
 function PDCTableSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="space-y-0 pb-2">
-              <Skeleton className="h-4 w-[100px]" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[120px]" />
-              <Skeleton className="h-3 w-[80px] mt-2" />
-            </CardContent>
-          </Card>
+          <div key={i} className="p-4 border-r border-border h-24">
+            <Skeleton className="h-4 w-1/3 mb-2 rounded-none" />
+            <Skeleton className="h-8 w-1/2 rounded-none" />
+          </div>
         ))}
       </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-          <Skeleton className="h-4 w-[300px]" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border border-border bg-background">
+        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/5">
+          <Skeleton className="h-6 w-[200px] rounded-none" />
+          <Skeleton className="h-9 w-[120px] rounded-none" />
+        </div>
+        <div className="p-4 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-none" />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -57,22 +47,20 @@ async function PDCContent() {
     <div className="space-y-6">
       <PDCStats pdcs={pdcs} />
       
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Post-Dated Checks</CardTitle>
-              <CardDescription>
-                Manage and track all post-dated checks in the system
-              </CardDescription>
-            </div>
-            <PDCForm tenants={tenants} />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold uppercase tracking-tight">Check Registry</h3>
+            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
+              Post-dated checks master list
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
+          <PDCForm tenants={tenants} />
+        </div>
+        <div className="border border-border bg-background">
           <PDCTable pdcs={pdcs} tenants={tenants} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
@@ -80,8 +68,13 @@ async function PDCContent() {
 export default function CreditCollectionPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Credit & Collection PDC Monitoring</h2>
+      <div className="flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">PDC Monitoring</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Track and manage post-dated check collections
+          </p>
+        </div>
       </div>
       
       <Suspense fallback={<PDCTableSkeleton />}>

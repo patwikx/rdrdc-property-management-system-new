@@ -1,7 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+
 import { FileText, Clock, CheckCircle, AlertTriangle } from "lucide-react"
 
 type PDC = {
@@ -77,69 +76,57 @@ export function PDCStats({ pdcs }: PDCStatsProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
-      currency: 'PHP'
+      currency: 'PHP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
   }
 
-  const statsData = [
-    {
-      title: "Total PDCs",
-      amount: stats.total,
-      count: stats.count,
-      description: "All post-dated checks",
-      variant: "secondary" as const,
-      icon: FileText
-    },
-    {
-      title: "Open PDCs", 
-      amount: stats.open,
-      count: stats.openCount,
-      description: "Pending collection",
-      variant: "outline" as const,
-      icon: Clock
-    },
-    {
-      title: "Due Soon",
-      amount: stats.dueSoon,
-      count: stats.dueSoonCount,
-      description: "Due within 30 days",
-      variant: "destructive" as const,
-      icon: AlertTriangle
-    },
-    {
-      title: "Deposited",
-      amount: stats.deposited,
-      count: stats.depositedCount,
-      description: "Successfully collected",
-      variant: "default" as const,
-      icon: CheckCircle
-    }
-  ]
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {statsData.map((stat) => {
-        const Icon = stat.icon
-        return (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                {stat.title}
-              </CardTitle>
-              <Badge variant={stat.variant}>{stat.count}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stat.amount)}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        )
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+      <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Total PDCs</span>
+          <FileText className="h-4 w-4 text-muted-foreground/50" />
+        </div>
+        <div>
+          <span className="text-2xl font-mono font-bold tracking-tighter">{formatCurrency(stats.total)}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">{stats.count} Checks</span>
+        </div>
+      </div>
+
+      <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Pending Collection</span>
+          <Clock className="h-4 w-4 text-amber-600/50" />
+        </div>
+        <div>
+          <span className="text-2xl font-mono font-bold tracking-tighter text-amber-600">{formatCurrency(stats.open)}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">{stats.openCount} Open</span>
+        </div>
+      </div>
+
+      <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Due Soon (30d)</span>
+          <AlertTriangle className="h-4 w-4 text-rose-600/50" />
+        </div>
+        <div>
+          <span className="text-2xl font-mono font-bold tracking-tighter text-rose-600">{formatCurrency(stats.dueSoon)}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">{stats.dueSoonCount} Critical</span>
+        </div>
+      </div>
+
+      <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Collected</span>
+          <CheckCircle className="h-4 w-4 text-emerald-600/50" />
+        </div>
+        <div>
+          <span className="text-2xl font-mono font-bold tracking-tighter text-emerald-600">{formatCurrency(stats.deposited)}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">{stats.depositedCount} Cleared</span>
+        </div>
+      </div>
     </div>
   )
 }

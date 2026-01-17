@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-import { ArrowLeft, Printer, Download, Edit3, Save, X, Plus, Trash2, Calendar, FileText } from "lucide-react";
+import { ArrowLeft, Printer, Download, Edit3, Save, X, Plus, Trash2, Calendar, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getTenantNoticeById, updateTenantNotice } from "@/lib/actions/tenant-notice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,7 +233,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     { value: "CRITICAL", label: "CRITICAL" },
     { value: "PENDING", label: "PENDING" },
     { value: "UNPAID", label: "UNPAID" },
-    { value: "CUSTOM", label: "Custom (Enter manually)" }
+    { value: "CUSTOM", label: "CUSTOM" }
   ];
 
   // Edit functions
@@ -375,7 +375,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   if (loading) {
     return (
       <div className="container mx-auto py-6">
-        <div className="text-center">Loading notice...</div>
+        <div className="text-center font-mono text-xs uppercase">Loading notice...</div>
       </div>
     );
   }
@@ -383,7 +383,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   if (!notice) {
     return (
       <div className="container mx-auto py-6">
-        <div className="text-center">Notice not found</div>
+        <div className="text-center font-mono text-xs uppercase">Notice not found</div>
       </div>
     );
   }
@@ -493,35 +493,35 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
       <div className="container mx-auto py-6">
         {/* Header Actions */}
         <div className="flex justify-between items-center mb-6 print:hidden">
-          <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <Button variant="outline" onClick={() => router.back()} className="rounded-none uppercase text-xs font-mono border-border">
+            <ArrowLeft className="mr-2 h-3 w-3" />
             Back to Notices
           </Button>
           <div className="space-x-2">
             {!isEditing && (
               <>
-                <Button variant="outline" onClick={handleEditToggle}>
-                  <Edit3 className="mr-2 h-4 w-4" />
+                <Button variant="outline" onClick={handleEditToggle} className="rounded-none uppercase text-xs font-mono border-border">
+                  <Edit3 className="mr-2 h-3 w-3" />
                   Edit
                 </Button>
-                <Button variant="outline" onClick={handleSaveAsPDF}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="outline" onClick={handleSaveAsPDF} className="rounded-none uppercase text-xs font-mono border-border">
+                  <Download className="mr-2 h-3 w-3" />
                   Save as PDF
                 </Button>
-                <Button variant="outline" onClick={handlePrint}>
-                  <Printer className="mr-2 h-4 w-4" />
+                <Button variant="outline" onClick={handlePrint} className="rounded-none uppercase text-xs font-mono border-border">
+                  <Printer className="mr-2 h-3 w-3" />
                   Print
                 </Button>
               </>
             )}
             {isEditing && (
               <>
-                <Button variant="outline" onClick={handleEditToggle} disabled={isUpdating}>
-                  <X className="mr-2 h-4 w-4" />
+                <Button variant="outline" onClick={handleEditToggle} disabled={isUpdating} className="rounded-none uppercase text-xs font-mono border-border">
+                  <X className="mr-2 h-3 w-3" />
                   Cancel
                 </Button>
-                <Button onClick={handleUpdateSubmit} disabled={isUpdating}>
-                  <Save className="mr-2 h-4 w-4" />
+                <Button onClick={handleUpdateSubmit} disabled={isUpdating} className="rounded-none uppercase text-xs font-mono">
+                  <Save className="mr-2 h-3 w-3" />
                   {isUpdating ? "Saving..." : "Save Changes"}
                 </Button>
               </>
@@ -533,68 +533,73 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
           {/* Form Section - Left Side */}
           {isEditing && (
             <div className="w-1/2 space-y-6 print:hidden">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Edit3 className="h-6 w-6" />
-                    Edit Notice
+              <Card className="rounded-none border border-border shadow-none">
+                <CardHeader className="border-b border-border bg-muted/5 py-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                    <Edit3 className="h-4 w-4" />
+                    Edit Notice Data
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                   <form onSubmit={handleUpdateSubmit} className="space-y-6">
                     {/* Signatory Information */}
                     <div className="space-y-4">
-                      <div className="border-l-4 border-primary pl-4">
-                        <h3 className="text-lg font-semibold mb-3">Signatory Information</h3>
+                      <div className="border border-border p-4 bg-background">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2 mb-4">Signatories</h3>
                         
                         <div className="grid grid-cols-1 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="primarySignatory">Primary Signatory</Label>
+                            <Label htmlFor="primarySignatory" className="text-[10px] font-bold uppercase tracking-wide">Primary Signatory</Label>
                             <Input
                               id="primarySignatory"
+                              className="rounded-none font-mono text-xs uppercase h-9 border-border"
                               value={formData.primarySignatory}
                               onChange={(e) => setFormData({...formData, primarySignatory: e.target.value})}
-                              placeholder="Enter primary signatory name"
+                              placeholder="FULL NAME"
                             />
                           </div>
                           
                           <div className="space-y-1.5">
-                            <Label htmlFor="primaryTitle">Primary Title</Label>
+                            <Label htmlFor="primaryTitle" className="text-[10px] font-bold uppercase tracking-wide">Primary Title</Label>
                             <Input
                               id="primaryTitle"
+                              className="rounded-none font-mono text-xs uppercase h-9 border-border"
                               value={formData.primaryTitle}
                               onChange={(e) => setFormData({...formData, primaryTitle: e.target.value})}
-                              placeholder="Enter primary title"
+                              placeholder="TITLE"
                             />
                           </div>
                           
                           <div className="space-y-1.5">
-                            <Label htmlFor="primaryContact">Primary Contact</Label>
+                            <Label htmlFor="primaryContact" className="text-[10px] font-bold uppercase tracking-wide">Primary Contact</Label>
                             <Input
                               id="primaryContact"
+                              className="rounded-none font-mono text-xs uppercase h-9 border-border"
                               value={formData.primaryContact}
                               onChange={(e) => setFormData({...formData, primaryContact: e.target.value})}
-                              placeholder="Enter primary contact"
+                              placeholder="CONTACT"
                             />
                           </div>
                           
                           <div className="space-y-1.5">
-                            <Label htmlFor="secondarySignatory">Secondary Signatory</Label>
+                            <Label htmlFor="secondarySignatory" className="text-[10px] font-bold uppercase tracking-wide">Secondary Signatory</Label>
                             <Input
                               id="secondarySignatory"
+                              className="rounded-none font-mono text-xs uppercase h-9 border-border"
                               value={formData.secondarySignatory}
                               onChange={(e) => setFormData({...formData, secondarySignatory: e.target.value})}
-                              placeholder="Enter secondary signatory name"
+                              placeholder="FULL NAME"
                             />
                           </div>
                           
                           <div className="space-y-1.5">
-                            <Label htmlFor="secondaryTitle">Secondary Title</Label>
+                            <Label htmlFor="secondaryTitle" className="text-[10px] font-bold uppercase tracking-wide">Secondary Title</Label>
                             <Input
                               id="secondaryTitle"
+                              className="rounded-none font-mono text-xs uppercase h-9 border-border"
                               value={formData.secondaryTitle}
                               onChange={(e) => setFormData({...formData, secondaryTitle: e.target.value})}
-                              placeholder="Enter secondary title"
+                              placeholder="TITLE"
                             />
                           </div>
                         </div>
@@ -603,35 +608,35 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
 
                     {/* Notice Items */}
                     <div className="space-y-4">
-                      <div className="border-l-4 border-primary pl-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-semibold">Notice Items</h3>
+                      <div className="border border-border p-4 bg-background">
+                        <div className="flex justify-between items-center mb-4 border-b border-border pb-2">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Line Items</h3>
                           <Button
                             type="button"
                             onClick={addItem}
                             variant="outline"
                             size="sm"
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 rounded-none h-7 text-[10px] font-mono uppercase border-border"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3 w-3" />
                             Add Item
                           </Button>
                         </div>
 
                         <div className="space-y-4">
                           {items.map((item, index) => (
-                            <div key={index} className="bg-muted/50 rounded-lg p-4 border">
+                            <div key={index} className="bg-muted/5 border border-border p-4 rounded-none">
                               <div className="flex justify-between items-center mb-3">
-                                <h4 className="font-medium">Item {index + 1}</h4>
+                                <h4 className="font-mono text-xs font-bold uppercase">Item {index + 1}</h4>
                                 {items.length > 1 && (
                                   <Button
                                     type="button"
                                     onClick={() => removeItem(index)}
-                                    variant="outline"
+                                    variant="ghost"
                                     size="sm"
-                                    className="text-destructive"
+                                    className="text-destructive h-7 w-7 p-0 rounded-none hover:bg-destructive/10"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3 w-3" />
                                   </Button>
                                 )}
                               </div>
@@ -639,35 +644,35 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                               <div className="space-y-3">
                                 {/* First Row: Description */}
                                 <div className="space-y-1.5">
-                                  <Label className="flex items-center gap-2 text-sm font-medium">
-                                    <Edit3 className="h-4 w-4" />
-                                    Description <span className="text-destructive">*</span>
+                                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                    <Edit3 className="h-3 w-3" />
+                                    Desc <span className="text-destructive">*</span>
                                   </Label>
                                   <Input
-                                    className="h-11"
+                                    className="h-9 rounded-none font-mono text-xs uppercase border-border"
                                     value={item.description}
                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                    placeholder="Enter item description..."
+                                    placeholder="DESCRIPTION"
                                   />
                                 </div>
 
                                 {/* Second Row: Status and Custom Status */}
                                 <div className="grid grid-cols-1 gap-3">
                                   <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-2 text-sm font-medium">
-                                      <FileText className="h-4 w-4" />
+                                    <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                      <FileText className="h-3 w-3" />
                                       Status <span className="text-destructive">*</span>
                                     </Label>
                                     <Select
                                       value={item.status}
                                       onValueChange={(value) => updateItem(index, 'status', value)}
                                     >
-                                      <SelectTrigger className="h-11">
-                                        <SelectValue placeholder="Select status" />
+                                      <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
+                                        <SelectValue placeholder="SELECT" />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="rounded-none border-border">
                                         {NOTICE_STATUSES.map((status) => (
-                                          <SelectItem key={status.value} value={status.value}>
+                                          <SelectItem key={status.value} value={status.value} className="font-mono text-xs uppercase cursor-pointer rounded-none">
                                             {status.label}
                                           </SelectItem>
                                         ))}
@@ -677,15 +682,15 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
 
                                   {item.status === "CUSTOM" && (
                                     <div className="space-y-1.5">
-                                      <Label className="flex items-center gap-2 text-sm font-medium">
-                                        <Edit3 className="h-4 w-4" />
+                                      <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                        <Edit3 className="h-3 w-3" />
                                         Custom Status <span className="text-destructive">*</span>
                                       </Label>
                                       <Input
-                                        className="h-11"
+                                        className="h-9 rounded-none font-mono text-xs uppercase border-border"
                                         value={item.customStatus}
                                         onChange={(e) => updateItem(index, 'customStatus', e.target.value)}
-                                        placeholder="Enter custom status..."
+                                        placeholder="ENTER STATUS"
                                       />
                                     </div>
                                   )}
@@ -694,24 +699,24 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                 {/* Third Row: Months, Year, and Amount */}
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-2 text-sm font-medium">
-                                      <Calendar className="h-4 w-4" />
+                                    <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                      <Calendar className="h-3 w-3" />
                                       Month(s) <span className="text-destructive">*</span>
                                     </Label>
                                     <Select>
-                                      <SelectTrigger className="h-11">
-                                        <div className="flex-1 text-left">
+                                      <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
+                                        <div className="flex-1 text-left truncate">
                                           {item.months.length === 0
-                                            ? <span className="text-muted-foreground">Select months...</span>
+                                            ? <span className="text-muted-foreground">SELECT</span>
                                             : <span>{formatMonthRange(item.months)}</span>
                                           }
                                         </div>
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="rounded-none border-border">
                                         {MONTHS.map((month) => (
                                           <div
                                             key={month}
-                                            className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded-sm"
+                                            className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-muted/10 rounded-none"
                                             onClick={(e) => {
                                               e.preventDefault();
                                               const currentMonths = item.months || [];
@@ -726,9 +731,9 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                               type="checkbox"
                                               checked={item.months.includes(month)}
                                               onChange={() => {}}
-                                              className="rounded"
+                                              className="rounded-none accent-primary"
                                             />
-                                            <span className="text-sm">{month}</span>
+                                            <span className="text-xs font-mono uppercase">{month}</span>
                                           </div>
                                         ))}
                                       </SelectContent>
@@ -736,8 +741,8 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                   </div>
 
                                   <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-2 text-sm font-medium">
-                                      <Calendar className="h-4 w-4" />
+                                    <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                      <Calendar className="h-3 w-3" />
                                       Year <span className="text-destructive">*</span>
                                     </Label>
                                     <Select
@@ -747,12 +752,12 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                         updateItem(index, 'year', value);
                                       }}
                                     >
-                                      <SelectTrigger className="h-11">
-                                        <SelectValue placeholder="Select year..." />
+                                      <SelectTrigger className="h-9 rounded-none font-mono text-xs uppercase border-border">
+                                        <SelectValue placeholder="YEAR" />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="rounded-none border-border">
                                         {YEARS.map((year) => (
-                                          <SelectItem key={year} value={year.toString()}>
+                                          <SelectItem key={year} value={year.toString()} className="font-mono text-xs uppercase cursor-pointer rounded-none">
                                             {year}
                                           </SelectItem>
                                         ))}
@@ -760,13 +765,13 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                                     </Select>
                                   </div>
 
-                                  <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-2 text-sm font-medium">
-                                      <FileText className="h-4 w-4" />
+                                  <div className="space-y-1.5 col-span-2">
+                                    <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide">
+                                      <FileText className="h-3 w-3" />
                                       Amount <span className="text-destructive">*</span>
                                     </Label>
                                     <Input
-                                      className="h-11"
+                                      className="h-9 rounded-none font-mono text-xs uppercase border-border"
                                       type="number"
                                       step="0.01"
                                       value={item.amount}
@@ -789,7 +794,14 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Preview Section - Right Side */}
           <div className={`${isEditing ? 'w-1/2' : 'w-full'} print-area max-w-4xl mx-auto print:shadow-none print:max-w-none print:mx-0`}>
-          <div className="p-8 print:p-1 print:pt-6">
+            <Card className="rounded-none border border-border shadow-none h-full">
+              <CardHeader className="border-b border-border bg-muted/5 py-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                  <Eye className="h-4 w-4" />
+                  Live Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="bg-white">
             {/* Header with embedded content */}
             <div className="flex justify-between items-start">
               {/* Left side - Date, Company, and Content */}
@@ -869,12 +881,17 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                         const displayMonths = item.months ? `${formatMonthRange(item.months)} ${item.year}` : `${item.year}`;
                         const itemAmount = parseFloat(item.amount) || 0;
                         
+                        // Dynamic text size based on number of rows
+                        const rowCount = items.length;
+                        const textSizeClass = rowCount > 2 ? 'text-xs' : 'text-sm';
+                        const paddingClass = rowCount > 2 ? 'py-1' : 'py-2';
+                        
                         return (
                           <tr key={index} className="border-b border-black">
-                            <td className="px-2 py-2 font-semibold text-sm">{item.description}</td>
-                            <td className="px-2 py-2 font-semibold text-center text-sm">{displayStatus}</td>
-                            <td className="px-2 py-2 font-semibold text-center text-sm">{displayMonths}</td>
-                            <td className="px-2 py-2 font-semibold text-right text-sm">₱{itemAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold ${textSizeClass}`}>{item.description}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-center ${textSizeClass}`}>{displayStatus}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-center ${textSizeClass}`}>{displayMonths}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-right ${textSizeClass}`}>₱{itemAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           </tr>
                         );
                       })
@@ -893,20 +910,25 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                           displayMonths = `${displayMonths} ${notice.forYear}`;
                         }
                         
+                        // Dynamic text size based on number of rows
+                        const rowCount = notice.items?.length || 0;
+                        const textSizeClass = rowCount > 2 ? 'text-xs' : 'text-sm';
+                        const paddingClass = rowCount > 2 ? 'py-1' : 'py-2';
+                        
                         return (
                           <tr key={item.id} className="border-b border-black">
-                            <td className="px-2 py-2 font-semibold text-sm">{item.description}</td>
-                            <td className="px-2 py-2 font-semibold text-center text-sm">{displayStatus}</td>
-                            <td className="px-2 py-2 font-semibold text-center text-sm">{displayMonths}</td>
-                            <td className="px-2 py-2 font-semibold text-right text-sm">₱{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold ${textSizeClass}`}>{item.description}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-center ${textSizeClass}`}>{displayStatus}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-center ${textSizeClass}`}>{displayMonths}</td>
+                            <td className={`px-2 ${paddingClass} font-semibold text-right ${textSizeClass}`}>₱{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           </tr>
                         );
                       })
                   }
 
                   <tr className="bg-yellow-200 print-yellow border-b border-black">
-                    <td className="px-2 py-2 font-bold text-sm" colSpan={3}>Total Outstanding Balance</td>
-                    <td className="px-2 py-2 font-bold text-right text-sm">₱{
+                    <td className={`px-2 ${(isEditing ? items.length : notice.items?.length || 0) > 2 ? 'py-1' : 'py-2'} font-bold ${(isEditing ? items.length : notice.items?.length || 0) > 2 ? 'text-xs' : 'text-sm'}`} colSpan={3}>Total Outstanding Balance</td>
+                    <td className={`px-2 ${(isEditing ? items.length : notice.items?.length || 0) > 2 ? 'py-1' : 'py-2'} font-bold text-right ${(isEditing ? items.length : notice.items?.length || 0) > 2 ? 'text-xs' : 'text-sm'}`}>₱{
                       isEditing 
                         ? items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                         : notice.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -1016,10 +1038,11 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                 </span>
               </div>
             )}
-          </div>
-        </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  </div>
     </>
   );
 }
