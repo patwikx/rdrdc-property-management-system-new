@@ -22,8 +22,18 @@ interface Tenant {
   status: string
 }
 
+interface LeaseFormData {
+  tenantId: string
+  startDate: Date
+  endDate: Date
+  securityDeposit: number
+  standardIncreasePercentage: number
+  increaseIntervalYears: number
+  autoIncreaseEnabled: boolean
+}
+
 interface LeaseDetailsStepProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<LeaseFormData>
   tenants: Tenant[]
   openTenantSelect: boolean
   setOpenTenantSelect: (open: boolean) => void

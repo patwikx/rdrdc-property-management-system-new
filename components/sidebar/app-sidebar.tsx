@@ -11,7 +11,6 @@ import {
   Settings,
   FolderKanban,
   FileBarChart,
-  Receipt,
   Zap,
 } from "lucide-react"
 import {

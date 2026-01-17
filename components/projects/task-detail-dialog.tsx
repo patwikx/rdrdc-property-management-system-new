@@ -5,12 +5,8 @@ import {
   Calendar, 
   User, 
   MessageCircle, 
-  Paperclip, 
-  CheckSquare,
   Flag,
-  Trash2,
   Edit3,
-  CalendarIcon,
   UserX,
 } from "lucide-react"
 import { format } from "date-fns"
@@ -24,7 +20,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
