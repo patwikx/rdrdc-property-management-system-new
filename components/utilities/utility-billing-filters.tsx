@@ -10,13 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X, ArrowUpDown } from "lucide-react"
-
-/**
- * UtilityBillingFilters Component
- * Provides filtering and sorting options for utility bills
- * Requirements: 1.6, 1.9
- */
+import { X, ArrowUpDown, Filter } from "lucide-react"
 
 interface Property {
   id: string
@@ -61,71 +55,82 @@ export function UtilityBillingFilters({ properties }: UtilityBillingFiltersProps
   const hasActiveFilters = currentProperty || currentUtilityType || currentStatus !== "all"
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {/* Property Filter */}
-      <Select
-        value={currentProperty}
-        onValueChange={(value) => updateFilters({ property: value })}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="All Properties" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Properties</SelectItem>
-          {properties.map((property) => (
-            <SelectItem key={property.id} value={property.id}>
-              {property.propertyName}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex flex-col xl:flex-row gap-4 p-1 border border-border bg-muted/5 items-start xl:items-center justify-between">
+      <div className="flex flex-1 flex-col sm:flex-row gap-0 w-full">
+        <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
+          <Filter className="h-4 w-4" />
+        </div>
 
-      {/* Utility Type Filter */}
-      <Select
-        value={currentUtilityType}
-        onValueChange={(value) => updateFilters({ utilityType: value })}
-      >
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="All Types" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Types</SelectItem>
-          <SelectItem value="ELECTRICITY">Electricity</SelectItem>
-          <SelectItem value="WATER">Water</SelectItem>
-          <SelectItem value="OTHERS">Others</SelectItem>
-        </SelectContent>
-      </Select>
+        {/* Property Filter */}
+        <div className="w-full sm:w-[200px] border-r border-border/50">
+          <Select
+            value={currentProperty}
+            onValueChange={(value) => updateFilters({ property: value })}
+          >
+            <SelectTrigger className="w-full rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus:ring-0">
+              <SelectValue placeholder="All Properties" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs uppercase">All Properties</SelectItem>
+              {properties.map((property) => (
+                <SelectItem key={property.id} value={property.id} className="font-mono text-xs uppercase">
+                  {property.propertyName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Payment Status Filter */}
-      <Select
-        value={currentStatus}
-        onValueChange={(value) => updateFilters({ status: value })}
-      >
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="All Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="paid">Paid</SelectItem>
-          <SelectItem value="unpaid">Unpaid</SelectItem>
-          <SelectItem value="overdue">Overdue</SelectItem>
-        </SelectContent>
-      </Select>
+        {/* Utility Type Filter */}
+        <div className="w-full sm:w-[160px] border-r border-border/50">
+          <Select
+            value={currentUtilityType}
+            onValueChange={(value) => updateFilters({ utilityType: value })}
+          >
+            <SelectTrigger className="w-full rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus:ring-0">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs uppercase">All Types</SelectItem>
+              <SelectItem value="ELECTRICITY" className="font-mono text-xs uppercase">Electricity</SelectItem>
+              <SelectItem value="WATER" className="font-mono text-xs uppercase">Water</SelectItem>
+              <SelectItem value="OTHERS" className="font-mono text-xs uppercase">Others</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Sort Options */}
-      <div className="flex items-center gap-2 ml-auto">
+        {/* Payment Status Filter */}
+        <div className="w-full sm:w-[140px] border-r border-border/50">
+          <Select
+            value={currentStatus}
+            onValueChange={(value) => updateFilters({ status: value })}
+          >
+            <SelectTrigger className="w-full rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus:ring-0">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs uppercase">All Status</SelectItem>
+              <SelectItem value="paid" className="font-mono text-xs uppercase">Paid</SelectItem>
+              <SelectItem value="unpaid" className="font-mono text-xs uppercase">Unpaid</SelectItem>
+              <SelectItem value="overdue" className="font-mono text-xs uppercase">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 ml-auto px-2">
         <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
         <Select
           value={currentSortBy}
           onValueChange={(value) => updateFilters({ sortBy: value })}
         >
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-[130px] rounded-none border-border bg-background h-8 font-mono text-xs uppercase">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dueDate">Due Date</SelectItem>
-            <SelectItem value="amount">Amount</SelectItem>
-            <SelectItem value="space">Space</SelectItem>
+          <SelectContent className="rounded-none border-border">
+            <SelectItem value="dueDate" className="font-mono text-xs uppercase">Due Date</SelectItem>
+            <SelectItem value="amount" className="font-mono text-xs uppercase">Amount</SelectItem>
+            <SelectItem value="space" className="font-mono text-xs uppercase">Space</SelectItem>
           </SelectContent>
         </Select>
 
@@ -133,28 +138,27 @@ export function UtilityBillingFilters({ properties }: UtilityBillingFiltersProps
           value={currentSortOrder}
           onValueChange={(value) => updateFilters({ sortOrder: value })}
         >
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[120px] rounded-none border-border bg-background h-8 font-mono text-xs uppercase">
             <SelectValue placeholder="Order" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="asc">Ascending</SelectItem>
-            <SelectItem value="desc">Descending</SelectItem>
+          <SelectContent className="rounded-none border-border">
+            <SelectItem value="asc" className="font-mono text-xs uppercase">Ascending</SelectItem>
+            <SelectItem value="desc" className="font-mono text-xs uppercase">Descending</SelectItem>
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Clear Filters Button */}
-      {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clearFilters}
-          className="h-9 px-2"
-        >
-          <X className="h-4 w-4 mr-1" />
-          Clear
-        </Button>
-      )}
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="h-8 px-2 text-xs uppercase font-mono hover:bg-destructive/10 hover:text-destructive"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Clear
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

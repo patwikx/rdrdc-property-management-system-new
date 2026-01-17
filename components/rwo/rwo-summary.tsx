@@ -1,22 +1,15 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { 
-  AlertTriangle, 
   Clock, 
-  CheckCircle2, 
-  XCircle, 
   Users,
-  Flame
+  Flame,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Activity
 } from "lucide-react"
 import type { RWOSummary as RWOSummaryType } from "@/lib/types/rwo-types"
-
-/**
- * RWO Summary Component
- * Displays status counts and priority breakdown
- * Requirements: 2.13
- */
 
 interface RWOSummaryProps {
   summary: RWOSummaryType
@@ -26,85 +19,68 @@ export function RWOSummary({ summary }: RWOSummaryProps) {
   const { statusCounts, priorityCounts, totalOpen } = summary
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
       {/* Total Open */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Open RWOs</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalOpen}</div>
-          <p className="text-xs text-muted-foreground">
-            Pending, Assigned, or In Progress
-          </p>
-        </CardContent>
-      </Card>
+      <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Active Requests</span>
+          <Activity className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <span className="text-3xl font-mono font-medium tracking-tighter text-foreground">{totalOpen}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">Open Tickets</span>
+        </div>
+      </div>
 
-      {/* Status Breakdown */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">By Status</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              Pending: {statusCounts.PENDING}
-            </Badge>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Assigned: {statusCounts.ASSIGNED}
-            </Badge>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-              In Progress: {statusCounts.IN_PROGRESS}
-            </Badge>
+      {/* Pending / In Progress */}
+      <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Workload</span>
+          <Users className="h-4 w-4 text-blue-600/50" />
+        </div>
+        <div className="flex items-baseline gap-4">
+          <div>
+            <span className="text-3xl font-mono font-medium tracking-tighter text-blue-600">{statusCounts.IN_PROGRESS}</span>
+            <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">Working</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="h-8 w-px bg-border/60" />
+          <div>
+            <span className="text-xl font-mono font-medium tracking-tighter text-amber-600">{statusCounts.PENDING}</span>
+            <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Critical / High Priority */}
+      <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Critical Items</span>
+          <Flame className="h-4 w-4 text-rose-600/50" />
+        </div>
+        <div className="flex items-baseline gap-4">
+          <div>
+             <span className="text-3xl font-mono font-medium tracking-tighter text-rose-600">{priorityCounts.EMERGENCY}</span>
+             <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">Emerg.</span>
+          </div>
+          <div className="h-8 w-px bg-border/60" />
+          <div>
+             <span className="text-xl font-mono font-medium tracking-tighter text-orange-600">{priorityCounts.HIGH}</span>
+             <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">High</span>
+          </div>
+        </div>
+      </div>
 
       {/* Completed */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Completed</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{statusCounts.COMPLETED}</div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-              <XCircle className="h-3 w-3 mr-1" />
-              Cancelled: {statusCounts.CANCELLED}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Priority Breakdown */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">By Priority</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {priorityCounts.EMERGENCY > 0 && (
-              <Badge variant="destructive" className="flex items-center gap-1">
-                <Flame className="h-3 w-3" />
-                Emergency: {priorityCounts.EMERGENCY}
-              </Badge>
-            )}
-            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-              High: {priorityCounts.HIGH}
-            </Badge>
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              Medium: {priorityCounts.MEDIUM}
-            </Badge>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Low: {priorityCounts.LOW}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="p-4 flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Performance</span>
+          <CheckCircle2 className="h-4 w-4 text-emerald-600/50" />
+        </div>
+        <div>
+          <span className="text-3xl font-mono font-medium tracking-tighter text-emerald-600">{statusCounts.COMPLETED}</span>
+          <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">Resolved</span>
+        </div>
+      </div>
     </div>
   )
 }

@@ -18,6 +18,8 @@ const UnitUtilitySchema = z.object({
   utilityType: z.enum(['ELECTRICITY', 'WATER', 'OTHERS']),
   accountNumber: z.string().min(1, "Account number is required"),
   meterNumber: z.string().optional(),
+  providerName: z.string().optional(),
+  billingDueDay: z.string().optional(),
   billingId: z.string().optional(),
   isActive: z.boolean(),
   remarks: z.string().optional(),
@@ -65,6 +67,8 @@ export function CreateUnitUtilityForm({ unitId, onSuccess, onCancel }: CreateUni
       utilityType: 'ELECTRICITY',
       accountNumber: "",
       meterNumber: "",
+      providerName: "",
+      billingDueDay: "",
       billingId: "",
       isActive: true,
       remarks: "",
@@ -75,7 +79,16 @@ export function CreateUnitUtilityForm({ unitId, onSuccess, onCancel }: CreateUni
     setIsLoading(true)
     
     try {
-      const result = await createUnitUtilityAction(data)
+      // Convert billingDueDay string to number for the action
+      const billingDueDayNum = data.billingDueDay ? parseInt(data.billingDueDay, 10) : undefined
+      const submitData = {
+        ...data,
+        billingDueDay: billingDueDayNum && !isNaN(billingDueDayNum) && billingDueDayNum >= 1 && billingDueDayNum <= 31 
+          ? billingDueDayNum 
+          : undefined
+      }
+      
+      const result = await createUnitUtilityAction(submitData)
       
       if (result.error) {
         toast.error(result.error)
@@ -162,6 +175,26 @@ export function CreateUnitUtilityForm({ unitId, onSuccess, onCancel }: CreateUni
             )}
           />
 
+          {/* Provider Name */}
+          <FormField
+            control={form.control}
+            name="providerName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Provider Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="E.G. MERALCO, MANILA WATER" 
+                    {...field}
+                    disabled={isLoading}
+                    className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Account Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
@@ -203,17 +236,39 @@ export function CreateUnitUtilityForm({ unitId, onSuccess, onCancel }: CreateUni
             />
           </div>
 
-          {/* Billing ID and Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Billing ID, Due Day and Status */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField
               control={form.control}
               name="billingId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Billing Reference ID</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Billing Ref. ID</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="OPTIONAL_REF_ID" 
+                      {...field}
+                      disabled={isLoading}
+                      className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="billingDueDay"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Billing Due Day</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      min={1}
+                      max={31}
+                      placeholder="1-31" 
                       {...field}
                       disabled={isLoading}
                       className="rounded-none font-mono text-sm h-10 border-border focus-visible:ring-0 focus-visible:border-primary"

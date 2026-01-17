@@ -90,7 +90,7 @@ export function MaintenanceOverview({ stats }: MaintenanceOverviewProps) {
           ))}
         </div>
         <div className="mt-6 pt-2">
-          <Link href="/maintenance/requests" className="block">
+          <Link href="/rwo" className="block">
             <Button className="w-full text-xs font-semibold tracking-wide h-10 shadow-sm bg-background border-muted hover:bg-muted/50 text-foreground" variant="outline" size="sm">
               <span className="mr-2">Manage Requests</span>
               <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />

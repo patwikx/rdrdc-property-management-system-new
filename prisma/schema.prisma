@@ -436,6 +436,8 @@ model UnitUtilityAccount {
   utilityType   UtilityType
   accountNumber String
   meterNumber   String?
+  providerName  String?
+  billingDueDay Int? // Day of month (1-31) when billing is due
   remarks       String?
   billingId     String?
   isActive      Boolean     @default(true)

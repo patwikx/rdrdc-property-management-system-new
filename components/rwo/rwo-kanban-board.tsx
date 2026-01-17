@@ -17,7 +17,7 @@ import { toast } from "sonner"
 
 import { RWOColumn } from "./rwo-column"
 import { RWOCard } from "./rwo-card"
-import { updateRWOStatus } from "@/lib/actions/rwo-actions"
+import { updateRWOStatus, assignRWO } from "@/lib/actions/rwo-actions"
 import type { RWOWithDetails } from "@/lib/types/rwo-types"
 import { MaintenanceStatus } from "@prisma/client"
 
@@ -30,6 +30,7 @@ import { MaintenanceStatus } from "@prisma/client"
 
 interface RWOKanbanBoardProps {
   requests: RWOWithDetails[]
+  users?: Array<{ id: string; firstName: string; lastName: string }>
 }
 
 // Define the order of columns
@@ -41,7 +42,7 @@ const COLUMN_ORDER: MaintenanceStatus[] = [
   MaintenanceStatus.CANCELLED,
 ]
 
-export function RWOKanbanBoard({ requests }: RWOKanbanBoardProps) {
+export function RWOKanbanBoard({ requests, users = [] }: RWOKanbanBoardProps) {
   const router = useRouter()
   const [activeRequest, setActiveRequest] = useState<RWOWithDetails | null>(null)
   const [activeColumn, setActiveColumn] = useState<MaintenanceStatus | null>(null)
@@ -157,8 +158,25 @@ export function RWOKanbanBoard({ requests }: RWOKanbanBoardProps) {
     }
   }, [router])
 
+  const handleAssign = useCallback(async (requestId: string, userId: string | null) => {
+    try {
+      const result = await assignRWO(requestId, userId)
+      
+      if (result.status === "error") {
+        toast.error(result.error.message)
+        return
+      }
+
+      toast.success(userId ? "RWO assigned successfully" : "RWO unassigned")
+      router.refresh()
+    } catch (error) {
+      console.error("Error assigning RWO:", error)
+      toast.error("Failed to assign RWO")
+    }
+  }, [router])
+
   return (
-    <div className="h-full bg-muted/20 rounded-lg p-4">
+    <div className="h-full w-full">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -166,7 +184,7 @@ export function RWOKanbanBoard({ requests }: RWOKanbanBoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 h-full">
           {COLUMN_ORDER.map((status) => (
             <RWOColumn
               key={status}
@@ -174,13 +192,15 @@ export function RWOKanbanBoard({ requests }: RWOKanbanBoardProps) {
               requests={requestsByStatus[status]}
               isReceiving={activeColumn === status && activeRequest !== null}
               onStatusChange={handleStatusChange}
+              onAssign={handleAssign}
+              users={users}
             />
           ))}
         </div>
 
         <DragOverlay>
           {activeRequest ? (
-            <div className="rotate-3 opacity-90">
+            <div className="rotate-3 opacity-90 w-80">
               <RWOCard request={activeRequest} />
             </div>
           ) : null}

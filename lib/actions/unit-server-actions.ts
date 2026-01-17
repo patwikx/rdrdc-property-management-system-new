@@ -41,6 +41,8 @@ interface UnitUtilityFormData {
   utilityType: "ELECTRICITY" | "WATER" | "OTHERS"
   accountNumber: string
   meterNumber?: string
+  providerName?: string
+  billingDueDay?: number
   billingId?: string
   isActive: boolean
   remarks?: string

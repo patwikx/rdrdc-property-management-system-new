@@ -38,7 +38,7 @@ export function MaintenanceLog({ stats }: MaintenanceLogProps) {
       </div>
 
       <div className="p-4 pt-0">
-        <Link href="/maintenance/requests" className="block">
+        <Link href="/rwo" className="block">
           <Button variant="outline" className="w-full rounded-none border-border hover:bg-muted/10 text-xs font-mono uppercase h-8">
              Access Requests <ArrowUpRight className="ml-2 h-3 w-3" />
           </Button>
