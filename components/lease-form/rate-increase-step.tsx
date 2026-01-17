@@ -6,8 +6,18 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 
+interface LeaseFormData {
+  tenantId: string
+  startDate: Date
+  endDate: Date
+  securityDeposit: number
+  standardIncreasePercentage: number
+  increaseIntervalYears: number
+  autoIncreaseEnabled: boolean
+}
+
 interface RateIncreaseStepProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<LeaseFormData>
 }
 
 export function RateIncreaseStep({ form }: RateIncreaseStepProps) {
