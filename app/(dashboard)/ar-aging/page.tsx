@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {  
   AlertTriangle, 
@@ -53,6 +52,7 @@ interface FilterState {
   maxBalance: string
   minMonths: string
   maxMonths: string
+  noticeFilter: string // 'all', 'first', 'second', 'final', 'none'
 }
 
 export default function ARAgingPage() {
@@ -61,13 +61,13 @@ export default function ARAgingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     status: "all",
     minBalance: "",
     maxBalance: "",
     minMonths: "",
     maxMonths: "",
+    noticeFilter: "all",
   })
 
   useEffect(() => {
@@ -123,6 +123,24 @@ export default function ARAgingPage() {
       })
     }
 
+    // Notice filter
+    if (filters.noticeFilter !== "all") {
+      filtered = filtered.filter(tenant => {
+        switch (filters.noticeFilter) {
+          case "first":
+            return tenant.firstNoticeDate !== null && tenant.firstNoticeDate !== undefined
+          case "second":
+            return tenant.secondNoticeDate !== null && tenant.secondNoticeDate !== undefined
+          case "final":
+            return tenant.finalNoticeDate !== null && tenant.finalNoticeDate !== undefined
+          case "none":
+            return !tenant.firstNoticeDate && !tenant.secondNoticeDate && !tenant.finalNoticeDate
+          default:
+            return true
+        }
+      })
+    }
+
     setFilteredTenants(filtered)
   }
 
@@ -133,6 +151,7 @@ export default function ARAgingPage() {
       maxBalance: "",
       minMonths: "",
       maxMonths: "",
+      noticeFilter: "all",
     })
     setSearchQuery("")
   }
@@ -143,6 +162,7 @@ export default function ARAgingPage() {
     filters.maxBalance !== "" ||
     filters.minMonths !== "" ||
     filters.maxMonths !== "" ||
+    filters.noticeFilter !== "all" ||
     searchQuery !== ""
 
   const fetchARAgingData = async () => {
@@ -256,135 +276,6 @@ export default function ARAgingPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border">
-                <Filter className="h-3 w-3 mr-2" />
-                Filters
-                {hasActiveFilters && (
-                  <Badge variant="secondary" className="ml-2 h-4 w-4 rounded-none p-0 flex items-center justify-center font-mono text-[10px]">
-                    !
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="rounded-none border-l border-border">
-              <SheetHeader className="text-left border-b border-border pb-4">
-                <SheetTitle className="uppercase font-bold tracking-widest text-sm">Filter Report</SheetTitle>
-                <SheetDescription className="font-mono text-xs">
-                  Configure view parameters
-                </SheetDescription>
-              </SheetHeader>
-              
-              <div className="space-y-6 py-6">
-                {/* Status Filter */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Status</label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger className="rounded-none font-mono text-xs border-border">
-                      <SelectValue placeholder="ALL STATUSES" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-none border-border">
-                      <SelectItem value="all" className="font-mono text-xs">ALL STATUSES</SelectItem>
-                      <SelectItem value="OK" className="font-mono text-xs">OK</SelectItem>
-                      <SelectItem value="FOR NOTICE" className="font-mono text-xs">FOR NOTICE</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Balance Range */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Balance Range</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="number"
-                      placeholder="MIN"
-                      value={filters.minBalance}
-                      onChange={(e) => setFilters(prev => ({ ...prev, minBalance: e.target.value }))}
-                      className="rounded-none font-mono text-xs border-border"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="MAX"
-                      value={filters.maxBalance}
-                      onChange={(e) => setFilters(prev => ({ ...prev, maxBalance: e.target.value }))}
-                      className="rounded-none font-mono text-xs border-border"
-                    />
-                  </div>
-                </div>
-
-                {/* Months Overdue Range */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Months Overdue</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="number"
-                      placeholder="MIN"
-                      value={filters.minMonths}
-                      onChange={(e) => setFilters(prev => ({ ...prev, minMonths: e.target.value }))}
-                      className="rounded-none font-mono text-xs border-border"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="MAX"
-                      value={filters.maxMonths}
-                      onChange={(e) => setFilters(prev => ({ ...prev, maxMonths: e.target.value }))}
-                      className="rounded-none font-mono text-xs border-border"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Quick Filters</label>
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start rounded-none h-8 text-xs font-mono uppercase border-border"
-                      onClick={() => {
-                        setFilters(prev => ({ ...prev, minMonths: "4" }))
-                        setIsFilterOpen(false)
-                      }}
-                    >
-                      <AlertTriangle className="h-3 w-3 mr-2 text-red-600" />
-                      Critical (&gt;4 Months)
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start rounded-none h-8 text-xs font-mono uppercase border-border"
-                      onClick={() => {
-                        setFilters(prev => ({ ...prev, status: "OK" }))
-                        setIsFilterOpen(false)
-                      }}
-                    >
-                      <CheckCircle className="h-3 w-3 mr-2 text-green-600" />
-                      Current Only
-                    </Button>
-                  </div>
-                </div>
-
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      clearFilters()
-                      setIsFilterOpen(false)
-                    }}
-                    className="w-full mt-4 rounded-none h-9 text-xs font-mono uppercase border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
-                  >
-                    <X className="h-3 w-3 mr-2" />
-                    Reset Filters
-                  </Button>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-          
           <Button onClick={fetchARAgingData} size="sm" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
             <RefreshCw className="h-3 w-3 mr-2" />
             Refresh Data
@@ -440,37 +331,135 @@ export default function ARAgingPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex items-center gap-4 border border-border bg-muted/5 p-1">
-        <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
-          <Search className="h-4 w-4" />
+      <div className="border border-border bg-muted/5">
+        {/* Search Row */}
+        <div className="flex items-center gap-4 p-1 border-b border-border/50">
+          <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
+            <Search className="h-4 w-4" />
+          </div>
+          <Input
+            placeholder="SEARCH TENANT NAME OR CODE..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus-visible:ring-0 placeholder:text-muted-foreground/50 flex-1"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 hover:bg-transparent rounded-none mr-2"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+            </Button>
+          )}
         </div>
-        <Input
-          placeholder="SEARCH TENANT NAME OR CODE..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus-visible:ring-0 placeholder:text-muted-foreground/50 flex-1"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 hover:bg-transparent rounded-none mr-2"
-            onClick={() => setSearchQuery("")}
+
+        {/* Filters Row */}
+        <div className="flex items-center gap-3 p-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Filter className="h-3 w-3" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Filters:</span>
+          </div>
+
+          {/* Status Filter */}
+          <Select
+            value={filters.status}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
           >
-            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-          </Button>
-        )}
-        
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="h-8 rounded-none px-3 text-[10px] font-mono uppercase hover:text-destructive hover:bg-destructive/10 border-l border-border/50"
-          >
-            Clear Filters
-          </Button>
-        )}
+            <SelectTrigger className="rounded-none font-mono text-xs border-border h-8 w-[140px]">
+              <SelectValue placeholder="ALL STATUSES" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs">ALL STATUSES</SelectItem>
+              <SelectItem value="OK" className="font-mono text-xs">OK</SelectItem>
+              <SelectItem value="FOR NOTICE" className="font-mono text-xs">FOR NOTICE</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Balance Range */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-mono uppercase">Balance:</span>
+            <Input
+              type="number"
+              placeholder="MIN"
+              value={filters.minBalance}
+              onChange={(e) => setFilters(prev => ({ ...prev, minBalance: e.target.value }))}
+              className="rounded-none font-mono text-xs border-border h-8 w-[90px]"
+            />
+            <span className="text-[10px] text-muted-foreground">-</span>
+            <Input
+              type="number"
+              placeholder="MAX"
+              value={filters.maxBalance}
+              onChange={(e) => setFilters(prev => ({ ...prev, maxBalance: e.target.value }))}
+              className="rounded-none font-mono text-xs border-border h-8 w-[90px]"
+            />
+          </div>
+
+          {/* Months Overdue Range */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-mono uppercase">Months:</span>
+            <Input
+              type="number"
+              placeholder="MIN"
+              value={filters.minMonths}
+              onChange={(e) => setFilters(prev => ({ ...prev, minMonths: e.target.value }))}
+              className="rounded-none font-mono text-xs border-border h-8 w-[70px]"
+            />
+            <span className="text-[10px] text-muted-foreground">-</span>
+            <Input
+              type="number"
+              placeholder="MAX"
+              value={filters.maxMonths}
+              onChange={(e) => setFilters(prev => ({ ...prev, maxMonths: e.target.value }))}
+              className="rounded-none font-mono text-xs border-border h-8 w-[70px]"
+            />
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              variant={filters.noticeFilter === "first" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeFilter: prev.noticeFilter === "first" ? "all" : "first" }))}
+            >
+              <FileText className="h-3 w-3 mr-1 text-yellow-600" />
+              1st Notice
+            </Button>
+            <Button
+              variant={filters.noticeFilter === "second" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeFilter: prev.noticeFilter === "second" ? "all" : "second" }))}
+            >
+              <FileText className="h-3 w-3 mr-1 text-orange-600" />
+              2nd Notice
+            </Button>
+            <Button
+              variant={filters.noticeFilter === "final" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeFilter: prev.noticeFilter === "final" ? "all" : "final" }))}
+            >
+              <AlertTriangle className="h-3 w-3 mr-1 text-red-600" />
+              Final Notice
+            </Button>
+            
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="h-8 rounded-none text-[10px] font-mono uppercase border-border hover:text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Data Table */}
