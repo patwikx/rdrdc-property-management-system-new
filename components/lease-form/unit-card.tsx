@@ -1,7 +1,6 @@
 // components/lease-form/unit-card.tsx
 import { Building, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import { AvailableUnit } from "@/lib/actions/lease-actions"
 
 interface UnitCardProps {

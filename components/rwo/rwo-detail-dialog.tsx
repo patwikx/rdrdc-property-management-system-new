@@ -4,14 +4,10 @@ import { format } from "date-fns"
 import { 
   Building2, 
   User, 
-  Calendar,
-  Clock,
-  Wrench,
-  FileText,
   CheckCircle2,
-  AlertTriangle,
   X,
-  UserPlus
+  UserPlus,
+  Wrench
 } from "lucide-react"
 
 import {
@@ -22,7 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
