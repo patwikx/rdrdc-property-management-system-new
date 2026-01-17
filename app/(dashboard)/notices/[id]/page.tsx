@@ -410,7 +410,11 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
           }
           /* Print spacing adjustments */
           .print-area {
-            padding: 0.1in 0.15in !important;
+            padding: 0 !important;
+          }
+          /* Remove card padding in print */
+          .print-area .bg-white {
+            padding: 0.5in 0.5in !important;
           }
           /* Force colors to print */
           * {
@@ -456,6 +460,19 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
           .signatory-name {
             position: relative;
             z-index: 2;
+          }
+          /* Reduce spacing in print for better fit */
+          .print-area .mb-6 {
+            margin-bottom: 1rem !important;
+          }
+          .print-area .mb-8 {
+            margin-bottom: 1.25rem !important;
+          }
+          .print-area .mb-12 {
+            margin-bottom: 1.5rem !important;
+          }
+          .print-area .mt-20 {
+            margin-top: 1rem !important;
           }
         }
         
@@ -794,14 +811,14 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Preview Section - Right Side */}
           <div className={`${isEditing ? 'w-1/2' : 'w-full'} print-area max-w-4xl mx-auto print:shadow-none print:max-w-none print:mx-0`}>
-            <Card className="rounded-none border border-border shadow-none h-full">
-              <CardHeader className="border-b border-border bg-muted/5 py-3">
+            <Card className="rounded-none border border-border shadow-none h-full print:border-0">
+              <CardHeader className="border-b border-border bg-muted/5 py-3 print:hidden">
                 <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
                   <Eye className="h-4 w-4" />
                   Live Preview
                 </CardTitle>
               </CardHeader>
-              <CardContent className="bg-white">
+              <CardContent className="bg-white print:p-0">
             {/* Header with embedded content */}
             <div className="flex justify-between items-start">
               {/* Left side - Date, Company, and Content */}
