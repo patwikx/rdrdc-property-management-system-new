@@ -1,15 +1,26 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { notFound } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import { Edit, Trash2, Save, X, Building, Home, Ruler, DollarSign, Activity } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { UnitWithDetails } from "@/lib/actions/unit-actions"
 import { UnitSchema, UnitFormData } from "@/lib/validations/unit-schema"
-import { getUnitById, updateUnitWithFloorsAction } from "@/lib/actions/unit-server-actions"
+import { getUnitById, updateUnitWithFloorsAction, deleteUnitAction } from "@/lib/actions/unit-server-actions"
 import { UnitTabs } from "@/components/units/unit-tabs"
 import { UnitOverview } from "@/components/units/unit-overview"
 import { UnitHistory } from "@/components/units/unit-history"
@@ -47,11 +58,13 @@ interface FloorConfig {
 }
 
 export default function UnitPage({ params }: UnitPageProps) {
+  const router = useRouter()
   const [unit, setUnit] = useState<UnitWithDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [, setPropertyId] = useState<string>("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [propertyId, setPropertyId] = useState<string>("")
   const [unitId, setUnitId] = useState<string>("")
   const [activeTab, setActiveTab] = useState("overview")
   const [floors, setFloors] = useState<FloorConfig[]>([])
@@ -137,6 +150,27 @@ export default function UnitPage({ params }: UnitPageProps) {
     }
   }
 
+  async function handleDelete() {
+    if (!unit) return
+    
+    setIsDeleting(true)
+    
+    try {
+      const result = await deleteUnitAction(unit.id)
+      
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Unit deleted successfully")
+        router.push(`/properties/${propertyId}`)
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -186,13 +220,37 @@ export default function UnitPage({ params }: UnitPageProps) {
                   <Edit className="h-3 w-3 mr-2" />
                   Edit Unit
                 </Button>
-                <Button 
-                  variant="destructive"
-                  className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-rose-600 hover:bg-rose-700"
-                >
-                  <Trash2 className="h-3 w-3 mr-2" />
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive"
+                      disabled={isDeleting}
+                      className="rounded-none h-9 text-xs font-mono uppercase tracking-wider bg-rose-600 hover:bg-rose-700"
+                    >
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-none border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="font-mono uppercase tracking-wide">Delete Unit {unit.unitNumber}?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-sm">
+                        This action cannot be undone. This will permanently delete the unit and all associated data including floors, taxes, utilities, and maintenance records.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-none border-border font-mono uppercase text-xs tracking-wider">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="rounded-none bg-rose-600 hover:bg-rose-700 font-mono uppercase text-xs tracking-wider"
+                      >
+                        Delete Unit
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             ) : (
               <>

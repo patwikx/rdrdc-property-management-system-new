@@ -46,7 +46,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface Notice {
@@ -269,8 +268,6 @@ export default function TenantNoticesPage() {
       );
     }
   };
-
-  const selectedTenant = tenants.find(tenant => tenant.id === filters.tenantId);
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">

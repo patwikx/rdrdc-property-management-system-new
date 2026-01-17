@@ -1,6 +1,6 @@
 "use server"
 
-import { getUnitByIdInternal, updateUnit, updateUnitWithFloors, UnitWithDetails } from "./unit-actions"
+import { getUnitByIdInternal, updateUnit, updateUnitWithFloors, deleteUnit, UnitWithDetails } from "./unit-actions"
 import { createUnitTax } from "./unit-tax-actions"
 import { createMaintenanceRequest } from "./unit-maintenance-actions"
 import { createUnitUtility } from "./unit-utility-actions"
@@ -74,4 +74,8 @@ export async function createMaintenanceRequestAction(data: MaintenanceRequestFor
 
 export async function createUnitUtilityAction(data: UnitUtilityFormData) {
   return await createUnitUtility(data)
+}
+
+export async function deleteUnitAction(id: string) {
+  return await deleteUnit(id)
 }
