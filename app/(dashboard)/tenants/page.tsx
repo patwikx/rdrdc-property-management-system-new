@@ -4,12 +4,18 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Plus, Search, Building, Phone, Mail, X, Briefcase, ChevronRight, Upload } from "lucide-react"
+import { User, Plus, Search, Building, Phone, Mail, X, Briefcase, ChevronRight, Upload, Download, FileUp } from "lucide-react"
 import { getAllTenants, TenantWithDetails } from "@/lib/actions/tenant-actions"
 import { TenantStatus, LeaseStatus } from "@prisma/client"
 import { format } from "date-fns"
 import Link from "next/link"
+import { useTenantSelection } from "@/hooks/use-tenant-selection"
+import { BulkUpdateUploadDialog } from "@/components/tenants/bulk-update-upload-dialog"
+import { applyBulkUpdates } from "@/lib/actions/tenant-bulk-update-actions"
+import { useSession } from "next-auth/react"
+import { toast } from "sonner"
 
 function getTenantStatusStyle(status: string) {
   switch (status) {
@@ -35,6 +41,76 @@ export default function TenantsPage() {
     leaseStatus: 'all',
     hasActiveLease: 'all'
   })
+
+  // Get user session for audit logging
+  const { data: session } = useSession()
+
+  // Initialize selection hook
+  const {
+    selectedTenantIds,
+    selectAll,
+    toggleTenant,
+    toggleSelectAll,
+    clearSelection,
+    getSelectedCount,
+    getSelectedIds,
+  } = useTenantSelection()
+
+  // Bulk update state
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+
+  // Download CSV handler
+  const handleDownloadTemplate = async () => {
+    try {
+      const selectedIds = getSelectedIds()
+      
+      if (selectedIds.length === 0) {
+        return
+      }
+
+      // Call API route to generate and download CSV
+      const response = await fetch('/api/tenant-bulk-update/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tenantIds: selectedIds }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('Failed to download CSV:', error)
+        return
+      }
+
+      // Get the CSV content as blob
+      const blob = await response.blob()
+      
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'tenant-bulk-update.csv'
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Error downloading CSV:', error)
+    }
+  }
 
   useEffect(() => {
     async function fetchTenants() {
@@ -79,6 +155,9 @@ export default function TenantsPage() {
     setFilters({ status: 'all', leaseStatus: 'all', hasActiveLease: 'all' })
     setSearchQuery('')
   }
+
+  // Get visible tenant IDs for select all functionality
+  const visibleTenantIds = filteredTenants.map(t => t.id)
 
   // Stats
   const totalTenants = tenants.length
@@ -174,7 +253,59 @@ export default function TenantsPage() {
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 p-4 border border-border bg-muted/5 items-start sm:items-center justify-between">
-        <div className="flex flex-1 gap-4 w-full">
+        <div className="flex flex-1 gap-4 w-full items-center flex-wrap">
+          {/* Select All Checkbox */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectAll}
+              onCheckedChange={() => toggleSelectAll(visibleTenantIds)}
+              className="rounded-none"
+            />
+            <span className="text-xs font-mono uppercase text-muted-foreground">
+              Select All
+            </span>
+          </div>
+
+          {/* Selected Count */}
+          {getSelectedCount() > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20">
+              <span className="text-xs font-mono font-bold text-primary">
+                {getSelectedCount()} Selected
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                className="h-5 w-5 p-0 hover:bg-transparent"
+              >
+                <X className="h-3 w-3 text-primary hover:text-primary/70" />
+              </Button>
+            </div>
+          )}
+
+          {/* Bulk Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={getSelectedCount() === 0}
+              onClick={handleDownloadTemplate}
+              className="rounded-none h-9 border-border hover:bg-muted font-mono text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Template
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUploadDialogOpen(true)}
+              className="rounded-none h-9 border-border hover:bg-muted font-mono text-xs uppercase tracking-wider"
+            >
+              <FileUp className="h-4 w-4 mr-2" />
+              Import Updates
+            </Button>
+          </div>
+
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -232,21 +363,31 @@ export default function TenantsPage() {
           {filteredTenants.map((tenant) => {
             const activeLease = tenant.leases.find(lease => lease.status === 'ACTIVE')
             const statusStyle = getTenantStatusStyle(tenant.status)
+            const isSelected = selectedTenantIds.has(tenant.id)
             
             return (
-              <div key={tenant.id} className={`group border border-border border-l-4 ${statusStyle.border} bg-background hover:border-primary/50 transition-all flex flex-col`}>
+              <div key={tenant.id} className={`group border border-border border-l-4 ${statusStyle.border} bg-background hover:border-primary/50 transition-all flex flex-col ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
                 {/* Header */}
                 <div className="p-4 border-b border-dashed border-border/50 flex justify-between items-start">
-                  <div className="flex flex-col w-full pr-2">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Business Name</span>
-                    <h3 className="font-bold text-base truncate w-full" title={tenant.businessName}>
-                      {tenant.businessName}
-                    </h3>
-                    <span className="text-xs font-mono text-muted-foreground mt-1 bg-muted/30 px-1 w-fit">
-                      {tenant.bpCode}
-                    </span>
+                  <div className="flex items-start gap-3 w-full">
+                    {/* Checkbox */}
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleTenant(tenant.id)}
+                      className="rounded-none mt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex flex-col flex-1 min-w-0 pr-2">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Business Name</span>
+                      <h3 className="font-bold text-base truncate w-full" title={tenant.businessName}>
+                        {tenant.businessName}
+                      </h3>
+                      <span className="text-xs font-mono text-muted-foreground mt-1 bg-muted/30 px-1 w-fit">
+                        {tenant.bpCode}
+                      </span>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={`rounded-none text-xs uppercase tracking-widest border-0 ${statusStyle.badge} px-1.5 py-0.5`}>
+                  <Badge variant="outline" className={`rounded-none text-xs uppercase tracking-widest border-0 ${statusStyle.badge} px-1.5 py-0.5 shrink-0`}>
                     {tenant.status}
                   </Badge>
                 </div>
@@ -322,6 +463,12 @@ export default function TenantsPage() {
           )}
         </div>
       )}
+      
+      {/* Bulk Update Dialog */}
+      <BulkUpdateUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+      />
     </div>
   )
 }

@@ -1,12 +1,9 @@
 "use client"
 
 import { 
-  Clock, 
   Users,
   Flame,
   CheckCircle2,
-  AlertTriangle,
-  XCircle,
   Activity
 } from "lucide-react"
 import type { RWOSummary as RWOSummaryType } from "@/lib/types/rwo-types"
