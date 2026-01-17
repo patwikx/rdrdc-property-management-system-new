@@ -153,7 +153,7 @@ export default function CreateNoticePage() {
     try {
       const tenantsData = await getTenants();
       setTenants(tenantsData);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load tenants");
     }
   };
@@ -338,7 +338,7 @@ export default function CreateNoticePage() {
       } else {
         router.push("/notices");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to create notice");
     } finally {
       setLoading(false);

@@ -1,66 +1,67 @@
-// app/under-construction/page.tsx
-"use client"
+import { Suspense } from "react"
 
-import { Button } from "@/components/ui/button"
-import { Construction, ArrowLeft, Home } from "lucide-react"
-import Link from "next/link"
+export const dynamic = 'force-dynamic'
+import { getAuditLogs, getAuditLogStats } from "@/lib/actions/audit-log-actions"
+import { AuditLogsClient } from "./audit-logs-client"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export default function UnderConstructionPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-3xl">
-        <div className="flex flex-col items-center text-center space-y-8">
-          {/* Icon */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <div className="relative bg-muted p-8 rounded-full border border-border/50">
-              <Construction className="h-20 w-20 text-primary" />
-            </div>
-          </div>
+async function AuditLogsContent() {
+  const [logsResult, statsResult] = await Promise.all([
+    getAuditLogs({ page: 1, pageSize: 20, sortOrder: 'desc' }),
+    getAuditLogStats()
+  ])
 
-          {/* Content */}
-          <div className="space-y-4 max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Under Construction
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl">
-              This page is currently being built. Check back soon for updates.
-            </p>
-          </div>
-
-          {/* Details */}
-          <div className="w-full max-w-xl p-6 rounded-lg bg-muted/30 border border-border/50">
-            <div className="grid grid-cols-2 gap-6 text-base">
-              <div className="text-left">
-                <span className="text-muted-foreground block mb-1">Status:</span>
-                <span className="font-medium">In Development</span>
-              </div>
-              <div className="text-left">
-                <span className="text-muted-foreground block mb-1">Expected:</span>
-                <span className="font-medium">Coming Soon</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full max-w-md">
-            <Link href="/" className="flex-1">
-              <Button variant="outline" className="w-full h-12">
-                <Home className="h-4 w-4 mr-2" />
-                Go to Dashboard
-              </Button>
-            </Link>
-            <Button 
-              variant="default"
-              onClick={() => window.history.back()}
-              className="flex-1 h-12"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
-          </div>
-        </div>
+  if (!logsResult.success || !logsResult.data || !statsResult.success || !statsResult.data) {
+    return (
+      <div className="p-4 border border-destructive/50 bg-destructive/10 text-destructive text-sm font-mono uppercase">
+        Error loading audit logs: {logsResult.error || statsResult.error}
       </div>
+    )
+  }
+
+  return (
+    <AuditLogsClient 
+      initialData={logsResult.data} 
+      initialStats={statsResult.data} 
+    />
+  )
+}
+
+function AuditLoading() {
+  return (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center pb-6 border-b border-border">
+          <div className="space-y-2">
+             <Skeleton className="h-8 w-48 rounded-none" />
+             <Skeleton className="h-4 w-64 rounded-none" />
+          </div>
+          <Skeleton className="h-8 w-32 rounded-none" />
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+             <Skeleton key={i} className="h-24 w-full rounded-none" />
+          ))}
+       </div>
+       <div className="border border-border bg-background p-4">
+          <div className="flex gap-2 mb-4">
+             <Skeleton className="h-8 w-full rounded-none" />
+             <Skeleton className="h-8 w-32 rounded-none" />
+             <Skeleton className="h-8 w-32 rounded-none" />
+          </div>
+          {[...Array(5)].map((_, i) => (
+             <Skeleton key={i} className="h-12 w-full mb-2 rounded-none" />
+          ))}
+       </div>
+    </div>
+  )
+}
+
+export default function AuditLogsPage() {
+  return (
+    <div className="p-6 max-w-[1920px] mx-auto">
+      <Suspense fallback={<AuditLoading />}>
+        <AuditLogsContent />
+      </Suspense>
     </div>
   )
 }

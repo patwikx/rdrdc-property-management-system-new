@@ -165,12 +165,7 @@ export function PDCTable({ pdcs, tenants = [] }: PDCTableProps) {
     return filteredPDCs.slice(startIndex, startIndex + ROWS_PER_PAGE)
   }, [filteredPDCs, currentPage])
 
-  // Get tenant name by bpCode
-  const getTenantName = (bpCode: string) => {
-    if (!tenants || tenants.length === 0) return bpCode
-    const tenant = tenants.find((t) => t.bpCode === bpCode)
-    return tenant ? tenant.company || tenant.businessName : bpCode
-  }
+
 
   const handleStatusFilterChange = (status: string, checked: boolean) => {
     if (checked) {

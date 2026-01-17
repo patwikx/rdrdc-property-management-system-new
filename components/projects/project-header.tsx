@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Users, Settings, Clock, Target, ArrowLeft, Activity, CheckCircle2, Flame } from "lucide-react"
+import { Calendar, Users, Settings, Clock, Target, ArrowLeft, Activity } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 

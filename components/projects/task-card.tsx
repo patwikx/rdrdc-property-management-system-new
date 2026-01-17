@@ -6,7 +6,6 @@ import { CSS } from "@dnd-kit/utilities"
 import { 
   MessageCircle, 
   Paperclip, 
-  Clock, 
   User, 
   Calendar,
 } from "lucide-react"
@@ -121,7 +120,7 @@ export function TaskCard({ task, isDragging = false, projectMembers = [] }: Task
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group relative border border-border bg-background p-3 transition-all hover:shadow-md hover:border-primary/20",
+          "group relative border border-border bg-background p-3 transition-all hover:shadow-md hover:border-primary/20 rounded-none",
           "cursor-grab active:cursor-grabbing",
           "border-l-[3px]", 
           priorityInfo.borderColor,

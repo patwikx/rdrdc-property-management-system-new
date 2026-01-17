@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { Plus, FolderKanban, Users, Calendar, MoreHorizontal, Clock, Target, ArrowRight } from "lucide-react"
+import { Plus, FolderKanban, Users, Calendar, MoreHorizontal, Clock, Target, ArrowRight, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getProjects, ProjectListItem } from "@/lib/actions/project-actions"
@@ -208,12 +208,20 @@ export default function ProjectsPage() {
             Project Kanban workflow & task management
           </p>
         </div>
-        <CreateProjectDialog>
-          <Button className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
-            <Plus className="h-3 w-3 mr-2" />
-            New Project
-          </Button>
-        </CreateProjectDialog>
+        <div className="flex items-center gap-2">
+          <Link href="/projects/boards">
+            <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+              <Settings className="h-3 w-3 mr-2" />
+              Board Settings
+            </Button>
+          </Link>
+          <CreateProjectDialog>
+            <Button className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+              <Plus className="h-3 w-3 mr-2" />
+              New Project
+            </Button>
+          </CreateProjectDialog>
+        </div>
       </div>
 
       {/* Projects Grid */}

@@ -1,9 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateDocumentForm } from "@/components/documents/create-document-form"
-import { FileText } from "lucide-react"
+import { FileUp, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 import { DocumentType } from "@prisma/client"
 
@@ -59,44 +60,40 @@ export function CreateDocumentClient({
   }
 
   return (
-    <>
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2">
-              <FileText className="h-8 w-8" />
-              <span>Upload Document</span>
-            </h1>
-            <p className="text-muted-foreground">
-              Upload and categorize a new document for your property management system
-            </p>
-          </div>
+      <div className="flex items-center justify-between pb-6 border-b border-border">
+        <div>
+          <h1 className="text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
+            <FileUp className="h-6 w-6 text-muted-foreground" />
+            <span>Document Upload</span>
+          </h1>
+          <p className="text-xs font-mono text-muted-foreground mt-1 uppercase tracking-wide">
+            Add New Record to Repository
+          </p>
         </div>
+        <Button asChild variant="outline" className="rounded-none h-9 text-xs uppercase tracking-wider border-border hover:bg-muted/10">
+          <Link href="/documents">
+            <ArrowLeft className="h-3 w-3 mr-2" />
+            Back to Repository
+          </Link>
+        </Button>
       </div>
 
       {/* Create Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Information</CardTitle>
-          <CardDescription>
-            Fill in the details below to upload and categorize your document
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CreateDocumentForm
-            properties={properties}
-            units={units}
-            tenants={tenants}
-            defaultPropertyId={defaultPropertyId}
-            defaultUnitId={defaultUnitId}
-            defaultTenantId={defaultTenantId}
-            defaultType={defaultType}
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-          />
-        </CardContent>
-      </Card>
-    </>
+      <div className="border border-border bg-background p-6">
+        <CreateDocumentForm
+          properties={properties}
+          units={units}
+          tenants={tenants}
+          defaultPropertyId={defaultPropertyId}
+          defaultUnitId={defaultUnitId}
+          defaultTenantId={defaultTenantId}
+          defaultType={defaultType}
+          onSuccess={handleSuccess}
+          onCancel={handleCancel}
+        />
+      </div>
+    </div>
   )
 }

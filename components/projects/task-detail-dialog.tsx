@@ -104,9 +104,7 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
   const [description, setDescription] = useState(task.description || "")
   const [isEditingDescription, setIsEditingDescription] = useState(false)
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
+
 
   const getPriorityOption = (value: TaskPriority) => {
     return priorityOptions.find(option => option.value === value)

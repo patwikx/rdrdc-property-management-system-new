@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,7 +9,7 @@ import { ArrowRight, Check, X, AlertCircle, ArrowLeft } from "lucide-react"
 import { generateChangePreview, applyBulkUpdates } from "@/lib/actions/tenant-bulk-update-actions"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { getAllTenants } from "@/lib/actions/tenant-actions"
+
 
 interface FieldChange {
   fieldName: string
@@ -64,7 +64,7 @@ interface TenantUpdateData {
 
 export default function BulkUpdatePreviewPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  // const searchParams = useSearchParams()
   const { data: session } = useSession()
   
   const [isLoading, setIsLoading] = useState(true)

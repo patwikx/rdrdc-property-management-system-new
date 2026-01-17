@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { getLeaseById, updateLease, terminateLease, deleteLease, LeaseWithDetails } from "@/lib/actions/lease-actions"
 import { getRateHistory, type RateHistoryWithDetails } from "@/lib/actions/rate-actions"
-import { RateHistory, RateHistoryCompact } from "@/components/rate-management/rate-history"
+import { RateHistory } from "@/components/rate-management/rate-history"
 import { RateChangeForm } from "@/components/rate-management/rate-change-form"
 import { RateOverrideForm } from "@/components/rate-management/rate-override-form"
 import { LeaseUpdateSchema, LeaseUpdateFormData, LeaseTerminationSchema, LeaseTerminationFormData } from "@/lib/validations/lease-schema"
@@ -249,8 +249,6 @@ export default function LeaseDetailPage({ params }: LeasePageProps) {
     : lease.tenant.businessName || lease.tenant.company
 
   const daysUntilExpiry = differenceInDays(new Date(lease.endDate), new Date())
-  const isExpiringSoon = daysUntilExpiry <= 30 && daysUntilExpiry > 0 && lease.status === 'ACTIVE'
-  const isExpired = daysUntilExpiry < 0 && lease.status === 'ACTIVE'
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: FileCheck },

@@ -115,35 +115,11 @@ const getNavigationItems = (userRole: string) => {
       title: "Project Kanban",
       url: "/projects",
       icon: FolderKanban,
-      items: [
-        {
-          title: "All Projects",
-          url: "/projects",
-        },
-        {
-          title: "All Boards",
-          url: "/projects/boards",
-        },
-      ],
     },
     {
       title: "Documents",
       url: "/documents",
       icon: FileText,
-      items: [
-        {
-          title: "All Documents",
-          url: "/documents",
-        },
-        {
-          title: "By Property",
-          url: "/documents?filter=property",
-        },
-        {
-          title: "By Tenant",
-          url: "/documents?filter=tenant",
-        },
-      ],
     },
   ]
 
@@ -157,24 +133,28 @@ const getNavigationItems = (userRole: string) => {
         icon: FileBarChart,
         items: [
           {
-            title: "Reports Dashboard",
-            url: "/reports",
-          },
-          {
-            title: "Occupancy Reports",
+            title: "Occupancy Analysis",
             url: "/reports/occupancy",
           },
           {
-            title: "Leasing Reports",
-            url: "/reports/leasing",
+            title: "Lease Aging",
+            url: "/reports/lease-aging",
           },
           {
-            title: "Tax Reports",
-            url: "/reports/taxes",
+            title: "Rate History",
+            url: "/reports/rate-history",
           },
           {
-            title: "Maintenance Reports",
-            url: "/reports/maintenance",
+            title: "Renewals Due",
+            url: "/reports/renewals",
+          },
+          {
+            title: "Multi-Space Tenants",
+            url: "/reports/multi-space",
+          },
+          {
+            title: "Opportunity Loss",
+            url: "/reports/opportunity-loss",
           },
         ],
       },
