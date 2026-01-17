@@ -279,7 +279,7 @@ export async function updateRWOStatus(
     }
   })
 
-  revalidatePath('/maintenance/rwo')
+  revalidatePath('/rwo')
 
   const result: RWOWithDetails = {
     id: updated.id,
@@ -405,7 +405,7 @@ export async function createRWO(
     }
   })
 
-  revalidatePath('/maintenance/rwo')
+  revalidatePath('/rwo')
 
   const result: RWOWithDetails = {
     id: created.id,
@@ -530,4 +530,125 @@ export async function getPropertiesForRWOFilter(): Promise<Array<{ id: string; p
   })
 
   return properties
+}
+
+/**
+ * Get users for RWO assignment dropdown
+ */
+export async function getUsersForRWOAssignment(): Promise<Array<{ id: string; firstName: string; lastName: string }>> {
+  const session = await auth()
+
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true
+    },
+    orderBy: [
+      { firstName: 'asc' },
+      { lastName: 'asc' }
+    ]
+  })
+
+  return users
+}
+
+/**
+ * Assign a user to an RWO
+ * Requirements: 2.7
+ */
+export async function assignRWO(
+  requestId: string,
+  userId: string | null
+): Promise<Result<RWOWithDetails, NotFoundError | UnauthorizedError>> {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return new Err(new UnauthorizedError())
+  }
+
+  // Check if request exists
+  const existingRequest = await prisma.maintenanceRequest.findUnique({
+    where: { id: requestId }
+  })
+
+  if (!existingRequest) {
+    return new Err(new NotFoundError('MaintenanceRequest', requestId))
+  }
+
+  // Update the assignment and set status to ASSIGNED if assigning someone
+  const newStatus = userId 
+    ? (existingRequest.status === MaintenanceStatus.PENDING ? MaintenanceStatus.ASSIGNED : existingRequest.status)
+    : existingRequest.status
+
+  const updated = await prisma.maintenanceRequest.update({
+    where: { id: requestId },
+    data: { 
+      assignedToId: userId,
+      status: newStatus
+    },
+    include: {
+      unit: {
+        include: {
+          property: {
+            select: {
+              id: true,
+              propertyName: true
+            }
+          }
+        }
+      },
+      tenant: {
+        select: {
+          id: true,
+          businessName: true,
+          bpCode: true
+        }
+      },
+      assignedTo: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true
+        }
+      }
+    }
+  })
+
+  revalidatePath('/rwo')
+
+  const result: RWOWithDetails = {
+    id: updated.id,
+    category: updated.category,
+    priority: updated.priority,
+    description: updated.description,
+    status: updated.status,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt,
+    completedAt: updated.completedAt,
+    unit: {
+      id: updated.unit.id,
+      unitNumber: updated.unit.unitNumber,
+      property: {
+        id: updated.unit.property.id,
+        propertyName: updated.unit.property.propertyName
+      }
+    },
+    tenant: {
+      id: updated.tenant.id,
+      businessName: updated.tenant.businessName,
+      bpCode: updated.tenant.bpCode
+    },
+    assignedTo: updated.assignedTo ? {
+      id: updated.assignedTo.id,
+      firstName: updated.assignedTo.firstName,
+      lastName: updated.assignedTo.lastName
+    } : null
+  }
+
+  return new Ok(result)
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { X } from "lucide-react"
+import { X, Filter } from "lucide-react"
 
 import {
   Select,
@@ -12,12 +12,6 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-
-/**
- * RWO Filters Component
- * Add property, priority, and category filters
- * Requirements: 2.9
- */
 
 interface PropertyOption {
   id: string
@@ -78,20 +72,24 @@ export function RWOFilters({ properties }: RWOFiltersProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-0 border border-border bg-muted/5 p-1">
+        <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
+          <Filter className="h-4 w-4" />
+        </div>
+        
         {/* Property Filter */}
-        <div className="w-[200px]">
+        <div className="w-[200px] border-r border-border/50">
           <Select
             value={currentProperty || "all"}
             onValueChange={(value) => updateFilter("property", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-none shadow-none rounded-none h-9 focus:ring-0 bg-transparent">
               <SelectValue placeholder="All Properties" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Properties</SelectItem>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="rounded-none font-mono">ALL PROPERTIES</SelectItem>
               {properties.map((property) => (
-                <SelectItem key={property.id} value={property.id}>
+                <SelectItem key={property.id} value={property.id} className="rounded-none font-mono">
                   {property.propertyName}
                 </SelectItem>
               ))}
@@ -100,18 +98,18 @@ export function RWOFilters({ properties }: RWOFiltersProps) {
         </div>
 
         {/* Priority Filter */}
-        <div className="w-[160px]">
+        <div className="w-[160px] border-r border-border/50">
           <Select
             value={currentPriority || "all"}
             onValueChange={(value) => updateFilter("priority", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-none shadow-none rounded-none h-9 focus:ring-0 bg-transparent">
               <SelectValue placeholder="All Priorities" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="rounded-none font-mono">ALL PRIORITIES</SelectItem>
               {priorityOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="rounded-none font-mono">
                   {option.label}
                 </SelectItem>
               ))}
@@ -120,18 +118,18 @@ export function RWOFilters({ properties }: RWOFiltersProps) {
         </div>
 
         {/* Category Filter */}
-        <div className="w-[160px]">
+        <div className="w-[160px] border-r border-border/50">
           <Select
             value={currentCategory || "all"}
             onValueChange={(value) => updateFilter("category", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-none shadow-none rounded-none h-9 focus:ring-0 bg-transparent">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="rounded-none font-mono">ALL CATEGORIES</SelectItem>
               {categoryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="rounded-none font-mono">
                   {option.label}
                 </SelectItem>
               ))}
@@ -141,9 +139,14 @@ export function RWOFilters({ properties }: RWOFiltersProps) {
 
         {/* Clear Filters */}
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearFilters}
+            className="ml-auto rounded-none text-xs h-9 hover:bg-destructive/10 hover:text-destructive"
+          >
             <X className="h-4 w-4 mr-1" />
-            Clear Filters
+            CLEAR
           </Button>
         )}
       </div>
@@ -151,39 +154,31 @@ export function RWOFilters({ properties }: RWOFiltersProps) {
       {/* Active Filters Display */}
       {hasFilters && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          
           {currentProperty && (
-            <Badge variant="secondary" className="gap-1">
-              Property: {properties.find(p => p.id === currentProperty)?.propertyName}
-              <button
-                onClick={() => removeFilter("property")}
-                className="ml-1 hover:text-destructive"
-              >
+            <Badge variant="outline" className="gap-1 rounded-none border-border bg-background">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">PROPERTY:</span>
+              <span className="font-mono font-bold text-xs">{properties.find(p => p.id === currentProperty)?.propertyName}</span>
+              <button onClick={() => removeFilter("property")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             </Badge>
           )}
           
           {currentPriority && (
-            <Badge variant="secondary" className="gap-1">
-              Priority: {priorityOptions.find(p => p.value === currentPriority)?.label}
-              <button
-                onClick={() => removeFilter("priority")}
-                className="ml-1 hover:text-destructive"
-              >
+            <Badge variant="outline" className="gap-1 rounded-none border-border bg-background">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">PRIORITY:</span>
+              <span className="font-mono font-bold text-xs">{priorityOptions.find(p => p.value === currentPriority)?.label}</span>
+              <button onClick={() => removeFilter("priority")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             </Badge>
           )}
           
           {currentCategory && (
-            <Badge variant="secondary" className="gap-1">
-              Category: {categoryOptions.find(c => c.value === currentCategory)?.label}
-              <button
-                onClick={() => removeFilter("category")}
-                className="ml-1 hover:text-destructive"
-              >
+            <Badge variant="outline" className="gap-1 rounded-none border-border bg-background">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">CATEGORY:</span>
+              <span className="font-mono font-bold text-xs">{categoryOptions.find(c => c.value === currentCategory)?.label}</span>
+              <button onClick={() => removeFilter("category")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             </Badge>

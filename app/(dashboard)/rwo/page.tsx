@@ -1,20 +1,12 @@
 import { Suspense } from "react"
-import { Wrench } from "lucide-react"
 
-import { getRWOs, getPropertiesForRWOFilter, getSpacesForRWO } from "@/lib/actions/rwo-actions"
+import { getRWOs, getPropertiesForRWOFilter, getSpacesForRWO, getUsersForRWOAssignment } from "@/lib/actions/rwo-actions"
 import { RWOSummary } from "@/components/rwo/rwo-summary"
 import { RWOKanbanBoard } from "@/components/rwo/rwo-kanban-board"
 import { RWOFilters } from "@/components/rwo/rwo-filters"
 import { CreateRWODialog } from "@/components/rwo/create-rwo-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MaintenanceCategory, Priority } from "@prisma/client"
-
-/**
- * RWO Kanban Page
- * Integrates all RWO components
- * Implements URL filter persistence
- * Requirements: 2.1, 5.1, 5.2, 5.3, 5.4
- */
 
 interface RWOPageProps {
   searchParams: Promise<{
@@ -35,26 +27,22 @@ export default async function RWOPage({ searchParams }: RWOPageProps) {
   }
 
   // Fetch data in parallel
-  const [rwoData, properties, spaces] = await Promise.all([
+  const [rwoData, properties, spaces, users] = await Promise.all([
     getRWOs(filters),
     getPropertiesForRWOFilter(),
     getSpacesForRWO(),
+    getUsersForRWOAssignment(),
   ])
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6 h-[calc(100vh-4rem)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Wrench className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">RWO Kanban Board</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage and track Repair Work Orders
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold uppercase tracking-tight">RWO Kanban Board</h1>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+            Manage and track Repair Work Orders
+          </p>
         </div>
         
         <CreateRWODialog spaces={spaces} />
@@ -72,7 +60,9 @@ export default async function RWOPage({ searchParams }: RWOPageProps) {
 
       {/* Kanban Board */}
       <Suspense fallback={<BoardSkeleton />}>
-        <RWOKanbanBoard requests={rwoData.requests} />
+        <div className="flex-1 min-h-0 border border-border bg-background p-4 overflow-hidden">
+           <RWOKanbanBoard requests={rwoData.requests} users={users} />
+        </div>
       </Suspense>
     </div>
   )
@@ -82,7 +72,7 @@ function SummarySkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {[...Array(4)].map((_, i) => (
-        <Skeleton key={i} className="h-[120px] rounded-lg" />
+        <Skeleton key={i} className="h-[120px] rounded-none" />
       ))}
     </div>
   )
@@ -90,21 +80,21 @@ function SummarySkeleton() {
 
 function FiltersSkeleton() {
   return (
-    <div className="flex gap-4">
-      <Skeleton className="h-10 w-[200px]" />
-      <Skeleton className="h-10 w-[160px]" />
-      <Skeleton className="h-10 w-[160px]" />
+    <div className="flex gap-4 border border-border bg-muted/5 p-1">
+      <Skeleton className="h-9 w-[200px] rounded-none" />
+      <Skeleton className="h-9 w-[160px] rounded-none" />
+      <Skeleton className="h-9 w-[160px] rounded-none" />
     </div>
   )
 }
 
 function BoardSkeleton() {
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 border border-border bg-background p-4 h-full">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="w-80 flex-shrink-0">
-          <Skeleton className="h-10 w-full mb-3 rounded-t-lg" />
-          <Skeleton className="h-[400px] w-full rounded-b-lg" />
+        <div key={i} className="w-full flex flex-col h-full">
+          <Skeleton className="h-10 w-full mb-3 rounded-none" />
+          <Skeleton className="flex-1 w-full rounded-none" />
         </div>
       ))}
     </div>

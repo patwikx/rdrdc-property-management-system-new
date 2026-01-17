@@ -8,29 +8,20 @@ import {
   User, 
   Calendar,
   Clock,
-  Flame,
-  AlertTriangle,
-  Wrench
+  AlertTriangle
 } from "lucide-react"
 import { format } from "date-fns"
 
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { getDaysElapsed } from "@/lib/utils/date-helpers"
 import type { RWOWithDetails } from "@/lib/types/rwo-types"
 import { RWODetailDialog } from "./rwo-detail-dialog"
 
-/**
- * RWO Card Component
- * Displays space, property, category, priority indicator, description
- * Shows assigned staff, creation date, days elapsed
- * Draggable with dnd-kit
- * Requirements: 2.3, 2.4, 2.11, 2.12
- */
-
 interface RWOCardProps {
   request: RWOWithDetails
   onStatusChange?: (requestId: string, newStatus: string) => Promise<void>
+  onAssign?: (requestId: string, userId: string | null) => Promise<void>
+  users?: Array<{ id: string; firstName: string; lastName: string }>
 }
 
 const categoryLabels: Record<string, string> = {
@@ -44,28 +35,28 @@ const categoryLabels: Record<string, string> = {
 
 const priorityConfig = {
   EMERGENCY: { 
-    label: "Emergency", 
-    className: "bg-red-500 text-white border-red-500",
-    icon: Flame
+    label: "EMERGENCY", 
+    borderColor: "border-l-rose-600",
+    textColor: "text-rose-600"
   },
   HIGH: { 
-    label: "High", 
-    className: "bg-orange-100 text-orange-700 border-orange-200",
-    icon: AlertTriangle
+    label: "HIGH", 
+    borderColor: "border-l-orange-500",
+    textColor: "text-orange-600"
   },
   MEDIUM: { 
-    label: "Medium", 
-    className: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    icon: null
+    label: "MEDIUM", 
+    borderColor: "border-l-amber-500",
+    textColor: "text-amber-600"
   },
   LOW: { 
-    label: "Low", 
-    className: "bg-green-100 text-green-700 border-green-200",
-    icon: null
+    label: "LOW", 
+    borderColor: "border-l-emerald-500",
+    textColor: "text-emerald-600"
   }
 }
 
-export function RWOCard({ request, onStatusChange }: RWOCardProps) {
+export function RWOCard({ request, onStatusChange, onAssign, users }: RWOCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   
   const {
@@ -86,9 +77,6 @@ export function RWOCard({ request, onStatusChange }: RWOCardProps) {
 
   const daysElapsed = getDaysElapsed(request.createdAt)
   const priorityInfo = priorityConfig[request.priority]
-  const PriorityIcon = priorityInfo.icon
-
-  const isHighPriority = request.priority === 'EMERGENCY' || request.priority === 'HIGH'
 
   return (
     <>
@@ -96,13 +84,11 @@ export function RWOCard({ request, onStatusChange }: RWOCardProps) {
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group relative p-3 rounded-lg border bg-background",
-          "cursor-grab active:cursor-grabbing transition-all duration-200",
-          "hover:shadow-md hover:border-border",
-          isDragging && "opacity-50 rotate-2 shadow-lg scale-105",
-          isHighPriority && "border-l-4",
-          request.priority === 'EMERGENCY' && "border-l-red-500",
-          request.priority === 'HIGH' && "border-l-orange-500"
+          "group relative border border-border bg-background p-3 transition-all hover:shadow-md",
+          "cursor-grab active:cursor-grabbing",
+          "border-l-[3px]", 
+          priorityInfo.borderColor,
+          isDragging && "opacity-50 rotate-1 scale-105 shadow-xl z-50",
         )}
         {...attributes}
         {...listeners}
@@ -113,76 +99,67 @@ export function RWOCard({ request, onStatusChange }: RWOCardProps) {
           }
         }}
       >
-        <div className="space-y-3">
-          {/* Header: Space & Property */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 text-sm font-medium">
-                <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{request.unit.unitNumber}</span>
-              </div>
-              <p className="text-xs text-muted-foreground truncate mt-0.5">
-                {request.unit.property.propertyName}
-              </p>
-            </div>
-            
-            {/* Priority Badge */}
-            <Badge 
-              variant="outline" 
-              className={cn("flex-shrink-0 text-xs", priorityInfo.className)}
-            >
-              {PriorityIcon && <PriorityIcon className="h-3 w-3 mr-1" />}
+        <div className="space-y-2">
+          {/* Header: ID & Priority */}
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-muted-foreground">#{request.id.slice(-6)}</span>
+            <span className={cn("text-[10px] font-bold uppercase tracking-widest", priorityInfo.textColor)}>
               {priorityInfo.label}
-            </Badge>
-          </div>
-
-          {/* Category */}
-          <div className="flex items-center gap-1.5">
-            <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {categoryLabels[request.category] || request.category}
             </span>
           </div>
 
-          {/* Description */}
-          <p className="text-sm line-clamp-2 leading-relaxed">
-            {request.description}
-          </p>
-
-          {/* Footer: Assigned, Date, Days Elapsed */}
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {/* Assigned Staff */}
-              {request.assignedTo ? (
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  <span>{request.assignedTo.firstName} {request.assignedTo.lastName}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-yellow-600">
-                  <User className="h-3 w-3" />
-                  <span>Unassigned</span>
-                </div>
-              )}
+          {/* Title/Space */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-0.5">
+               <Building2 className="h-3 w-3 text-muted-foreground" />
+               <span className="font-mono text-xs font-bold">{request.unit.unitNumber}</span>
             </div>
-
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {/* Creation Date */}
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>{format(new Date(request.createdAt), 'MMM dd')}</span>
-              </div>
-
-              {/* Days Elapsed */}
-              <div className={cn(
-                "flex items-center gap-1 px-1.5 py-0.5 rounded",
-                daysElapsed > 7 && "bg-red-50 text-red-600",
-                daysElapsed > 3 && daysElapsed <= 7 && "bg-yellow-50 text-yellow-600"
-              )}>
-                <Clock className="h-3 w-3" />
-                <span>{daysElapsed}d</span>
-              </div>
+            <div className="flex items-center gap-1.5 mb-1">
+               <User className="h-3 w-3 text-muted-foreground" />
+               <span className="text-[10px] uppercase tracking-wide text-muted-foreground truncate max-w-[150px]" title={request.tenant.businessName}>
+                 {request.tenant.businessName}
+               </span>
             </div>
+            <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground/90">
+              {request.description}
+            </p>
+          </div>
+          
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1 mt-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-none text-[10px] uppercase font-medium bg-muted text-muted-foreground tracking-wide">
+              {categoryLabels[request.category]}
+            </span>
+          </div>
+
+          {/* Footer Metrics */}
+          <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/50">
+             <div className="flex items-center gap-2">
+                {request.assignedTo ? (
+                  <div className="flex items-center gap-1" title={`Assigned to ${request.assignedTo.firstName}`}>
+                    <User className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] uppercase font-medium text-muted-foreground">
+                      {request.assignedTo.firstName}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] uppercase text-amber-600 font-bold tracking-wider">Unassigned</span>
+                )}
+             </div>
+
+             <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                   <Calendar className="h-3 w-3" />
+                   <span className="text-[10px] font-mono">{format(new Date(request.createdAt), 'MM/dd')}</span>
+                </div>
+                <div className={cn(
+                  "flex items-center gap-1 text-[10px] font-mono font-bold",
+                  daysElapsed > 7 ? "text-rose-600" : "text-muted-foreground"
+                )}>
+                   <Clock className="h-3 w-3" />
+                   <span>{daysElapsed}d</span>
+                </div>
+             </div>
           </div>
         </div>
       </div>
@@ -192,6 +169,8 @@ export function RWOCard({ request, onStatusChange }: RWOCardProps) {
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         onStatusChange={onStatusChange}
+        onAssign={onAssign}
+        users={users}
       />
     </>
   )

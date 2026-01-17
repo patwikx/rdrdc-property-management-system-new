@@ -35,13 +35,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { createRWO } from "@/lib/actions/rwo-actions"
 import { MaintenanceCategory, Priority } from "@prisma/client"
 
-/**
- * Create RWO Dialog Component
- * Form with space selection, category, priority, description
- * Validates required fields
- * Requirements: 2.5, 2.6
- */
-
 interface SpaceOption {
   id: string
   unitNumber: string
@@ -131,15 +124,15 @@ export function CreateRWODialog({ spaces, trigger }: CreateRWODialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
+          <Button className="rounded-none h-9 text-xs uppercase tracking-wider font-semibold">
             <Plus className="h-4 w-4 mr-2" />
             Add RWO
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New RWO</DialogTitle>
+      <DialogContent className="sm:max-w-[500px] rounded-none border-border">
+        <DialogHeader className="border-b border-border pb-4 mb-4">
+          <DialogTitle className="font-bold uppercase tracking-tight text-lg">Create Repair Work Order</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -150,24 +143,24 @@ export function CreateRWODialog({ spaces, trigger }: CreateRWODialogProps) {
               name="unitId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Space *</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Space / Unit</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a space" />
+                      <SelectTrigger className="w-full rounded-none border-border font-mono text-sm">
+                        <SelectValue placeholder="SELECT SPACE" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="rounded-none border-border">
                       {Object.entries(spacesByProperty).map(([propertyName, propertySpaces]) => (
                         <div key={propertyName}>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted">
+                          <div className="px-2 py-1.5 text-[10px] uppercase font-bold text-muted-foreground bg-muted/50">
                             {propertyName}
                           </div>
                           {propertySpaces.map((space) => (
-                            <SelectItem key={space.id} value={space.id}>
+                            <SelectItem key={space.id} value={space.id} className="rounded-none font-mono">
                               <div className="flex flex-col">
                                 <span>{space.unitNumber}</span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-[10px] text-muted-foreground">
                                   {space.tenantName}
                                 </span>
                               </div>
@@ -182,62 +175,64 @@ export function CreateRWODialog({ spaces, trigger }: CreateRWODialogProps) {
               )}
             />
 
-            {/* Category */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categoryOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              {/* Category */}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full rounded-none border-border font-mono text-sm">
+                          <SelectValue placeholder="SELECT" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="rounded-none border-border">
+                        {categoryOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="rounded-none font-mono">
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Priority */}
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {priorityOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex flex-col">
-                            <span>{option.label}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {option.description}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Priority */}
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Priority</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full rounded-none border-border font-mono text-sm">
+                          <SelectValue placeholder="SELECT" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="rounded-none border-border">
+                        {priorityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="rounded-none font-mono">
+                            <div className="flex flex-col">
+                              <span>{option.label}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase">
+                                {option.description}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Description */}
             <FormField
@@ -245,11 +240,11 @@ export function CreateRWODialog({ spaces, trigger }: CreateRWODialogProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Description</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Describe the issue in detail..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] rounded-none border-border font-mono text-sm resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -259,16 +254,17 @@ export function CreateRWODialog({ spaces, trigger }: CreateRWODialogProps) {
             />
 
             {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-4 border-t border-border mt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
+                className="rounded-none uppercase tracking-wider text-xs font-semibold"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="rounded-none uppercase tracking-wider text-xs font-semibold">
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create RWO
               </Button>

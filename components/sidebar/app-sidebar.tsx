@@ -117,34 +117,14 @@ const getNavigationItems = (userRole: string) => {
       ],
     },
     {
-      title: "Utilities",
-      url: "/utilities",
+      title: "Billing Monitoring",
+      url: "/billing-monitoring",
       icon: Zap,
-      items: [
-        {
-          title: "Billing Monitoring",
-          url: "/utilities/billing",
-        },
-      ],
     },
     {
-      title: "Maintenance",
-      url: "/maintenance",
+      title: "Repair Work Order",
+      url: "/rwo",
       icon: Wrench,
-      items: [
-        {
-          title: "RWO Board",
-          url: "/maintenance/rwo",
-        },
-        {
-          title: "Requests",
-          url: "/maintenance/requests",
-        },
-        {
-          title: "Schedule",
-          url: "/maintenance/schedule",
-        },
-      ],
     },
     {
       title: "Projects",

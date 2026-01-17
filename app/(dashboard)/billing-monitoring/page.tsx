@@ -2,7 +2,6 @@ import { Suspense } from "react"
 import { Metadata } from "next"
 import { UtilityType } from "@prisma/client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getUtilityBills, getPropertiesForFilter } from "@/lib/actions/utility-billing-actions"
 import { UtilityBillingSummary } from "@/components/utilities/utility-billing-summary"
@@ -15,7 +14,7 @@ import { UtilityBillingTable } from "@/components/utilities/utility-billing-tabl
  */
 
 export const metadata: Metadata = {
-  title: "RD Realty Group - Utilities Billing",
+  title: "Billing Monitoring | RDRDC",
   description: "Monitor utility bills and payment deadlines across all spaces",
 }
 
@@ -34,34 +33,30 @@ function UtilityBillingSkeleton() {
   return (
     <div className="space-y-6">
       {/* Summary Cards Skeleton */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="space-y-0 pb-2">
-              <Skeleton className="h-4 w-[100px]" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[120px]" />
-              <Skeleton className="h-3 w-[80px] mt-2" />
-            </CardContent>
-          </Card>
+          <div key={i} className="p-4 border-r border-border h-24">
+            <Skeleton className="h-4 w-1/3 mb-2 rounded-none" />
+            <Skeleton className="h-8 w-1/2 rounded-none" />
+          </div>
         ))}
       </div>
 
+      {/* Filter Skeleton */}
+      <div className="flex gap-4 border border-border bg-muted/5 p-1">
+        <Skeleton className="h-9 w-[200px] rounded-none" />
+        <Skeleton className="h-9 w-[160px] rounded-none" />
+        <Skeleton className="h-9 w-[160px] rounded-none" />
+      </div>
+
       {/* Table Skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-          <Skeleton className="h-4 w-[300px]" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border border-border">
+        <div className="space-y-2 p-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-none" />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -96,22 +91,10 @@ async function UtilityBillingContent({
       <UtilityBillingSummary summary={summary} />
 
       {/* Filters and Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Utility Bills</CardTitle>
-              <CardDescription>
-                Track payment deadlines and manage utility bills across all spaces
-              </CardDescription>
-            </div>
-          </div>
-          <UtilityBillingFilters properties={properties} />
-        </CardHeader>
-        <CardContent>
-          <UtilityBillingTable bills={bills} />
-        </CardContent>
-      </Card>
+      <div className="space-y-0">
+        <UtilityBillingFilters properties={properties} />
+        <UtilityBillingTable bills={bills} />
+      </div>
     </div>
   )
 }
@@ -121,8 +104,13 @@ export default async function UtilitiesBillingPage({ searchParams }: PageProps) 
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Utilities Billing</h2>
+      <div className="flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Billing Monitoring</h2>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Track utility payments and deadlines across properties
+          </p>
+        </div>
       </div>
 
       <Suspense fallback={<UtilityBillingSkeleton />}>

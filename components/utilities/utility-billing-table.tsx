@@ -11,14 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getBillStatusColor, getBillStatusLabel } from "@/lib/utils/bill-status"
 import type { UtilityBillWithDetails } from "@/lib/actions/utility-billing-actions"
-
-/**
- * UtilityBillingTable Component
- * Displays utility bills with status indicators
- * Requirements: 1.2, 1.3, 1.4, 1.5, 1.8, 1.10
- */
 
 interface UtilityBillingTableProps {
   bills: UtilityBillWithDetails[]
@@ -37,41 +30,49 @@ export function UtilityBillingTable({ bills }: UtilityBillingTableProps) {
 
   const getUtilityTypeLabel = (type: string) => {
     switch (type) {
-      case "ELECTRICITY":
-        return "Electricity"
-      case "WATER":
-        return "Water"
-      case "OTHERS":
-        return "Others"
+      case "ELECTRICITY": return "Electricity"
+      case "WATER": return "Water"
+      case "OTHERS": return "Others"
+      default: return type
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return <Badge variant="outline" className="rounded-none border-emerald-500 text-emerald-600 bg-emerald-50/10 uppercase">Paid</Badge>
+      case "OVERDUE":
+        return <Badge variant="outline" className="rounded-none border-rose-500 text-rose-600 bg-rose-50/10 uppercase">Overdue</Badge>
+      case "UNPAID":
+        return <Badge variant="outline" className="rounded-none border-amber-500 text-amber-600 bg-amber-50/10 uppercase">Unpaid</Badge>
       default:
-        return type
+        return <Badge variant="outline" className="rounded-none border-muted text-muted-foreground uppercase">{status}</Badge>
     }
   }
 
   const handleRowClick = (bill: UtilityBillWithDetails) => {
-    // Navigate to the space's utility details
     router.push(`/properties/${bill.space.property.id}/units/${bill.space.id}?tab=utilities`)
   }
 
   if (bills.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div className="border border-t-0 border-border">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Space</TableHead>
-              <TableHead>Property</TableHead>
-              <TableHead>Utility Type</TableHead>
-              <TableHead>Billing Period</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Tenant</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="hover:bg-transparent border-border">
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Space</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Property</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Type</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Period</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Due Date</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5 text-right">Amount</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Tenant</TableHead>
+              <TableHead className="h-10 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={8} className="h-24 text-center text-xs text-muted-foreground font-mono uppercase tracking-wide">
                 No utility bills found.
               </TableCell>
             </TableRow>
@@ -82,64 +83,57 @@ export function UtilityBillingTable({ bills }: UtilityBillingTableProps) {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="border border-t-0 border-border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Space</TableHead>
-            <TableHead>Property</TableHead>
-            <TableHead>Utility Type</TableHead>
-            <TableHead>Billing Period</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Tenant</TableHead>
-            <TableHead>Status</TableHead>
+          <TableRow className="hover:bg-transparent border-border">
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Space</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Property</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Type</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Billing Period</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Due Date</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5 text-right">Amount</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Tenant</TableHead>
+            <TableHead className="h-9 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/5">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {bills.map((bill) => (
             <TableRow
               key={bill.id}
-              className="cursor-pointer hover:bg-muted/50"
+              className="cursor-pointer hover:bg-muted/5 border-border transition-colors group"
               onClick={() => handleRowClick(bill)}
             >
-              <TableCell className="font-medium">
+              <TableCell className="font-mono text-xs font-bold text-foreground">
                 {bill.space.unitNumber}
               </TableCell>
-              <TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">
                 {bill.space.property.propertyName}
               </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {getUtilityTypeLabel(bill.utilityType)}
-                </Badge>
+              <TableCell className="font-mono text-xs uppercase text-muted-foreground">
+                {getUtilityTypeLabel(bill.utilityType)}
               </TableCell>
-              <TableCell>
-                {format(new Date(bill.billingPeriodStart), "MMM d")} -{" "}
-                {format(new Date(bill.billingPeriodEnd), "MMM d, yyyy")}
+              <TableCell className="font-mono text-xs text-muted-foreground">
+                {format(new Date(bill.billingPeriodStart), "MM/dd")} - {format(new Date(bill.billingPeriodEnd), "MM/dd/yy")}
               </TableCell>
-              <TableCell>
-                {format(new Date(bill.dueDate), "MMM d, yyyy")}
+              <TableCell className="font-mono text-xs text-muted-foreground">
+                {format(new Date(bill.dueDate), "MMM dd, yyyy")}
               </TableCell>
-              <TableCell className="text-right font-medium">
+              <TableCell className="text-right font-mono text-xs font-medium text-foreground">
                 {formatCurrency(bill.amount)}
               </TableCell>
               <TableCell>
                 {bill.tenant ? (
-                  <div>
-                    <div className="font-medium">{bill.tenant.businessName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {bill.tenant.bpCode}
-                    </div>
+                  <div className="flex flex-col">
+                    <span className="font-mono text-xs font-medium truncate max-w-[150px]">{bill.tenant.businessName}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{bill.tenant.bpCode}</span>
                   </div>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-muted-foreground text-xs font-mono">—</span>
                 )}
               </TableCell>
               <TableCell>
-                <Badge className={getBillStatusColor(bill.status)}>
-                  {getBillStatusLabel(bill.status)}
-                </Badge>
+                {getStatusBadge(bill.status)}
               </TableCell>
             </TableRow>
           ))}
