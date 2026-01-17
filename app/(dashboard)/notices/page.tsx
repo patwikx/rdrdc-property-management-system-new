@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,38 +20,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { 
   Plus, 
   Eye, 
   CheckCircle, 
-  Trash2, 
-  Check, 
-  ChevronsUpDown,
+  Trash2,
   FileText,
   Clock,
   DollarSign,
   AlertTriangle,
-  Filter
+  Filter,
+  Search,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import { getTenantNotices, getTenants, settleNotice, deleteNotice } from "@/lib/actions/tenant-notice";
@@ -105,11 +86,12 @@ interface Tenant {
 export default function TenantNoticesPage() {
   const router = useRouter();
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tenantComboboxOpen, setTenantComboboxOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
-    tenantId: "all",
+    noticeType: "all", // 'all', 'first', 'second', 'final'
     status: "all",
     isSettled: "all"
   });
@@ -118,33 +100,70 @@ export default function TenantNoticesPage() {
     try {
       setLoading(true);
       const [noticesData, tenantsData] = await Promise.all([
-        getTenantNotices({
-          tenantId: filters.tenantId === "all" ? undefined : filters.tenantId,
-          status: filters.status === "all" ? undefined : filters.status,
-          isSettled: filters.isSettled === "all" ? undefined : filters.isSettled === "true"
-        }),
+        getTenantNotices({}),
         getTenants()
       ]);
       
       setNotices(noticesData as Notice[]);
+      setFilteredNotices(noticesData as Notice[]);
       setTenants(tenantsData);
     } catch (error) {
       toast.error("Failed to load notices");
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...notices];
+
+    // Search filter
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        notice =>
+          notice.tenant.businessName.toLowerCase().includes(query) ||
+          notice.tenant.bpCode.toLowerCase().includes(query)
+      );
+    }
+
+    // Notice type filter
+    if (filters.noticeType !== "all") {
+      filtered = filtered.filter(notice => {
+        if (filters.noticeType === "first") return notice.noticeNumber === 1;
+        if (filters.noticeType === "second") return notice.noticeNumber === 2;
+        if (filters.noticeType === "final") return notice.noticeNumber >= 3;
+        return true;
+      });
+    }
+
+    // Status filter
+    if (filters.status !== "all") {
+      filtered = filtered.filter(notice =>
+        notice.items?.some(item => item.status === filters.status)
+      );
+    }
+
+    // Settlement filter
+    if (filters.isSettled !== "all") {
+      const isSettled = filters.isSettled === "true";
+      filtered = filtered.filter(notice => notice.isSettled === isSettled);
+    }
+
+    setFilteredNotices(filtered);
+  }, [notices, searchQuery, filters]);
+
   const stats = useMemo(() => {
-    const totalNotices = notices.length;
-    const activeNotices = notices.filter(notice => !notice.isSettled).length;
-    const settledNotices = notices.filter(notice => notice.isSettled).length;
-    const totalAmount = notices.reduce((sum, notice) => sum + notice.totalAmount, 0);
-    const criticalNotices = notices.filter(notice => 
+    const totalNotices = filteredNotices.length;
+    const activeNotices = filteredNotices.filter(notice => !notice.isSettled).length;
+    const settledNotices = filteredNotices.filter(notice => notice.isSettled).length;
+    const totalAmount = filteredNotices.reduce((sum, notice) => sum + notice.totalAmount, 0);
+    const criticalNotices = filteredNotices.filter(notice => 
       notice.items?.some(item => item.status === "CRITICAL") && !notice.isSettled
     ).length;
 
@@ -155,7 +174,22 @@ export default function TenantNoticesPage() {
       totalAmount,
       critical: criticalNotices,
     };
-  }, [notices]);
+  }, [filteredNotices]);
+
+  const clearFilters = () => {
+    setFilters({
+      noticeType: "all",
+      status: "all",
+      isSettled: "all"
+    });
+    setSearchQuery("");
+  };
+
+  const hasActiveFilters = 
+    filters.noticeType !== "all" ||
+    filters.status !== "all" ||
+    filters.isSettled !== "all" ||
+    searchQuery !== "";
 
   const handleSettleNotice = async (noticeId: string) => {
     try {
@@ -249,145 +283,6 @@ export default function TenantNoticesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border">
-                <Filter className="h-3 w-3 mr-2" />
-                Filters
-                {(filters.tenantId !== "all" || filters.status !== "all" || filters.isSettled !== "all") && (
-                  <Badge variant="secondary" className="ml-2 h-4 w-4 rounded-none p-0 flex items-center justify-center text-[10px] font-mono">
-                    {[filters.tenantId !== "all", filters.status !== "all", filters.isSettled !== "all"].filter(Boolean).length}
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="rounded-none border-l border-border">
-              <SheetHeader className="text-left border-b border-border pb-4">
-                <SheetTitle className="uppercase font-bold tracking-widest text-sm">Filter Notices</SheetTitle>
-                <SheetDescription className="font-mono text-xs">
-                  Refine notice list by tenant & status
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-6 mt-6">
-                {/* Tenant Filter */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Tenant</label>
-                  <Popover open={tenantComboboxOpen} onOpenChange={setTenantComboboxOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={tenantComboboxOpen}
-                        className="w-full justify-between rounded-none font-mono text-xs border-border"
-                      >
-                        {selectedTenant
-                          ? `${selectedTenant.businessName}`
-                          : "ALL TENANTS"}
-                        <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 rounded-none border-border" align="start">
-                      <Command className="rounded-none">
-                        <CommandInput placeholder="SEARCH TENANTS..." className="h-9 rounded-none font-mono text-xs" />
-                        <CommandEmpty className="font-mono text-xs p-2">No tenant found.</CommandEmpty>
-                        <CommandGroup className="max-h-64 overflow-y-auto">
-                          <CommandItem
-                            value="all"
-                            onSelect={() => {
-                              setFilters({ ...filters, tenantId: "all" });
-                              setTenantComboboxOpen(false);
-                            }}
-                            className="rounded-none font-mono text-xs cursor-pointer"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-3 w-3",
-                                filters.tenantId === "all" ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            ALL TENANTS
-                          </CommandItem>
-                          {tenants.map((tenant) => (
-                            <CommandItem
-                              key={tenant.id}
-                              value={`${tenant.businessName} ${tenant.bpCode}`}
-                              onSelect={() => {
-                                setFilters({ ...filters, tenantId: tenant.id });
-                                setTenantComboboxOpen(false);
-                              }}
-                              className="rounded-none font-mono text-xs cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-3 w-3",
-                                  filters.tenantId === tenant.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-bold">{tenant.businessName}</span>
-                                <span className="text-[10px] text-muted-foreground">{tenant.bpCode}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Status Filter */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Status</label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters({ ...filters, status: value })}
-                  >
-                    <SelectTrigger className="rounded-none font-mono text-xs border-border">
-                      <SelectValue placeholder="ALL STATUSES" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-none border-border">
-                      <SelectItem value="all" className="font-mono text-xs">ALL STATUSES</SelectItem>
-                      <SelectItem value="PAST_DUE" className="font-mono text-xs">PAST DUE</SelectItem>
-                      <SelectItem value="OVERDUE" className="font-mono text-xs">OVERDUE</SelectItem>
-                      <SelectItem value="CRITICAL" className="font-mono text-xs">CRITICAL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Settlement Filter */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Settlement</label>
-                  <Select
-                    value={filters.isSettled}
-                    onValueChange={(value) => setFilters({ ...filters, isSettled: value })}
-                  >
-                    <SelectTrigger className="rounded-none font-mono text-xs border-border">
-                      <SelectValue placeholder="ALL NOTICES" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-none border-border">
-                      <SelectItem value="all" className="font-mono text-xs">ALL NOTICES</SelectItem>
-                      <SelectItem value="false" className="font-mono text-xs">ACTIVE</SelectItem>
-                      <SelectItem value="true" className="font-mono text-xs">SETTLED</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Clear Filters */}
-                {(filters.tenantId !== "all" || filters.status !== "all" || filters.isSettled !== "all") && (
-                  <div className="border-t border-border pt-4">
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-none h-9 text-xs font-mono uppercase border-border"
-                      onClick={() => setFilters({ tenantId: "all", status: "all", isSettled: "all" })}
-                    >
-                      Reset Filters
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-          
           <Button 
             onClick={() => router.push("/notices/create")}
             className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold"
@@ -439,6 +334,114 @@ export default function TenantNoticesPage() {
         </div>
       </div>
 
+      {/* Search and Filters */}
+      <div className="border border-border bg-muted/5">
+        {/* Search Row */}
+        <div className="flex items-center gap-4 p-1 border-b border-border/50">
+          <div className="flex items-center px-3 py-2 text-muted-foreground border-r border-border/50">
+            <Search className="h-4 w-4" />
+          </div>
+          <Input
+            placeholder="SEARCH TENANT NAME OR BP CODE..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-none border-none shadow-none bg-transparent h-9 font-mono text-xs uppercase focus-visible:ring-0 placeholder:text-muted-foreground/50 flex-1"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 hover:bg-transparent rounded-none mr-2"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+            </Button>
+          )}
+        </div>
+
+        {/* Filters Row */}
+        <div className="flex items-center gap-3 p-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Filter className="h-3 w-3" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Filters:</span>
+          </div>
+
+          {/* Status Filter */}
+          <Select
+            value={filters.status}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+          >
+            <SelectTrigger className="rounded-none font-mono text-xs border-border h-8 w-[140px]">
+              <SelectValue placeholder="ALL STATUSES" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs">ALL STATUSES</SelectItem>
+              <SelectItem value="PAST_DUE" className="font-mono text-xs">PAST DUE</SelectItem>
+              <SelectItem value="OVERDUE" className="font-mono text-xs">OVERDUE</SelectItem>
+              <SelectItem value="CRITICAL" className="font-mono text-xs">CRITICAL</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Settlement Filter */}
+          <Select
+            value={filters.isSettled}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, isSettled: value }))}
+          >
+            <SelectTrigger className="rounded-none font-mono text-xs border-border h-8 w-[120px]">
+              <SelectValue placeholder="ALL" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-border">
+              <SelectItem value="all" className="font-mono text-xs">ALL</SelectItem>
+              <SelectItem value="false" className="font-mono text-xs">ACTIVE</SelectItem>
+              <SelectItem value="true" className="font-mono text-xs">SETTLED</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Notice Type Quick Filters */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              variant={filters.noticeType === "first" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeType: prev.noticeType === "first" ? "all" : "first" }))}
+            >
+              <FileText className="h-3 w-3 mr-1 text-blue-600" />
+              1st Notice
+            </Button>
+            <Button
+              variant={filters.noticeType === "second" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeType: prev.noticeType === "second" ? "all" : "second" }))}
+            >
+              <FileText className="h-3 w-3 mr-1 text-orange-600" />
+              2nd Notice
+            </Button>
+            <Button
+              variant={filters.noticeType === "final" ? "default" : "outline"}
+              size="sm"
+              className="h-8 rounded-none text-[10px] font-mono uppercase border-border"
+              onClick={() => setFilters(prev => ({ ...prev, noticeType: prev.noticeType === "final" ? "all" : "final" }))}
+            >
+              <AlertTriangle className="h-3 w-3 mr-1 text-red-600" />
+              Final Notice
+            </Button>
+            
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="h-8 rounded-none text-[10px] font-mono uppercase border-border hover:text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content - Table */}
       <div className="border border-border">
         <Table>
@@ -465,7 +468,7 @@ export default function TenantNoticesPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : notices.length === 0 ? (
+            ) : filteredNotices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -475,7 +478,7 @@ export default function TenantNoticesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              notices.map((notice) => (
+              filteredNotices.map((notice) => (
                 <TableRow key={notice.id} className="group border-border hover:bg-muted/5 transition-colors">
                   <TableCell>
                     <div className="flex flex-col">

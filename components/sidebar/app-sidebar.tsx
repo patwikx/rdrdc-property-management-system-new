@@ -253,7 +253,7 @@ export function AppSidebar({
           </div>
           <div className="flex flex-col flex-1 min-w-0 transition-all duration-300 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden">
             <span className="font-mono font-bold tracking-tight text-sm leading-none text-foreground truncate">RDRDC</span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1 truncate">Properties</span>
+            <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 truncate">Property Management System</span>
           </div>
         </div>
       </SidebarHeader>
