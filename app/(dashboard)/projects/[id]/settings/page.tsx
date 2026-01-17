@@ -24,7 +24,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-full w-full">
       <ProjectSettings project={project} />
     </div>
   )

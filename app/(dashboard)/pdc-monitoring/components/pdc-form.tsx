@@ -288,7 +288,7 @@ export function PDCForm({ tenants }: PDCFormProps) {
                                   } else {
                                     field.onChange(value)
                                   }
-                                } catch (error) {
+                                } catch {
                                   field.onChange(value)
                                 }
                               }

@@ -34,7 +34,7 @@ import {
   X
 } from "lucide-react";
 import { toast } from "sonner";
-import { getTenantNotices, getTenants, settleNotice, deleteNotice } from "@/lib/actions/tenant-notice";
+import { getTenantNotices, settleNotice, deleteNotice } from "@/lib/actions/tenant-notice";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,17 +76,13 @@ interface Notice {
   }>;
 }
 
-interface Tenant {
-  id: string;
-  bpCode: string;
-  businessName: string;
-}
+
 
 export default function TenantNoticesPage() {
   const router = useRouter();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [filteredNotices, setFilteredNotices] = useState<Notice[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -98,15 +94,12 @@ export default function TenantNoticesPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [noticesData, tenantsData] = await Promise.all([
-        getTenantNotices({}),
-        getTenants()
-      ]);
+      const noticesData = await getTenantNotices({});
       
       setNotices(noticesData as Notice[]);
       setFilteredNotices(noticesData as Notice[]);
-      setTenants(tenantsData);
-    } catch (error) {
+
+    } catch {
       toast.error("Failed to load notices");
     } finally {
       setLoading(false);
@@ -195,7 +188,7 @@ export default function TenantNoticesPage() {
       await settleNotice(noticeId, "Manual Settlement");
       toast.success("Notice settled successfully!");
       loadData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to settle notice");
     }
   };
@@ -205,7 +198,7 @@ export default function TenantNoticesPage() {
       await deleteNotice(noticeId);
       toast.success("Notice deleted successfully!");
       loadData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete notice");
     }
   };

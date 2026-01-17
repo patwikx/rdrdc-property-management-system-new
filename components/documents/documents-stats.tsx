@@ -1,7 +1,5 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { DocumentType } from "@prisma/client"
 import { FileText, TrendingUp, Calendar, Users } from "lucide-react"
 
@@ -12,22 +10,6 @@ interface DocumentStats {
   documentsThisMonth: number
 }
 
-const documentTypeLabels: Record<DocumentType, string> = {
-  LEASE: "Lease Agreements",
-  CONTRACT: "Contracts", 
-  INVOICE: "Invoices",
-  MAINTENANCE: "Maintenance",
-  OTHER: "Other"
-}
-
-const documentTypeColors: Record<DocumentType, string> = {
-  LEASE: "bg-blue-600",
-  CONTRACT: "bg-green-600",
-  INVOICE: "bg-yellow-600", 
-  MAINTENANCE: "bg-orange-600",
-  OTHER: "bg-gray-600"
-}
-
 interface DocumentsStatsProps {
   stats: DocumentStats
 }
@@ -35,83 +17,50 @@ interface DocumentsStatsProps {
 export function DocumentsStats({ stats }: DocumentsStatsProps) {
   const mostCommonType = Object.entries(stats.documentsByType)
     .sort(([,a], [,b]) => b - a)[0]
+  
+  const mostCommonTypeLabel = mostCommonType ? mostCommonType[0] : 'NONE'
+  const mostCommonTypeCount = mostCommonType ? mostCommonType[1] : 0
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.totalDocuments}</div>
-          <p className="text-xs text-muted-foreground">
-            Across all properties and tenants
-          </p>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-2 md:grid-cols-4 border border-border bg-background">
+      {/* Total Documents */}
+      <div className="p-4 border-r border-border border-b md:border-b-0 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Total Files</span>
+          <FileText className="h-4 w-4 text-primary" />
+        </div>
+        <span className="text-2xl font-mono font-medium tracking-tighter text-foreground">{stats.totalDocuments}</span>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">This Month</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.documentsThisMonth}</div>
-          <p className="text-xs text-muted-foreground">
-            Documents uploaded this month
-          </p>
-        </CardContent>
-      </Card>
+      {/* This Month */}
+      <div className="p-4 border-r md:border-r border-b md:border-b-0 border-border hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">New (Month)</span>
+          <Calendar className="h-4 w-4 text-blue-600" />
+        </div>
+        <span className="text-2xl font-mono font-medium tracking-tighter text-blue-600">{stats.documentsThisMonth}</span>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Recent Uploads</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.recentUploads}</div>
-          <p className="text-xs text-muted-foreground">
-            Uploaded in the last 7 days
-          </p>
-        </CardContent>
-      </Card>
+      {/* Recent Uploads */}
+      <div className="p-4 border-r border-border border-b md:border-b-0 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Last 7 Days</span>
+          <TrendingUp className="h-4 w-4 text-emerald-600" />
+        </div>
+        <span className="text-2xl font-mono font-medium tracking-tighter text-emerald-600">{stats.recentUploads}</span>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Most Common Type</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{mostCommonType?.[1] || 0}</div>
-          <p className="text-xs text-muted-foreground">
-            {mostCommonType ? documentTypeLabels[mostCommonType[0] as DocumentType] : 'No documents'}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Document Types Breakdown */}
-      <Card className="md:col-span-2 lg:col-span-4">
-        <CardHeader>
-          <CardTitle>Documents by Type</CardTitle>
-          <CardDescription>
-            Breakdown of documents by category
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(stats.documentsByType).map(([type, count]) => (
-              <Badge 
-                key={type} 
-                variant="outline" 
-                className={`${documentTypeColors[type as DocumentType]} text-white`}
-              >
-                {documentTypeLabels[type as DocumentType]}: {count}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Most Common Type */}
+      <div className="p-4 hover:bg-muted/5 transition-colors">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Top Category</span>
+          <Users className="h-4 w-4 text-orange-600" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-2xl font-mono font-medium tracking-tighter text-orange-600">{mostCommonTypeCount}</span>
+          <span className="text-[10px] font-mono text-muted-foreground uppercase">{mostCommonTypeLabel}</span>
+        </div>
+      </div>
     </div>
   )
 }

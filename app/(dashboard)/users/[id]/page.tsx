@@ -130,7 +130,7 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to update user")
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update user")
     } finally {
       setSaving(false)
@@ -150,7 +150,7 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to delete user")
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete user")
     } finally {
       setIsDeleting(false)
@@ -175,7 +175,7 @@ export default function UserPage({ params }: UserPageProps) {
       } else {
         toast.error(result.error || "Failed to reset password")
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to reset password")
     } finally {
       setIsChangingPassword(false)

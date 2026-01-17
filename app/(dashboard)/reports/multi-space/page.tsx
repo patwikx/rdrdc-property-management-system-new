@@ -1,27 +1,24 @@
 import { Suspense } from "react"
-import { getOccupancyReport, OccupancyReportFilters } from "@/lib/actions/comprehensive-reports-actions"
-import { OccupancyReportClient } from "./occupancy-report-client"
+import { getMultiSpaceTenantsReport, MultiSpaceTenantsFilters } from "@/lib/actions/comprehensive-reports-actions"
+import { MultiSpaceClient } from "./multi-space-client"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface PageProps {
   searchParams: Promise<{
-    propertyId?: string
-    minOccupancy?: string
-    maxOccupancy?: string
+    minUnits?: string
+    sortBy?: string
   }>
 }
 
-async function OccupancyReportContent({ searchParams }: PageProps) {
+async function MultiSpaceContent({ searchParams }: PageProps) {
   const params = await searchParams
   
-  const filters: OccupancyReportFilters = {
-    propertyId: params.propertyId,
-    minOccupancyRate: params.minOccupancy ? Number(params.minOccupancy) : undefined,
-    maxOccupancyRate: params.maxOccupancy ? Number(params.maxOccupancy) : undefined,
-    includeUnitDetails: true, // Always fetch details for the expandable view
+  const filters: MultiSpaceTenantsFilters = {
+    minUnits: params.minUnits ? Number(params.minUnits) : 2,
+    sortBy: params.sortBy as 'unitCount' | 'totalRent' | 'totalArea' | 'businessName' | undefined,
   }
 
-  const result = await getOccupancyReport(filters)
+  const result = await getMultiSpaceTenantsReport(filters)
 
   if (!result.success || !result.data) {
     return (
@@ -32,7 +29,7 @@ async function OccupancyReportContent({ searchParams }: PageProps) {
   }
 
   return (
-    <OccupancyReportClient 
+    <MultiSpaceClient 
       initialData={result.data} 
       filters={filters} 
     />
@@ -63,11 +60,11 @@ function ReportLoading() {
   )
 }
 
-export default function OccupancyReportsPage({ searchParams }: PageProps) {
+export default function MultiSpacePage({ searchParams }: PageProps) {
   return (
     <div className="p-6 max-w-[1920px] mx-auto">
       <Suspense fallback={<ReportLoading />}>
-        <OccupancyReportContent searchParams={searchParams} />
+        <MultiSpaceContent searchParams={searchParams} />
       </Suspense>
     </div>
   )

@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { DocumentSchema, DocumentFormData } from "@/lib/validations/document-schema"
 import { createDocument } from "@/lib/actions/document-actions"
-import { Save, X, FileText, Building, Home, User, Upload, Check, ChevronsUpDown } from "lucide-react"
+import { Save, FileText, Building, Home, User, Check, ChevronsUpDown } from "lucide-react"
 import { toast } from "sonner"
 import { DocumentType } from "@prisma/client"
 import { FileUpload, UploadedFileDisplay } from "@/components/file-upload"
@@ -22,36 +22,36 @@ const documentTypeOptions = [
   { 
     value: 'LEASE' as const, 
     label: "Lease Agreement", 
-    description: "Rental lease contracts and agreements",
-    color: "bg-blue-600",
+    description: "RENTAL CONTRACTS",
+    color: "bg-blue-600/10 text-blue-600 border-blue-600/20",
     icon: FileText
   },
   { 
     value: 'CONTRACT' as const, 
     label: "Contract", 
-    description: "Service contracts and legal documents",
-    color: "bg-green-600",
+    description: "SERVICE AGREEMENTS",
+    color: "bg-green-600/10 text-green-600 border-green-600/20",
     icon: FileText
   },
   { 
     value: 'INVOICE' as const, 
     label: "Invoice", 
-    description: "Billing and payment invoices",
-    color: "bg-yellow-600",
+    description: "BILLING RECORDS",
+    color: "bg-yellow-600/10 text-yellow-600 border-yellow-600/20",
     icon: FileText
   },
   { 
     value: 'MAINTENANCE' as const, 
     label: "Maintenance", 
-    description: "Maintenance reports and records",
-    color: "bg-orange-600",
+    description: "WORK ORDERS",
+    color: "bg-orange-600/10 text-orange-600 border-orange-600/20",
     icon: FileText
   },
   { 
     value: 'OTHER' as const, 
     label: "Other", 
-    description: "Miscellaneous documents",
-    color: "bg-gray-600",
+    description: "MISCELLANEOUS",
+    color: "bg-muted text-muted-foreground border-border",
     icon: FileText
   },
 ]
@@ -176,113 +176,110 @@ export function CreateDocumentForm({
   const selectedTenant = tenants.find(t => t.id === form.watch('tenantId'))
 
   return (
-    <div className="space-y-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Document Type Selection */}
-          <FormField
-            control={form.control}
-            name="documentType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Document Type</FormLabel>
-                <FormControl>
-                  <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-                    {documentTypeOptions.map((option) => {
-                      const Icon = option.icon
-                      return (
-                        <div
-                          key={option.value}
-                          className={`relative cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md ${
-                            field.value === option.value
-                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => field.onChange(option.value)}
-                        >
-                          <div className="flex flex-col items-center text-center space-y-2">
-                            <div className={`rounded-lg p-2 ${option.color}`}>
-                              <Icon className="h-4 w-4 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-sm">{option.label}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {option.description}
-                              </p>
-                            </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Document Type Selection */}
+        <FormField
+          control={form.control}
+          name="documentType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Document Category</FormLabel>
+              <FormControl>
+                <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+                  {documentTypeOptions.map((option) => {
+                    const Icon = option.icon
+                    const isSelected = field.value === option.value
+                    return (
+                      <div
+                        key={option.value}
+                        className={cn(
+                          "relative cursor-pointer border p-3 transition-all hover:bg-muted/5 group",
+                          isSelected
+                            ? "border-primary bg-primary/5"
+                            : "border-border"
+                        )}
+                        onClick={() => field.onChange(option.value)}
+                      >
+                        <div className="flex flex-col items-start space-y-2">
+                          <div className={cn("p-1.5 rounded-none border", option.color)}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <h3 className={cn("font-bold text-xs uppercase tracking-wide", isSelected ? "text-primary" : "text-foreground")}>{option.label}</h3>
+                            <p className="text-[10px] font-mono text-muted-foreground uppercase mt-0.5">
+                              {option.description}
+                            </p>
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2">
+                            <div className="h-1.5 w-1.5 bg-primary rounded-none" />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Document Name and Description */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Document Title</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="ENTER DOCUMENT NAME" 
+                    {...field}
+                    disabled={isLoading}
+                    className="rounded-none border-border font-mono text-xs uppercase h-9"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Document Name and Description */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4" />
-                    <span>Document Name</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Enter document name" 
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Descriptive name for the document
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Optional description"
-                      {...field}
-                      disabled={isLoading}
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Additional details about the document
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* File Upload */}
           <FormField
             control={form.control}
-            name="fileUrl"
+            name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center space-x-2">
-                  <Upload className="h-4 w-4" />
-                  <span>Document File</span>
-                </FormLabel>
+                <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Description / Notes</FormLabel>
                 <FormControl>
-                  <div className="space-y-4">
-                    {!uploadedFileUrl ? (
+                  <Textarea
+                    placeholder="OPTIONAL DETAILS..."
+                    {...field}
+                    disabled={isLoading}
+                    rows={1}
+                    className="rounded-none border-border font-mono text-xs uppercase min-h-[36px] resize-none"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* File Upload */}
+        <FormField
+          control={form.control}
+          name="fileUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">File Attachment</FormLabel>
+              <FormControl>
+                <div className="space-y-4">
+                  {!uploadedFileUrl ? (
+                    <div className="border border-dashed border-border p-6 hover:bg-muted/5 transition-colors text-center">
                       <FileUpload
                         onUploadComplete={(result) => {
                           setUploadedFileUrl(result.fileUrl)
@@ -300,7 +297,12 @@ export function CreateDocumentForm({
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp"
                         maxSize={16}
                       />
-                    ) : (
+                      <p className="text-[10px] font-mono text-muted-foreground uppercase mt-2">
+                        Max 16MB • PDF, Images, Office Docs
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-border p-4 bg-muted/5 flex items-center justify-between">
                       <UploadedFileDisplay
                         fileName={uploadedFileName}
                         name={uploadedFileName}
@@ -312,18 +314,18 @@ export function CreateDocumentForm({
                         }}
                         disabled={isLoading}
                       />
-                    )}
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Upload the document file (PDF, DOC, DOCX, etc.)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          {/* Associations with Combobox */}
+        {/* Associations with Combobox */}
+        <div className="space-y-4 pt-4 border-t border-border">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-foreground mb-4">Associations (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Property Combobox */}
             <FormField
@@ -331,9 +333,8 @@ export function CreateDocumentForm({
               name="propertyId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center space-x-2">
-                    <Building className="h-4 w-4" />
-                    <span>Property (Optional)</span>
+                  <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Building className="h-3 w-3" /> Property
                   </FormLabel>
                   <Popover open={openProperty} onOpenChange={setOpenProperty}>
                     <PopoverTrigger asChild>
@@ -343,25 +344,25 @@ export function CreateDocumentForm({
                           role="combobox"
                           aria-expanded={openProperty}
                           className={cn(
-                            "justify-between",
+                            "justify-between rounded-none border-border font-mono text-xs uppercase h-9",
                             !field.value && "text-muted-foreground"
                           )}
                           disabled={isLoading}
                         >
                           {field.value && field.value !== "no-property"
                             ? properties.find((property) => property.id === field.value)
-                                ? `${properties.find((property) => property.id === field.value)?.propertyCode} - ${properties.find((property) => property.id === field.value)?.propertyName}`
+                                ? `${properties.find((property) => property.id === field.value)?.propertyCode}`
                                 : "Select property"
-                            : "Select property"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            : "SELECT PROPERTY"}
+                          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
+                    <PopoverContent className="w-[300px] p-0 rounded-none border-border">
                       <Command>
-                        <CommandInput placeholder="Search property..." />
+                        <CommandInput placeholder="SEARCH PROPERTY..." className="font-mono text-xs uppercase" />
                         <CommandList>
-                          <CommandEmpty>No property found.</CommandEmpty>
+                          <CommandEmpty className="font-mono text-xs uppercase p-2">No property found.</CommandEmpty>
                           <CommandGroup>
                             <CommandItem
                               value="no-property"
@@ -369,10 +370,11 @@ export function CreateDocumentForm({
                                 form.setValue("propertyId", "")
                                 setOpenProperty(false)
                               }}
+                              className="font-mono text-xs uppercase"
                             >
                               <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4",
+                                  "mr-2 h-3 w-3",
                                   !field.value || field.value === "no-property" ? "opacity-100" : "opacity-0"
                                 )}
                               />
@@ -386,10 +388,11 @@ export function CreateDocumentForm({
                                   form.setValue("propertyId", property.id)
                                   setOpenProperty(false)
                                 }}
+                                className="font-mono text-xs uppercase"
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
+                                    "mr-2 h-3 w-3",
                                     field.value === property.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
@@ -401,9 +404,6 @@ export function CreateDocumentForm({
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Associate with a property
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -415,9 +415,8 @@ export function CreateDocumentForm({
               name="unitId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center space-x-2">
-                    <Home className="h-4 w-4" />
-                    <span>Space (Optional)</span>
+                  <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Home className="h-3 w-3" /> Space / Unit
                   </FormLabel>
                   <Popover open={openUnit} onOpenChange={setOpenUnit}>
                     <PopoverTrigger asChild>
@@ -427,25 +426,25 @@ export function CreateDocumentForm({
                           role="combobox"
                           aria-expanded={openUnit}
                           className={cn(
-                            "justify-between",
+                            "justify-between rounded-none border-border font-mono text-xs uppercase h-9",
                             !field.value && "text-muted-foreground"
                           )}
                           disabled={isLoading}
                         >
                           {field.value && field.value !== "no-spaces"
                             ? units.find((unit) => unit.id === field.value)
-                                ? `${units.find((unit) => unit.id === field.value)?.unitNumber} - ${units.find((unit) => unit.id === field.value)?.property.propertyName}`
+                                ? `${units.find((unit) => unit.id === field.value)?.unitNumber}`
                                 : "Select unit"
-                            : "Select unit"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            : "SELECT UNIT"}
+                          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
+                    <PopoverContent className="w-[300px] p-0 rounded-none border-border">
                       <Command>
-                        <CommandInput placeholder="Search space..." />
+                        <CommandInput placeholder="SEARCH SPACE..." className="font-mono text-xs uppercase" />
                         <CommandList>
-                          <CommandEmpty>No space found.</CommandEmpty>
+                          <CommandEmpty className="font-mono text-xs uppercase p-2">No space found.</CommandEmpty>
                           <CommandGroup>
                             <CommandItem
                               value="no-spaces"
@@ -453,10 +452,11 @@ export function CreateDocumentForm({
                                 form.setValue("unitId", "")
                                 setOpenUnit(false)
                               }}
+                              className="font-mono text-xs uppercase"
                             >
                               <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4",
+                                  "mr-2 h-3 w-3",
                                   !field.value || field.value === "no-spaces" ? "opacity-100" : "opacity-0"
                                 )}
                               />
@@ -470,10 +470,11 @@ export function CreateDocumentForm({
                                   form.setValue("unitId", unit.id)
                                   setOpenUnit(false)
                                 }}
+                                className="font-mono text-xs uppercase"
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
+                                    "mr-2 h-3 w-3",
                                     field.value === unit.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
@@ -485,9 +486,6 @@ export function CreateDocumentForm({
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Associate with a specific space
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -499,9 +497,8 @@ export function CreateDocumentForm({
               name="tenantId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>Tenant (Optional)</span>
+                  <FormLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                    <User className="h-3 w-3" /> Tenant
                   </FormLabel>
                   <Popover open={openTenant} onOpenChange={setOpenTenant}>
                     <PopoverTrigger asChild>
@@ -511,25 +508,25 @@ export function CreateDocumentForm({
                           role="combobox"
                           aria-expanded={openTenant}
                           className={cn(
-                            "justify-between",
+                            "justify-between rounded-none border-border font-mono text-xs uppercase h-9",
                             !field.value && "text-muted-foreground"
                           )}
                           disabled={isLoading}
                         >
                           {field.value && field.value !== "no-tenant"
                             ? tenants.find((tenant) => tenant.id === field.value)
-                                ? `${tenants.find((tenant) => tenant.id === field.value)?.bpCode} - ${tenants.find((tenant) => tenant.id === field.value)?.firstName} ${tenants.find((tenant) => tenant.id === field.value)?.lastName}`
+                                ? `${tenants.find((tenant) => tenant.id === field.value)?.bpCode}`
                                 : "Select tenant"
-                            : "Select tenant"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            : "SELECT TENANT"}
+                          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
+                    <PopoverContent className="w-[300px] p-0 rounded-none border-border">
                       <Command>
-                        <CommandInput placeholder="Search tenant..." />
+                        <CommandInput placeholder="SEARCH TENANT..." className="font-mono text-xs uppercase" />
                         <CommandList>
-                          <CommandEmpty>No tenant found.</CommandEmpty>
+                          <CommandEmpty className="font-mono text-xs uppercase p-2">No tenant found.</CommandEmpty>
                           <CommandGroup>
                             <CommandItem
                               value="no-tenant"
@@ -537,10 +534,11 @@ export function CreateDocumentForm({
                                 form.setValue("tenantId", "")
                                 setOpenTenant(false)
                               }}
+                              className="font-mono text-xs uppercase"
                             >
                               <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4",
+                                  "mr-2 h-3 w-3",
                                   !field.value || field.value === "no-tenant" ? "opacity-100" : "opacity-0"
                                 )}
                               />
@@ -554,10 +552,11 @@ export function CreateDocumentForm({
                                   form.setValue("tenantId", tenant.id)
                                   setOpenTenant(false)
                                 }}
+                                className="font-mono text-xs uppercase"
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
+                                    "mr-2 h-3 w-3",
                                     field.value === tenant.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
@@ -569,72 +568,87 @@ export function CreateDocumentForm({
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Associate with a tenant
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+        </div>
 
-          {/* Document Preview */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <h4 className="font-medium mb-2">Document Preview</h4>
-            <div className="flex items-center space-x-2 mb-2">
-              {selectedOption && (
-                <Badge className={selectedOption.color}>
-                  {selectedOption.label}
-                </Badge>
-              )}
-              {selectedProperty && (
-                <Badge variant="outline">
-                  <Building className="h-3 w-3 mr-1" />
-                  {selectedProperty.propertyCode}
-                </Badge>
-              )}
-              {selectedUnit && (
-                <Badge variant="outline">
-                  <Home className="h-3 w-3 mr-1" />
-                  {selectedUnit.unitNumber}
-                </Badge>
-              )}
-              {selectedTenant && (
-                <Badge variant="outline">
-                  <User className="h-3 w-3 mr-1" />
-                  {selectedTenant.bpCode}
-                </Badge>
-              )}
+        {/* Document Preview */}
+        <div className="border border-dashed border-border p-4 bg-muted/5">
+          <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-3">Live Preview</h4>
+          <div className="flex items-center gap-3">
+            <div className="p-2 border border-border bg-background">
+              <FileText className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {form.watch('name') || 'Document name'} • {selectedOption?.label || 'Document type'}
-            </p>
+            <div className="flex-1 min-w-0">
+               <div className="flex items-center gap-2 mb-1">
+                 <span className="font-bold text-sm uppercase truncate">{form.watch('name') || 'DOCUMENT TITLE'}</span>
+                 {selectedOption && (
+                   <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-wider font-mono border", selectedOption.color)}>
+                     {selectedOption.label}
+                   </Badge>
+                 )}
+               </div>
+               <div className="flex items-center gap-2">
+                 {selectedProperty && (
+                   <span className="text-[10px] font-mono text-muted-foreground uppercase border border-border px-1">
+                     PROP: {selectedProperty.propertyCode}
+                   </span>
+                 )}
+                 {selectedUnit && (
+                   <span className="text-[10px] font-mono text-muted-foreground uppercase border border-border px-1">
+                     UNIT: {selectedUnit.unitNumber}
+                   </span>
+                 )}
+                 {selectedTenant && (
+                   <span className="text-[10px] font-mono text-muted-foreground uppercase border border-border px-1">
+                     TENANT: {selectedTenant.bpCode}
+                   </span>
+                 )}
+                 {(!selectedProperty && !selectedUnit && !selectedTenant) && (
+                   <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                     NO ASSOCIATIONS SELECTED
+                   </span>
+                 )}
+               </div>
+            </div>
           </div>
+        </div>
 
-          {/* Submit Buttons */}
-          <div className="flex items-center space-x-4 pt-6 border-t">
-            <Button type="submit" disabled={isLoading || !uploadedFileUrl}>
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Document
-                </>
-              )}
+        {/* Submit Buttons */}
+        <div className="flex items-center justify-end space-x-2 pt-4 border-t border-border">
+          {onCancel && (
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={onCancel} 
+              disabled={isLoading}
+              className="rounded-none h-9 text-xs uppercase font-bold tracking-wider border-border"
+            >
+              Cancel
             </Button>
-            {onCancel && (
-              <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
+          )}
+          <Button 
+            type="submit" 
+            disabled={isLoading || !uploadedFileUrl}
+            className="rounded-none h-9 text-xs uppercase font-bold tracking-wider"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Save className="h-3 w-3 mr-2" />
+                Upload Record
+              </>
             )}
-          </div>
-        </form>
-      </Form>
-    </div>
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }

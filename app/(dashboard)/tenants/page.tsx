@@ -13,9 +13,8 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { useTenantSelection } from "@/hooks/use-tenant-selection"
 import { BulkUpdateUploadDialog } from "@/components/tenants/bulk-update-upload-dialog"
-import { applyBulkUpdates } from "@/lib/actions/tenant-bulk-update-actions"
-import { useSession } from "next-auth/react"
-import { toast } from "sonner"
+
+
 
 function getTenantStatusStyle(status: string) {
   switch (status) {
@@ -43,7 +42,7 @@ export default function TenantsPage() {
   })
 
   // Get user session for audit logging
-  const { data: session } = useSession()
+  // const { data: session } = useSession()
 
   // Initialize selection hook
   const {

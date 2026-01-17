@@ -1,27 +1,28 @@
 import { Suspense } from "react"
-import { getOccupancyReport, OccupancyReportFilters } from "@/lib/actions/comprehensive-reports-actions"
-import { OccupancyReportClient } from "./occupancy-report-client"
+import { getRateChangeHistoryReport, RateChangeHistoryFilters } from "@/lib/actions/comprehensive-reports-actions"
+import { RateHistoryClient } from "./rate-history-client"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface PageProps {
   searchParams: Promise<{
-    propertyId?: string
-    minOccupancy?: string
-    maxOccupancy?: string
+    tenantId?: string
+    leaseId?: string
+    unitId?: string
+    autoApplied?: string
   }>
 }
 
-async function OccupancyReportContent({ searchParams }: PageProps) {
+async function RateHistoryContent({ searchParams }: PageProps) {
   const params = await searchParams
   
-  const filters: OccupancyReportFilters = {
-    propertyId: params.propertyId,
-    minOccupancyRate: params.minOccupancy ? Number(params.minOccupancy) : undefined,
-    maxOccupancyRate: params.maxOccupancy ? Number(params.maxOccupancy) : undefined,
-    includeUnitDetails: true, // Always fetch details for the expandable view
+  const filters: RateChangeHistoryFilters = {
+    tenantId: params.tenantId,
+    leaseId: params.leaseId,
+    unitId: params.unitId,
+    isAutoApplied: params.autoApplied === 'true' ? true : params.autoApplied === 'false' ? false : undefined,
   }
 
-  const result = await getOccupancyReport(filters)
+  const result = await getRateChangeHistoryReport(filters)
 
   if (!result.success || !result.data) {
     return (
@@ -32,7 +33,7 @@ async function OccupancyReportContent({ searchParams }: PageProps) {
   }
 
   return (
-    <OccupancyReportClient 
+    <RateHistoryClient 
       initialData={result.data} 
       filters={filters} 
     />
@@ -63,11 +64,11 @@ function ReportLoading() {
   )
 }
 
-export default function OccupancyReportsPage({ searchParams }: PageProps) {
+export default function RateHistoryPage({ searchParams }: PageProps) {
   return (
     <div className="p-6 max-w-[1920px] mx-auto">
       <Suspense fallback={<ReportLoading />}>
-        <OccupancyReportContent searchParams={searchParams} />
+        <RateHistoryContent searchParams={searchParams} />
       </Suspense>
     </div>
   )

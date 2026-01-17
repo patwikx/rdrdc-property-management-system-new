@@ -69,7 +69,7 @@ export default function CreateUserPage() {
       } else {
         toast.error(result.error || "Failed to create user")
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to create user")
     } finally {
       setIsCreating(false)

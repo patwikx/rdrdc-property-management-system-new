@@ -7,7 +7,7 @@ import { DocumentsTable } from "@/components/documents/documents-table"
 import { DocumentDetailsDialog } from "@/components/documents/document-details-dialog"
 import { DocumentListItem, DocumentWithDetails, getDocumentById, deleteDocument } from "@/lib/actions/document-actions"
 import { DocumentType } from "@prisma/client"
-import { Plus, FileText } from "lucide-react"
+import { Plus, FolderOpen } from "lucide-react"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import Link from "next/link"
@@ -120,25 +120,23 @@ export function DocumentsClient({
     }
   }
 
-
-
   return (
     <>
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-6 border-b border-border mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2">
-            <FileText className="h-8 w-8" />
-            <span>Documents</span>
+          <h1 className="text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
+            <FolderOpen className="h-6 w-6 text-muted-foreground" />
+            <span>Document Repository</span>
           </h1>
-          <p className="text-muted-foreground">
-            Manage and organize all property-related documents
+          <p className="text-xs font-mono text-muted-foreground mt-1 uppercase tracking-wide">
+            System-wide File Management & Archival
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="rounded-none h-9 text-xs uppercase tracking-wider font-bold">
           <Link href="/documents/create">
-            <Plus className="h-4 w-4 mr-2" />
-            Upload Document
+            <Plus className="h-3 w-3 mr-2" />
+            Upload File
           </Link>
         </Button>
       </div>
@@ -171,17 +169,20 @@ export function DocumentsClient({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Document</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &apos;{documentToDelete?.name}&apos;? This action cannot be undone.
+            <AlertDialogTitle className="font-bold uppercase tracking-widest text-sm">Delete Document</AlertDialogTitle>
+            <AlertDialogDescription className="font-mono text-xs">
+              Are you sure you want to permanently delete &apos;{documentToDelete?.name}&apos;?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogCancel className="rounded-none border-border font-mono text-xs uppercase">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive hover:bg-destructive/90 rounded-none font-mono text-xs uppercase"
+            >
+              Confirm Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
