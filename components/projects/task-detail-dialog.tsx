@@ -19,7 +19,6 @@ import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -76,22 +75,22 @@ interface TaskDetailDialogProps {
 const priorityOptions = [
   {
     value: TaskPriority.LOW,
-    label: "Low",
+    label: "LOW",
     color: "bg-gray-500"
   },
   {
     value: TaskPriority.MEDIUM,
-    label: "Medium",
+    label: "MEDIUM",
     color: "bg-blue-500"
   },
   {
     value: TaskPriority.HIGH,
-    label: "High",
+    label: "HIGH",
     color: "bg-orange-500"
   },
   {
     value: TaskPriority.URGENT,
-    label: "Urgent",
+    label: "URGENT",
     color: "bg-red-500"
   }
 ]
@@ -214,34 +213,29 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden">
-        <DialogHeader className="pb-3">
-          <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
-          <DialogDescription className="flex items-center gap-3 text-xs">
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden rounded-none border-border p-0 gap-0 flex flex-col">
+        <DialogHeader className="p-4 border-b border-border bg-muted/5">
+          <DialogTitle className="text-lg font-bold uppercase tracking-tight line-clamp-1 pr-4">{task.title}</DialogTitle>
+          <div className="flex items-center gap-3 text-[10px] font-mono uppercase text-muted-foreground mt-1">
             <div className="flex items-center gap-1">
-              <span>in list</span>
-              <Badge variant="outline" className="text-xs px-1 py-0">TODO</Badge>
+              <span>STATUS:</span>
+              <Badge variant="outline" className="rounded-none text-[9px] px-1 py-0 h-4 border-border font-mono">TODO</Badge>
             </div>
             <div className="flex items-center gap-1">
-              <span>Created by</span>
-              <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-xs">
-                  {getInitials(task.createdBy.firstName, task.createdBy.lastName)}
-                </AvatarFallback>
-              </Avatar>
+              <span>CREATOR:</span>
               <span>{task.createdBy.firstName} {task.createdBy.lastName}</span>
             </div>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 max-h-[65vh] overflow-y-auto">
+        <div className="space-y-0 flex-1 overflow-y-auto p-4">
           {/* Task Details - Editable Row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             {/* Assignee - Editable */}
-            <div className="bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center gap-1 mb-2">
-                <User className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Assigned to</span>
+            <div className="border border-border bg-background p-3 hover:bg-muted/5 transition-colors group">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <User className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Assigned To</span>
               </div>
               <Select
                 value={assignedToId || "unassigned"}
@@ -253,27 +247,45 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                 disabled={isUpdating}
               >
                 <SelectTrigger 
-                  className="w-full h-7 text-xs border-none bg-transparent px-1 hover:bg-muted/50"
+                  className="w-full h-8 text-xs border-b border-border border-t-0 border-x-0 bg-transparent pl-0 pr-2 font-mono rounded-none focus:ring-0 focus:border-primary data-[state=open]:border-primary transition-colors"
                   data-testid="assignee-select"
                 >
-                  <SelectValue />
+                  <SelectValue>
+                    {assignedToId && assignedToId !== "unassigned" ? (
+                      (() => {
+                        const member = projectMembers.find(m => m.id === assignedToId)
+                        if (!member) return <span className="text-muted-foreground">UNKNOWN</span>
+                        return (
+                          <div className="flex items-center gap-2 ml-2">
+                            <div className="h-5 w-5 bg-primary/10 flex items-center justify-center text-[10px] font-bold border border-primary/20 text-primary rounded-none">
+                              {member.name.charAt(0)}
+                            </div>
+                            <span className="uppercase font-bold truncate">{member.name}</span>
+                          </div>
+                        )
+                      })()
+                    ) : (
+                      <div className="flex items-center gap-2 text-muted-foreground/50 ml-2">
+                        <UserX className="h-4 w-4" />
+                        <span>UNASSIGNED</span>
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="w-full">
-                  <SelectItem value="unassigned" className="px-3">
+                <SelectContent className="w-full min-w-[200px] rounded-none border-border" align="start">
+                  <SelectItem value="unassigned" className="rounded-none px-3 py-2 text-xs font-mono uppercase cursor-pointer">
                     <div className="flex items-center gap-2">
-                      <UserX className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Unassigned</span>
+                      <UserX className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">UNASSIGNED</span>
                     </div>
                   </SelectItem>
                   {projectMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id} className="px-3">
+                    <SelectItem key={member.id} value={member.id} className="rounded-none px-3 py-2 text-xs font-mono uppercase cursor-pointer">
                       <div className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-xs">
-                            {member.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{member.name}</span>
+                        <div className="h-4 w-4 bg-primary/10 flex items-center justify-center text-[9px] font-bold border border-primary/20 text-primary rounded-none">
+                          {member.name.charAt(0)}
+                        </div>
+                        <span className="truncate">{member.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -282,34 +294,37 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
             </div>
 
             {/* Due Date - Editable */}
-            <div className="bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center gap-1 mb-2">
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Due Date</span>
+            <div className="border border-border bg-background p-3 hover:bg-muted/5 transition-colors group">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Deadline</span>
               </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     className={cn(
-                      "h-7 text-xs p-0 font-normal justify-start hover:bg-muted/50",
-                      !dueDate && "text-muted-foreground"
+                      "w-full h-8 text-xs p-0 font-mono uppercase justify-start rounded-none border-b border-border bg-transparent hover:bg-transparent hover:border-primary focus:border-primary transition-colors",
+                      !dueDate && "text-muted-foreground/50"
                     )}
                     disabled={isUpdating}
                     data-testid="due-date-button"
                   >
-                    <CalendarIcon className="mr-1 h-3 w-3" />
                     {dueDate ? (
-                      <span className={cn(isOverdue && "text-red-600")}>
-                        {format(dueDate, "MMM dd")}
-                        {isOverdue && <span className="ml-1">Overdue</span>}
+                      <span className={cn("flex items-center gap-2 font-bold", isOverdue && "text-red-600")}>
+                        <span className="text-lg">{format(dueDate, "dd")}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{format(dueDate, "MMM")}</span>
+                        {isOverdue && <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 ml-auto">LATE</span>}
                       </span>
                     ) : (
-                      <span>No due date</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-lg opacity-20">--</span>
+                        <span className="text-xs font-normal">NO DATE</span>
+                      </span>
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
                   <CalendarComponent
                     mode="single"
                     selected={dueDate}
@@ -317,16 +332,17 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                       setDueDate(date)
                       handleUpdateTask({ dueDate: date || null })
                     }}
+                    className="rounded-none"
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
             {/* Priority - Editable */}
-            <div className="bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center gap-1 mb-2">
-                <Flag className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Priority</span>
+            <div className="border border-border bg-background p-3 hover:bg-muted/5 transition-colors group">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Flag className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Priority</span>
               </div>
               <Select
                 value={priority}
@@ -337,23 +353,23 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                 disabled={isUpdating}
               >
                 <SelectTrigger 
-                  className="w-full h-7 text-xs border-none bg-transparent px-1 hover:bg-muted/50"
+                  className="w-full h-8 text-xs border-b border-border border-t-0 border-x-0 bg-transparent pl-0 pr-2 font-mono uppercase rounded-none focus:ring-0 focus:border-primary data-[state=open]:border-primary transition-colors"
                   data-testid="priority-select"
                 >
                   <SelectValue>
                     {priority && getPriorityOption(priority) && (
-                      <div className="flex items-center gap-2">
-                        <div className={cn("w-2 h-2 rounded-full", getPriorityOption(priority)?.color)} />
-                        <span>{getPriorityOption(priority)?.label}</span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <div className={cn("w-2 h-2 rounded-none", getPriorityOption(priority)?.color)} />
+                        <span className="font-bold text-sm">{getPriorityOption(priority)?.label}</span>
                       </div>
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="w-full">
+                <SelectContent className="w-full min-w-[140px] rounded-none border-border" align="start">
                   {priorityOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="px-3">
+                    <SelectItem key={option.value} value={option.value} className="rounded-none px-3 py-2 text-xs font-mono uppercase cursor-pointer">
                       <div className="flex items-center gap-2">
-                        <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                        <div className={cn("w-2 h-2 rounded-none", option.color)} />
                         <span>{option.label}</span>
                       </div>
                     </SelectItem>
@@ -364,17 +380,17 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
           </div>
 
           {/* Description - Editable */}
-          <div className="bg-muted/30 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
+          <div className="border border-border bg-muted/5 p-3 mb-4">
+            <div className="flex items-center justify-between mb-2 border-b border-dashed border-border/50 pb-1">
               <div className="flex items-center gap-1">
                 <Edit3 className="h-3 w-3 text-muted-foreground" />
-                <span className="text-sm font-medium">Description</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Description</span>
               </div>
               {!isEditingDescription && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-xs"
+                  className="h-5 px-2 text-[10px] uppercase font-bold hover:bg-background border border-transparent hover:border-border rounded-none"
                   onClick={() => setIsEditingDescription(true)}
                 >
                   Edit
@@ -386,22 +402,14 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[60px] resize-none text-sm"
-                  placeholder="Add a more detailed description..."
+                  className="min-h-[80px] resize-none text-xs font-mono rounded-none border-border bg-background focus-visible:ring-0"
+                  placeholder="ADD DETAILS..."
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                   <Button
+                    variant="outline"
                     size="sm"
-                    className="h-6 px-3 text-xs"
-                    onClick={handleSaveDescription}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-3 text-xs"
+                    className="h-6 px-3 text-[10px] uppercase font-bold rounded-none border-border"
                     onClick={() => {
                       setDescription(task.description || "")
                       setIsEditingDescription(false)
@@ -409,16 +417,24 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
                   >
                     Cancel
                   </Button>
+                  <Button
+                    size="sm"
+                    className="h-6 px-3 text-[10px] uppercase font-bold rounded-none"
+                    onClick={handleSaveDescription}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "SAVING..." : "SAVE"}
+                  </Button>
                 </div>
               </div>
             ) : (
               <div
-                className="text-sm leading-relaxed cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
+                className="text-xs font-mono leading-relaxed cursor-pointer hover:bg-muted/10 p-1 -m-1"
                 onClick={() => setIsEditingDescription(true)}
               >
                 {description || (
-                  <span className="text-muted-foreground">
-                    Add a more detailed description...
+                  <span className="text-muted-foreground italic uppercase text-[10px]">
+                    NO DESCRIPTION PROVIDED...
                   </span>
                 )}
               </div>
@@ -426,45 +442,43 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
           </div>
 
           {/* Activity - Compact */}
-          <div className="bg-muted/30 rounded-lg p-3">
+          <div className="border-t border-border pt-4">
             <div className="flex items-center gap-1 mb-3">
               <MessageCircle className="h-3 w-3 text-muted-foreground" />
-              <span className="text-sm font-medium">Activity</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Activity Log</span>
             </div>
             
             {/* Add Comment */}
-            <div className="flex gap-2 mb-3">
-              <Avatar className="h-7 w-7">
-                <AvatarFallback className="text-xs">
-                  {getInitials(task.createdBy.firstName, task.createdBy.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
+            <div className="flex gap-2 mb-4">
+              <div className="h-8 w-8 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-bold font-mono text-primary">ME</span>
+              </div>
+              <div className="flex-1 space-y-2">
                 <Textarea
-                  placeholder="Write a comment..."
+                  placeholder="ADD A COMMENT..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  className="min-h-[60px] resize-none text-sm"
+                  className="min-h-[40px] h-[40px] resize-none text-xs font-mono rounded-none border-border bg-muted/5 focus-visible:ring-0"
                   disabled={isSavingComment}
                 />
                 {newComment.trim() && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 justify-end">
                     <Button 
-                      size="sm" 
-                      className="h-7 px-3 text-xs"
-                      onClick={handleSaveComment}
-                      disabled={isSavingComment}
-                    >
-                      {isSavingComment ? "Saving..." : "Save"}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
+                      variant="outline" 
                       size="sm"
-                      className="h-7 px-3 text-xs"
+                      className="h-6 px-3 text-[10px] uppercase font-bold rounded-none border-border"
                       onClick={() => setNewComment("")}
                       disabled={isSavingComment}
                     >
                       Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="h-6 px-3 text-[10px] uppercase font-bold rounded-none"
+                      onClick={handleSaveComment}
+                      disabled={isSavingComment}
+                    >
+                      {isSavingComment ? "POSTING..." : "POST"}
                     </Button>
                   </div>
                 )}
@@ -473,117 +487,76 @@ export function TaskDetailDialog({ task, open, onOpenChange, projectMembers = []
 
             {/* Comments List */}
             {isLoadingComments ? (
-              <div className="text-center py-4 text-muted-foreground text-xs">
-                Loading comments...
+              <div className="text-center py-4 text-muted-foreground text-[10px] uppercase font-mono animate-pulse">
+                SYNCING COMMENTS...
               </div>
             ) : comments.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 pl-4 border-l border-border/50">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">
-                        {getInitials(comment.user.firstName, comment.user.lastName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 bg-muted/50 rounded-lg p-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium">
-                          {comment.user.firstName} {comment.user.lastName}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.createdAt), 'MMM dd, yyyy • h:mm a')}
-                        </span>
-                      </div>
-                      <p className="text-xs leading-relaxed">{comment.content}</p>
+                  <div key={comment.id} className="group relative">
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-foreground">
+                        {comment.user.firstName} {comment.user.lastName}
+                      </span>
+                      <span className="text-[9px] font-mono text-muted-foreground uppercase">
+                        {format(new Date(comment.createdAt), 'MM/dd HH:mm')}
+                      </span>
                     </div>
+                    <p className="text-xs font-mono text-muted-foreground leading-relaxed">{comment.content}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-muted-foreground text-xs">
-                No comments yet. Be the first to add one!
+              <div className="text-center py-4 text-muted-foreground text-[10px] uppercase font-mono border border-dashed border-border/50 bg-muted/5">
+                NO ACTIVITY RECORDED
               </div>
             )}
           </div>
+        </div>
 
-          {/* Actions - Functional */}
-          <div className="bg-muted/30 rounded-lg p-3">
-            <div className="text-sm font-medium mb-2">Actions</div>
-            <div className="grid grid-cols-3 gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={() => {
-                  // Focus on assignee dropdown
-                  const assigneeSelect = document.querySelector('[data-testid="assignee-select"]')
-                  if (assigneeSelect) {
-                    (assigneeSelect as HTMLElement).click()
-                  }
-                }}
-              >
-                <User className="h-3 w-3 mr-1" />
-                Assign
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={() => {
-                  // Focus on priority dropdown
-                  const prioritySelect = document.querySelector('[data-testid="priority-select"]')
-                  if (prioritySelect) {
-                    (prioritySelect as HTMLElement).click()
-                  }
-                }}
-              >
-                <Flag className="h-3 w-3 mr-1" />
-                Priority
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={() => toast.info("Checklist feature coming soon!")}
-              >
-                <CheckSquare className="h-3 w-3 mr-1" />
-                Checklist
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={() => {
-                  // Focus on due date picker
-                  const dueDateButton = document.querySelector('[data-testid="due-date-button"]')
-                  if (dueDateButton) {
-                    (dueDateButton as HTMLElement).click()
-                  }
-                }}
-              >
-                <Calendar className="h-3 w-3 mr-1" />
-                Due Date
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={() => toast.info("File attachments coming soon!")}
-              >
-                <Paperclip className="h-3 w-3 mr-1" />
-                Attachment
-              </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                className="h-8 text-xs justify-start"
-                onClick={handleDeleteTask}
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
-            </div>
-          </div>
+        {/* Actions Footer */}
+        <div className="p-3 bg-muted/5 border-t border-border grid grid-cols-4 gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-[10px] uppercase font-bold rounded-none border-border hover:bg-background"
+            onClick={() => {
+              const assigneeSelect = document.querySelector('[data-testid="assignee-select"]')
+              if (assigneeSelect) (assigneeSelect as HTMLElement).click()
+            }}
+          >
+            Assign
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-[10px] uppercase font-bold rounded-none border-border hover:bg-background"
+            onClick={() => {
+              const prioritySelect = document.querySelector('[data-testid="priority-select"]')
+              if (prioritySelect) (prioritySelect as HTMLElement).click()
+            }}
+          >
+            Priority
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-[10px] uppercase font-bold rounded-none border-border hover:bg-background"
+            onClick={() => {
+              const dueDateButton = document.querySelector('[data-testid="due-date-button"]')
+              if (dueDateButton) (dueDateButton as HTMLElement).click()
+            }}
+          >
+            Due Date
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="h-8 text-[10px] uppercase font-bold rounded-none hover:bg-destructive/90"
+            onClick={handleDeleteTask}
+          >
+            Delete
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

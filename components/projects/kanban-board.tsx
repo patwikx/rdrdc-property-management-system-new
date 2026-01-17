@@ -167,7 +167,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
           if (result.error) {
             toast.error(result.error)
           } else {
-            toast.success("Tasks reordered successfully")
+            // Optimistic update done via state
           }
           router.refresh()
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -186,7 +186,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
         if (result.error) {
           toast.error(result.error)
         } else {
-          toast.success("Task moved successfully")
+          // Optimistic update done via state
         }
         router.refresh()
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -210,14 +210,14 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
   
   if (!board) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No board found for this project.</p>
+      <div className="flex h-full items-center justify-center border border-dashed border-border bg-muted/5">
+        <p className="text-sm font-mono uppercase text-muted-foreground">No board configuration found.</p>
       </div>
     )
   }
 
   return (
-    <div className="h-full bg-muted/20 rounded-lg p-6">
+    <div className="h-full w-full overflow-hidden">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -225,7 +225,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-6 overflow-x-auto pb-4 h-full">
+        <div className="flex gap-4 overflow-x-auto pb-4 h-full w-full max-w-full scrollbar-thin scrollbar-thumb-border">
           <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {columns.map((column) => (
               <KanbanColumn
@@ -247,7 +247,7 @@ export function KanbanBoard({ project }: KanbanBoardProps) {
         
         <DragOverlay>
           {activeTask ? (
-            <div className="rotate-3 opacity-90">
+            <div className="rotate-2 opacity-90">
               <TaskCard task={activeTask} />
             </div>
           ) : null}

@@ -73,11 +73,11 @@ export default function ApprovalsPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
+          <div className="h-8 bg-muted rounded-none w-1/3" />
+          <div className="h-4 bg-muted rounded-none w-1/2" />
           <div className="grid gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-24 bg-muted rounded" />
+              <div key={i} className="h-24 bg-muted rounded-none" />
             ))}
           </div>
         </div>
@@ -88,97 +88,96 @@ export default function ApprovalsPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Rate Approvals</h2>
-          <p className="text-muted-foreground">
-            Review and process pending rate change and override requests
+          <h2 className="text-2xl font-bold uppercase tracking-tight">Rate Approvals</h2>
+          <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mt-1">
+            Processing Queue & Audits
           </p>
         </div>
         <Button 
           variant="outline" 
           onClick={handleRefresh}
           disabled={isRefreshing}
+          className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
+          <RefreshCw className={`h-3 w-3 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh Data
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Recommendations</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{totalRecommending}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting your recommendation
-            </p>
-          </CardContent>
-        </Card>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Recommendations</span>
+            <Clock className="h-4 w-4 text-amber-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-amber-600">{totalRecommending}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Pending</span>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Final Approval</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{totalFinal}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting your final approval
-            </p>
-          </CardContent>
-        </Card>
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Final Approval</span>
+            <CheckCircle className="h-4 w-4 text-blue-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-blue-600">{totalFinal}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Action Required</span>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rate Changes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+        <div className="p-4 border-r border-border flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Rate Changes</span>
+            <TrendingUp className="h-4 w-4 text-emerald-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-emerald-600">
               {recommendingRequests.length + finalRequests.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total pending rate changes
-            </p>
-          </CardContent>
-        </Card>
+            </span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Total</span>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rate Overrides</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+        <div className="p-4 flex flex-col justify-between h-24 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Overrides</span>
+            <Shield className="h-4 w-4 text-purple-600/50" />
+          </div>
+          <div>
+            <span className="text-2xl font-mono font-bold tracking-tighter text-purple-600">
               {recommendingOverrides.length + finalOverrides.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total pending overrides
-            </p>
-          </CardContent>
-        </Card>
+            </span>
+            <span className="text-[10px] text-muted-foreground ml-2 font-mono uppercase tracking-wide">Total</span>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs for Recommending vs Final Approval */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="recommending" className="relative">
+        <TabsList className="w-full justify-start border-b border-border rounded-none h-auto p-0 bg-transparent gap-6">
+          <TabsTrigger 
+            value="recommending" 
+            className="relative rounded-none border-b-2 border-transparent px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none bg-transparent hover:text-foreground transition-colors"
+          >
             Pending Recommendations
             {totalRecommending > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 rounded-none px-1.5 py-0 text-[10px] font-mono font-bold">
                 {totalRecommending}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="final" className="relative">
+          <TabsTrigger 
+            value="final" 
+            className="relative rounded-none border-b-2 border-transparent px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none bg-transparent hover:text-foreground transition-colors"
+          >
             Pending Final Approval
             {totalFinal > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 rounded-none px-1.5 py-0 text-[10px] font-mono font-bold">
                 {totalFinal}
               </Badge>
             )}
@@ -187,17 +186,13 @@ export default function ApprovalsPage() {
 
         <TabsContent value="recommending" className="space-y-6">
           {totalRecommending === 0 ? (
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                  <h3 className="mt-4 text-lg font-semibold">All caught up!</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    No pending recommendations at this time.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border bg-muted/5">
+              <CheckCircle className="h-10 w-10 text-muted-foreground/30 mb-4" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Queue Empty</h3>
+              <p className="text-xs text-muted-foreground mt-1 font-mono uppercase">
+                No items requiring recommendation
+              </p>
+            </div>
           ) : (
             <>
               {/* Rate Change Requests */}
@@ -212,41 +207,40 @@ export default function ApprovalsPage() {
 
               {/* Rate Override Requests */}
               {recommendingOverrides.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Pending Override Recommendations
-                      <Badge variant="secondary">{recommendingOverrides.length}</Badge>
+                <Card className="rounded-none border border-border shadow-none">
+                  <CardHeader className="border-b border-border bg-muted/5 py-3">
+                    <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                      <Shield className="h-4 w-4" />
+                      Override Recommendations
+                      <Badge variant="secondary" className="ml-auto rounded-none font-mono text-[10px]">{recommendingOverrides.length}</Badge>
                     </CardTitle>
-                    <CardDescription>
-                      Rate override requests awaiting your recommendation
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
                       {recommendingOverrides.map((override) => (
-                        <div key={override.id} className="p-4 border rounded-lg">
+                        <div key={override.id} className="p-4 hover:bg-muted/5 transition-colors">
                           <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">
-                                {override.leaseUnit.unit.property.propertyName} - Unit {override.leaseUnit.unit.unitNumber}
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm font-bold">{override.leaseUnit.unit.unitNumber}</span>
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">{override.leaseUnit.unit.property.propertyName}</span>
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs font-mono text-muted-foreground uppercase">
                                 {override.leaseUnit.lease.tenant.company} ({override.leaseUnit.lease.tenant.bpCode})
                               </div>
-                              <div className="mt-2">
-                                <Badge variant="outline">{override.overrideType}</Badge>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="rounded-none font-mono text-[10px] uppercase">{override.overrideType}</Badge>
                                 {override.fixedRate && (
-                                  <span className="ml-2 text-sm">Fixed: ₱{override.fixedRate.toLocaleString()}</span>
+                                  <span className="text-xs font-mono">FIXED: ₱{override.fixedRate.toLocaleString()}</span>
                                 )}
                                 {override.percentageCap && (
-                                  <span className="ml-2 text-sm">Cap: {override.percentageCap}%</span>
+                                  <span className="text-xs font-mono">CAP: {override.percentageCap}%</span>
                                 )}
                               </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              Requested by {override.requestedBy.firstName} {override.requestedBy.lastName}
+                            <div className="text-right">
+                              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Requested By</div>
+                              <div className="text-xs font-mono">{override.requestedBy.firstName} {override.requestedBy.lastName}</div>
                             </div>
                           </div>
                         </div>
@@ -261,17 +255,13 @@ export default function ApprovalsPage() {
 
         <TabsContent value="final" className="space-y-6">
           {totalFinal === 0 ? (
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                  <h3 className="mt-4 text-lg font-semibold">All caught up!</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    No pending final approvals at this time.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border bg-muted/5">
+              <CheckCircle className="h-10 w-10 text-muted-foreground/30 mb-4" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">All Clear</h3>
+              <p className="text-xs text-muted-foreground mt-1 font-mono uppercase">
+                No items pending final approval
+              </p>
+            </div>
           ) : (
             <>
               {/* Rate Change Requests */}
@@ -286,41 +276,40 @@ export default function ApprovalsPage() {
 
               {/* Rate Override Requests */}
               {finalOverrides.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Pending Override Final Approvals
-                      <Badge variant="secondary">{finalOverrides.length}</Badge>
+                <Card className="rounded-none border border-border shadow-none">
+                  <CardHeader className="border-b border-border bg-muted/5 py-3">
+                    <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                      <Shield className="h-4 w-4" />
+                      Final Approval Overrides
+                      <Badge variant="secondary" className="ml-auto rounded-none font-mono text-[10px]">{finalOverrides.length}</Badge>
                     </CardTitle>
-                    <CardDescription>
-                      Recommended rate overrides awaiting your final approval
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
                       {finalOverrides.map((override) => (
-                        <div key={override.id} className="p-4 border rounded-lg">
+                        <div key={override.id} className="p-4 hover:bg-muted/5 transition-colors">
                           <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">
-                                {override.leaseUnit.unit.property.propertyName} - Unit {override.leaseUnit.unit.unitNumber}
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm font-bold">{override.leaseUnit.unit.unitNumber}</span>
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">{override.leaseUnit.unit.property.propertyName}</span>
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs font-mono text-muted-foreground uppercase">
                                 {override.leaseUnit.lease.tenant.company} ({override.leaseUnit.lease.tenant.bpCode})
                               </div>
-                              <div className="mt-2">
-                                <Badge variant="outline">{override.overrideType}</Badge>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="rounded-none font-mono text-[10px] uppercase">{override.overrideType}</Badge>
                                 {override.fixedRate && (
-                                  <span className="ml-2 text-sm">Fixed: ₱{override.fixedRate.toLocaleString()}</span>
+                                  <span className="text-xs font-mono">FIXED: ₱{override.fixedRate.toLocaleString()}</span>
                                 )}
                                 {override.percentageCap && (
-                                  <span className="ml-2 text-sm">Cap: {override.percentageCap}%</span>
+                                  <span className="text-xs font-mono">CAP: {override.percentageCap}%</span>
                                 )}
                               </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              Requested by {override.requestedBy.firstName} {override.requestedBy.lastName}
+                            <div className="text-right">
+                              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Requested By</div>
+                              <div className="text-xs font-mono">{override.requestedBy.firstName} {override.requestedBy.lastName}</div>
                             </div>
                           </div>
                         </div>

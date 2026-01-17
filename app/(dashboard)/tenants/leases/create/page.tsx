@@ -3,23 +3,18 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Building, Users, Calendar as CalendarIcon, DollarSign, Search, X, TrendingUp, ArrowLeft, Check, ChevronsUpDown } from "lucide-react"
+import { ArrowLeft, ArrowRight, Save, Activity, Info, CheckCircle, Check, TrendingUp } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Form } from "@/components/ui/form"
 import { createLease, getAvailableUnits, AvailableUnit } from "@/lib/actions/lease-actions"
 import { getAllTenants } from "@/lib/actions/tenant-actions"
-import { UnitCard } from "@/components/lease-form/unit-card"
-import { UnitConfiguration } from "@/components/lease-form/unit-configuration"
+import { LeaseDetailsStep } from "@/components/lease-form/lease-details-step"
+import { SpaceSelectionStep } from "@/components/lease-form/space-selection-step"
+import { RateIncreaseStep } from "@/components/lease-form/rate-increase-step"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 import { z } from "zod"
 
 // Types
@@ -52,7 +47,6 @@ const LeaseFormSchema = z.object({
   startDate: z.date({ message: "Start date is required" }),
   endDate: z.date({ message: "End date is required" }),
   securityDeposit: z.number().min(0, "Security deposit must be positive"),
-  // Rate increase settings - required fields (Requirements 1.2, 1.3)
   standardIncreasePercentage: z.number().min(0, "Percentage must be positive").max(100, "Percentage cannot exceed 100"),
   increaseIntervalYears: z.number().min(1, "Interval must be at least 1 year").max(10, "Interval cannot exceed 10 years"),
   autoIncreaseEnabled: z.boolean()
@@ -63,8 +57,15 @@ const LeaseFormSchema = z.object({
 
 type LeaseFormData = z.infer<typeof LeaseFormSchema>
 
+const workflowSteps = [
+  { step: 1, title: "Lease Details", fields: ['tenantId', 'startDate', 'endDate', 'securityDeposit'] },
+  { step: 2, title: "Space Selection", fields: [] }, // No form fields, just selection
+  { step: 3, title: "Rate Increases", fields: ['standardIncreasePercentage', 'increaseIntervalYears', 'autoIncreaseEnabled'] },
+]
+
 export default function CreateLeasePage() {
   const router = useRouter()
+  const [currentStep, setCurrentStep] = useState(1)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [units, setUnits] = useState<AvailableUnit[]>([])
   const [selectedUnitsData, setSelectedUnitsData] = useState<SelectedUnitData[]>([])
@@ -231,7 +232,55 @@ export default function CreateLeasePage() {
     return selectedUnitsData.reduce((sum, unitData) => sum + unitData.customRentAmount, 0)
   }
 
+  const calculateProjectedRent = () => {
+    const currentRent = calculateTotalRent()
+    const increasePercentage = form.watch('standardIncreasePercentage') || 0
+    const intervalYears = form.watch('increaseIntervalYears') || 3
+    const autoIncreaseEnabled = form.watch('autoIncreaseEnabled')
+    
+    if (!autoIncreaseEnabled || increasePercentage === 0) {
+      return null
+    }
+    
+    const projectedRent = currentRent * (1 + increasePercentage / 100)
+    return {
+      rent: projectedRent,
+      years: intervalYears
+    }
+  }
+
+  const handleNext = async () => {
+    const fields = workflowSteps[currentStep - 1].fields as (keyof LeaseFormData)[]
+    
+    // For step 2 (space selection), validate that at least one unit is selected
+    if (currentStep === 2) {
+      if (selectedUnitsData.length === 0) {
+        toast.error("Please select at least one space")
+        return
+      }
+      setCurrentStep(curr => curr + 1)
+      return
+    }
+    
+    const isValid = await form.trigger(fields)
+    
+    if (isValid && currentStep < workflowSteps.length) {
+      setCurrentStep(curr => curr + 1)
+    }
+  }
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(curr => curr - 1)
+    }
+  }
+
   async function onSubmit(data: LeaseFormData) {
+    if (currentStep !== workflowSteps.length) {
+      console.warn('Form submission blocked - not on final step')
+      return
+    }
+
     if (selectedUnitsData.length === 0) {
       toast.error("Please select at least one space")
       return
@@ -271,15 +320,6 @@ export default function CreateLeasePage() {
     }
   }
 
-  const getTenantName = (tenant: Tenant) => {
-    return tenant.businessName || tenant.company
-  }
-
-  const getTenantDisplayText = (tenantId: string) => {
-    const tenant = tenants.find(t => t.id === tenantId)
-    return tenant ? getTenantName(tenant) : "Select tenant"
-  }
-
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -303,499 +343,207 @@ export default function CreateLeasePage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight font-mono uppercase">Create New Lease</h2>
           <p className="text-xs text-muted-foreground font-mono mt-1">
-            Initialize new contract agreement
+            Step {currentStep} of {workflowSteps.length}: {workflowSteps[currentStep-1].title}
           </p>
         </div>
-        <Link href="/tenants/leases">
-          <Button variant="outline" className="rounded-none h-9 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
-            <ArrowLeft className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/tenants/leases">
+            <Button variant="outline" disabled={isSaving} className="rounded-none h-9 px-4 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted">
+              Cancel
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-8">
-              {/* Tenant Selection */}
-              <div className="border border-border bg-background">
-                <div className="border-b border-border bg-muted/10 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                    <Users className="h-3 w-3" />
-                    Tenant Party
-                  </span>
-                </div>
-                <div className="p-6">
-                  <FormField
-                    control={form.control}
-                    name="tenantId"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Select Tenant *</FormLabel>
-                        <Popover open={openTenantSelect} onOpenChange={setOpenTenantSelect}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={openTenantSelect}
-                                className={cn(
-                                  "w-full justify-between h-10 rounded-none border-border font-mono text-sm",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? getTenantDisplayText(field.value) : "Select tenant"}
-                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[400px] p-0 rounded-none border-border" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search tenant..." className="font-mono text-xs uppercase" />
-                              <CommandList>
-                                <CommandEmpty>No tenant found</CommandEmpty>
-                                <CommandGroup>
-                                  {tenants.map((tenant) => (
-                                    <CommandItem
-                                      key={tenant.id}
-                                      value={`${getTenantName(tenant)} ${tenant.bpCode} ${tenant.email}`}
-                                      onSelect={() => {
-                                        form.setValue("tenantId", tenant.id)
-                                        setOpenTenantSelect(false)
-                                      }}
-                                      className="font-mono text-xs uppercase"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-3 w-3",
-                                          field.value === tenant.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className="font-bold">{getTenantName(tenant)}</span>
-                                        <span className="text-[10px] text-muted-foreground">{tenant.bpCode}</span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Lease Period */}
-              <div className="border border-border bg-background">
-                <div className="border-b border-border bg-muted/10 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                    <CalendarIcon className="h-3 w-3" />
-                    Contract Duration
-                  </span>
-                </div>
-                <div className="p-6 grid gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Start Date *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal h-10 rounded-none border-border font-mono text-sm",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              captionLayout="dropdown"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">End Date *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal h-10 rounded-none border-border font-mono text-sm",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              captionLayout="dropdown"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Space Selection */}
-              <div className="border border-border bg-background">
-                <div className="border-b border-border bg-muted/10 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                    <Building className="h-3 w-3" />
-                    Space Assignment
-                  </span>
-                </div>
-                <div className="p-6">
-                  {units.length === 0 ? (
-                    <div className="text-center py-12 border border-dashed border-border bg-muted/5">
-                      <Building className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Available Spaces</h3>
-                      <p className="text-[10px] text-muted-foreground mt-1 font-mono">All units occupied</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Search and Filters */}
-                      <div className="flex flex-wrap gap-2 pb-4 border-b border-dashed border-border">
-                        <div className="relative flex-1 min-w-[200px]">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                          <Input
-                            placeholder="Search spaces..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 h-9 rounded-none border-border font-mono text-xs uppercase"
-                          />
-                        </div>
-
-                        <Popover open={openPropertySelect} onOpenChange={setOpenPropertySelect}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openPropertySelect}
-                              className="w-[180px] justify-between h-9 rounded-none border-border font-mono text-xs uppercase"
-                            >
-                              {selectedProperty === "all"
-                                ? "All properties"
-                                : properties.find((p) => p.id === selectedProperty)?.name}
-                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0 rounded-none border-border">
-                            <Command>
-                              <CommandInput placeholder="Search property..." className="font-mono text-xs uppercase" />
-                              <CommandList>
-                                <CommandEmpty>No property found</CommandEmpty>
-                                <CommandGroup>
-                                  <CommandItem
-                                    value="all"
-                                    onSelect={() => {
-                                      setSelectedProperty("all")
-                                      setOpenPropertySelect(false)
-                                    }}
-                                    className="font-mono text-xs uppercase"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-3 w-3",
-                                        selectedProperty === "all" ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    All properties
-                                  </CommandItem>
-                                  {properties.map((prop) => (
-                                    <CommandItem
-                                      key={prop.id}
-                                      value={prop.name}
-                                      onSelect={() => {
-                                        setSelectedProperty(prop.id)
-                                        setOpenPropertySelect(false)
-                                      }}
-                                      className="font-mono text-xs uppercase"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-3 w-3",
-                                          selectedProperty === prop.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {prop.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-
-                        <Input
-                          type="number"
-                          placeholder="Min area"
-                          value={minArea}
-                          onChange={(e) => setMinArea(e.target.value)}
-                          className="w-[100px] h-9 rounded-none border-border font-mono text-xs"
-                        />
-
-                        {hasActiveFilters && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={clearFilters}
-                            title="Clear filters"
-                            className="h-9 w-9 rounded-none border-border"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Results */}
-                      {filteredUnits.length === 0 ? (
-                        <div className="text-center py-12 border border-dashed border-border bg-muted/5">
-                          <Search className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No Spaces Found</h3>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wide">
-                            Available: {filteredUnits.length} / {units.length}
-                          </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[520px] overflow-y-auto pr-2">
-                            {filteredUnits.map((unit) => (
-                              <UnitCard
-                                key={unit.id}
-                                unit={unit}
-                                isSelected={selectedUnitsData.some(u => u.unit.id === unit.id)}
-                                onToggle={toggleUnitSelection}
-                              />
-                            ))}
-                          </div>
-
-                          <UnitConfiguration
-                            selectedUnitsData={selectedUnitsData}
-                            onUpdateUnitRent={updateUnitRent}
-                            onUpdateFloorRate={updateFloorRate}
-                            onRemoveUnit={handleRemoveUnit}
-                          />
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar */}
-            <div className="space-y-6">
-              {/* Financials */}
-              <div className="border border-border bg-background">
-                <div className="border-b border-border bg-muted/10 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                    <DollarSign className="h-3 w-3" />
-                    Financial Breakdown
-                  </span>
-                </div>
-                <div className="p-6 space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="securityDeposit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Security Deposit</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-muted-foreground">₱</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              className="pl-8 h-9 rounded-none border-border font-mono text-sm"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="space-y-3 pt-4 border-t border-dashed border-border">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-muted-foreground uppercase">Spaces Selected</span>
-                      <span className="font-bold">{selectedUnitsData.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-muted-foreground uppercase">Monthly Rent</span>
-                      <span className="font-bold">₱{calculateTotalRent().toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-muted-foreground uppercase">Deposit</span>
-                      <span className="font-bold">₱{(form.watch('securityDeposit') || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm font-mono pt-3 border-t border-border mt-2">
-                      <span className="font-bold uppercase tracking-wide">Initial Due</span>
-                      <span className="font-bold text-primary">₱{(calculateTotalRent() + (form.watch('securityDeposit') || 0)).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rate Escalation */}
-              <div className="border border-border bg-background">
-                <div className="border-b border-border bg-muted/10 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                    <TrendingUp className="h-3 w-3" />
-                    Escalation Terms
-                  </span>
-                </div>
-                <div className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="standardIncreasePercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Increase Rate (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            placeholder="10"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            className="h-9 rounded-none border-border font-mono text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="increaseIntervalYears"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Interval (Years)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="1"
-                            placeholder="3"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            className="h-9 rounded-none border-border font-mono text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="autoIncreaseEnabled"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="rounded-none mt-0.5"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-xs font-bold uppercase tracking-wide">
-                            Auto-Apply Increase
-                          </FormLabel>
-                          <FormDescription className="text-[10px] font-mono">
-                            System will flag lease for rate review automatically.
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="grid gap-2">
-                <Button 
-                  type="submit" 
-                  className="w-full rounded-none h-10 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={isSaving || selectedUnitsData.length === 0}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Form */}
+        <div className="lg:col-span-2">
+          <Form {...form}>
+            <form id="lease-form" onSubmit={(e) => {
+              e.preventDefault()
+              if (currentStep === workflowSteps.length) {
+                form.handleSubmit(onSubmit)(e)
+              } else {
+                handleNext()
+              }
+            }} className="space-y-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                      Initializing...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-3 w-3 mr-2" />
-                      Create Contract
-                    </>
+                  {currentStep === 1 && (
+                    <LeaseDetailsStep
+                      form={form}
+                      tenants={tenants}
+                      openTenantSelect={openTenantSelect}
+                      setOpenTenantSelect={setOpenTenantSelect}
+                    />
                   )}
+                  {currentStep === 2 && (
+                    <SpaceSelectionStep
+                      units={units}
+                      filteredUnits={filteredUnits}
+                      selectedUnitsData={selectedUnitsData}
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      selectedProperty={selectedProperty}
+                      setSelectedProperty={setSelectedProperty}
+                      minArea={minArea}
+                      setMinArea={setMinArea}
+                      properties={properties}
+                      openPropertySelect={openPropertySelect}
+                      setOpenPropertySelect={setOpenPropertySelect}
+                      hasActiveFilters={hasActiveFilters}
+                      clearFilters={clearFilters}
+                      toggleUnitSelection={toggleUnitSelection}
+                      updateUnitRent={updateUnitRent}
+                      updateFloorRate={updateFloorRate}
+                      handleRemoveUnit={handleRemoveUnit}
+                    />
+                  )}
+                  {currentStep === 3 && (
+                    <RateIncreaseStep form={form} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Navigation Actions */}
+              <div className="flex items-center justify-between pt-6 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrev}
+                  disabled={currentStep === 1 || isSaving}
+                  className="rounded-none h-10 px-6 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted"
+                >
+                  <ArrowLeft className="h-3 w-3 mr-2" />
+                  Back
                 </Button>
-                <Button type="button" variant="outline" className="w-full rounded-none h-10 text-xs font-mono uppercase tracking-wider border-border hover:bg-muted" asChild>
-                  <Link href="/tenants/leases">
-                    Cancel
-                  </Link>
-                </Button>
+
+                {currentStep === workflowSteps.length ? (
+                  <Button 
+                    type="submit" 
+                    disabled={isSaving}
+                    className="rounded-none h-10 px-8 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3 w-3 mr-2" />
+                        Create Lease
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleNext()
+                    }}
+                    className="rounded-none h-10 px-6 text-xs font-mono uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Next
+                    <ArrowRight className="h-3 w-3 ml-2" />
+                  </Button>
+                )}
               </div>
+            </form>
+          </Form>
+        </div>
+
+        {/* Sidebar Guide */}
+        <div className="space-y-6">
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Progress</h3>
+            </div>
+            <div className="space-y-0 relative">
+              <div className="absolute left-3.5 top-2 bottom-2 w-px bg-border" />
+              {workflowSteps.map((step) => (
+                <div key={step.step} className="flex items-center gap-4 relative py-2">
+                  <div className={`w-7 h-7 flex items-center justify-center rounded-none border text-xs font-mono z-10 transition-colors ${
+                    currentStep >= step.step
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-background text-muted-foreground border-border'
+                  }`}>
+                    {currentStep > step.step ? <Check className="h-3 w-3" /> : step.step}
+                  </div>
+                  <span className={`text-xs font-mono uppercase tracking-wide transition-colors ${
+                    currentStep === step.step ? 'text-foreground font-bold' : 
+                    currentStep > step.step ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-        </form>
-      </Form>
+
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Summary</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-muted-foreground uppercase">Spaces Selected</span>
+                <span className="font-bold">{selectedUnitsData.length}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-muted-foreground uppercase">Monthly Rent</span>
+                <span className="font-bold">₱{calculateTotalRent().toLocaleString()}</span>
+              </div>
+              {calculateProjectedRent() && (
+                <>
+                  <div className="border-t border-dashed border-border pt-3 mt-3">
+                    <div className="flex items-center gap-1 mb-2">
+                      <TrendingUp className="h-3 w-3 text-blue-600" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Rate Projection</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-muted-foreground uppercase">After {calculateProjectedRent()?.years} Years</span>
+                      <span className="font-bold text-blue-600">₱{calculateProjectedRent()?.rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-mono mt-1">
+                      <span className="text-muted-foreground">Increase</span>
+                      <span className="text-emerald-600 font-bold">+₱{((calculateProjectedRent()?.rent || 0) - calculateTotalRent()).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="border border-border bg-background p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Helpful Tips</h3>
+            </div>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>Fill out all required fields marked with * to proceed.</span>
+              </li>
+              <li className="flex items-start gap-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                <span>You can customize rent for each selected space.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

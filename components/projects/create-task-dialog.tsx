@@ -48,22 +48,22 @@ interface CreateTaskDialogProps {
 const priorityOptions = [
   {
     value: TaskPriority.LOW,
-    label: "Low",
+    label: "LOW",
     color: "bg-gray-500"
   },
   {
     value: TaskPriority.MEDIUM,
-    label: "Medium",
+    label: "MEDIUM",
     color: "bg-blue-500"
   },
   {
     value: TaskPriority.HIGH,
-    label: "High",
+    label: "HIGH",
     color: "bg-orange-500"
   },
   {
     value: TaskPriority.URGENT,
-    label: "Urgent",
+    label: "URGENT",
     color: "bg-red-500"
   }
 ]
@@ -112,24 +112,24 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to this column.
+      <DialogContent className="sm:max-w-[500px] rounded-none border-border p-0 gap-0">
+        <DialogHeader className="p-4 border-b border-border bg-muted/5">
+          <DialogTitle className="text-sm font-bold uppercase tracking-widest">New Task Entry</DialogTitle>
+          <DialogDescription className="text-xs font-mono uppercase text-muted-foreground">
+            Define task parameters
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Task Title</FormLabel>
+                  <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Task Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter task title" {...field} />
+                    <Input placeholder="TASK TITLE" {...field} className="rounded-none border-border h-9 font-mono text-xs uppercase" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -141,11 +141,11 @@ export function CreateTaskDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Enter task description"
-                      className="resize-none"
+                      placeholder="ENTER DETAILS..."
+                      className="resize-none rounded-none border-border font-mono text-xs uppercase min-h-[80px]"
                       rows={3}
                       {...field}
                     />
@@ -161,25 +161,25 @@ export function CreateTaskDialog({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Priority Level</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority">
+                        <SelectTrigger className="rounded-none border-border h-9 text-xs font-mono uppercase">
+                          <SelectValue placeholder="SELECT PRIORITY">
                             {field.value && getPriorityOption(field.value) && (
                               <div className="flex items-center gap-2">
-                                <div className={cn("w-2 h-2 rounded-full", getPriorityOption(field.value)?.color)} />
+                                <div className={cn("w-1.5 h-1.5 rounded-none", getPriorityOption(field.value)?.color)} />
                                 <span>{getPriorityOption(field.value)?.label}</span>
                               </div>
                             )}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="rounded-none border-border">
                         {priorityOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem key={option.value} value={option.value} className="text-xs font-mono uppercase">
                             <div className="flex items-center gap-2">
-                              <div className={cn("w-2 h-2 rounded-full", option.color)} />
+                              <div className={cn("w-1.5 h-1.5 rounded-none", option.color)} />
                               <span>{option.label}</span>
                             </div>
                           </SelectItem>
@@ -196,17 +196,17 @@ export function CreateTaskDialog({
                 name="assignedToId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assignee (Optional)</FormLabel>
+                    <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Assignee</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select assignee" />
+                        <SelectTrigger className="rounded-none border-border h-9 text-xs font-mono uppercase">
+                          <SelectValue placeholder="SELECT MEMBER" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                      <SelectContent className="rounded-none border-border">
+                        <SelectItem value="unassigned" className="text-xs font-mono uppercase">UNASSIGNED</SelectItem>
                         {projectMembers.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
+                          <SelectItem key={member.id} value={member.id} className="text-xs font-mono uppercase">
                             {member.name}
                           </SelectItem>
                         ))}
@@ -223,27 +223,27 @@ export function CreateTaskDialog({
               name="dueDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Due Date (Optional)</FormLabel>
+                  <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Due Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
+                            "w-full pl-3 text-left font-normal rounded-none border-border h-9 text-xs font-mono uppercase",
                             !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>PICK DATE</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-none border-border" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
@@ -252,6 +252,7 @@ export function CreateTaskDialog({
                           date < new Date(new Date().setHours(0, 0, 0, 0))
                         }
                         initialFocus
+                        className="rounded-none"
                       />
                     </PopoverContent>
                   </Popover>
@@ -260,16 +261,17 @@ export function CreateTaskDialog({
               )}
             />
             
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                className="rounded-none h-8 text-[10px] font-bold uppercase tracking-wider border-border"
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button type="submit" className="rounded-none h-8 text-[10px] font-bold uppercase tracking-wider">
+                <Plus className="mr-2 h-3 w-3" />
                 Create Task
               </Button>
             </div>

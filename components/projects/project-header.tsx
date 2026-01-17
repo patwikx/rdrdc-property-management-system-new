@@ -1,12 +1,13 @@
 "use client"
 
-import { Calendar, Users, Settings, Clock, Target } from "lucide-react"
+import { Calendar, Users, Settings, Clock, Target, ArrowLeft, Activity, CheckCircle2, Flame } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { ProjectWithDetails } from "@/lib/actions/project-actions"
 
 interface ProjectHeaderProps {
@@ -14,13 +15,13 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project }: ProjectHeaderProps) {
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
-      case 'COMPLETED': return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-      case 'ON_HOLD': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300'
-      case 'ARCHIVED': return 'bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300'
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300'
+      case 'ACTIVE': return 'border-emerald-500 text-emerald-600 bg-emerald-500/10'
+      case 'COMPLETED': return 'border-blue-500 text-blue-600 bg-blue-500/10'
+      case 'ON_HOLD': return 'border-amber-500 text-amber-600 bg-amber-500/10'
+      case 'ARCHIVED': return 'border-muted text-muted-foreground bg-muted/10'
+      default: return 'border-muted text-muted-foreground bg-muted/10'
     }
   }
 
@@ -39,129 +40,128 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
     : 0
 
   return (
-    <div className="border-b border-border/50 pb-6 mb-6">
-      {/* Main Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-semibold tracking-tight truncate">
+    <div className="space-y-6">
+      {/* Top Row: Nav & Actions */}
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/projects" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <h1 className="text-2xl font-bold uppercase tracking-tight truncate">
               {project.name}
             </h1>
-            <div className={cn(
-              "px-2 py-1 rounded-md text-xs font-medium",
-              getStatusColor(project.status)
+            <Badge variant="outline" className={cn(
+              "rounded-none text-[10px] uppercase tracking-widest font-mono h-5",
+              getStatusStyle(project.status)
             )}>
               {project.status.replace('_', ' ')}
-            </div>
+            </Badge>
           </div>
           {project.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+            <p className="text-xs font-mono text-muted-foreground max-w-2xl pl-6">
               {project.description}
             </p>
           )}
         </div>
         
-        <Button variant="outline" size="sm" asChild className="ml-4 flex-shrink-0">
+        <Button variant="outline" size="sm" asChild className="rounded-none h-8 text-xs font-mono uppercase border-border hover:bg-muted/10">
           <Link href={`/projects/${project.id}/settings`}>
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+            <Settings className="h-3 w-3 mr-2" />
+            Config
           </Link>
         </Button>
       </div>
 
-      {/* Project Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-950">
-            <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      {/* Stats Grid - RWO Style */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-border bg-background">
+        {/* Progress */}
+        <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Completion</span>
+            <Target className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Progress</p>
-            <p className="text-sm font-medium">{progressPercentage}% Complete</p>
+            <span className="text-3xl font-mono font-medium tracking-tighter text-foreground">{progressPercentage}%</span>
+            <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">Overall</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="p-2 rounded-md bg-green-100 dark:bg-green-950">
-            <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
+        {/* Workload */}
+        <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Workload</span>
+            <Activity className="h-4 w-4 text-blue-600/50" />
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Tasks</p>
-            <p className="text-sm font-medium">{completedTasks}/{project._count.tasks}</p>
+          <div className="flex items-baseline gap-4">
+            <div>
+              <span className="text-3xl font-mono font-medium tracking-tighter text-blue-600">{project._count.tasks - completedTasks}</span>
+              <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">Active</span>
+            </div>
+            <div className="h-8 w-px bg-border/60" />
+            <div>
+              <span className="text-xl font-mono font-medium tracking-tighter text-muted-foreground">{project._count.tasks}</span>
+              <span className="text-[10px] text-muted-foreground ml-1.5 uppercase tracking-wide">Total</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="p-2 rounded-md bg-purple-100 dark:bg-purple-950">
-            <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        {/* Team */}
+        <div className="p-4 border-r border-border flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Team Size</span>
+            <Users className="h-4 w-4 text-purple-600/50" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Team</p>
-            <p className="text-sm font-medium">{project.members.length + 1} members</p>
+            <span className="text-3xl font-mono font-medium tracking-tighter text-purple-600">{project.members.length + 1}</span>
+            <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">Members</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="p-2 rounded-md bg-orange-100 dark:bg-orange-950">
-            <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+        {/* Timeline */}
+        <div className="p-4 flex flex-col justify-between h-28 hover:bg-muted/5 transition-colors">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Timeline</span>
+            <Clock className="h-4 w-4 text-orange-600/50" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Timeline</p>
-            <p className="text-sm font-medium">
-              {project.endDate 
-                ? `${Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left`
-                : 'No deadline'
-              }
-            </p>
+            {project.endDate ? (
+              <>
+                <span className="text-3xl font-mono font-medium tracking-tighter text-orange-600">
+                  {Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                </span>
+                <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-wide">Days Left</span>
+              </>
+            ) : (
+              <span className="text-xl font-mono font-medium tracking-tighter text-muted-foreground">OPEN ENDED</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Project Details */}
-      <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+      {/* Metadata Bar */}
+      <div className="flex flex-wrap items-center gap-6 pt-2 text-[10px] font-mono uppercase text-muted-foreground">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-3 w-3" />
           <span>
-            Started {format(new Date(project.startDate), 'MMM dd, yyyy')}
-            {project.endDate && (
-              <> • Due {format(new Date(project.endDate), 'MMM dd, yyyy')}</>
-            )}
+            START: {format(new Date(project.startDate), 'MM/dd/yy')}
+            {project.endDate && ` • DUE: ${format(new Date(project.endDate), 'MM/dd/yy')}`}
           </span>
         </div>
         
         <div className="flex items-center gap-2">
-          <span>Owner:</span>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">
+          <span className="font-bold">OWNER:</span>
+          <div className="flex items-center gap-1.5">
+            <Avatar className="h-4 w-4 rounded-none border border-border">
+              <AvatarFallback className="text-[8px] rounded-none bg-primary/10 text-primary">
                 {getInitials(project.owner.firstName, project.owner.lastName)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-foreground font-medium">
+            <span className="text-foreground">
               {project.owner.firstName} {project.owner.lastName}
             </span>
           </div>
         </div>
-        
-        {project.members.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span>Team:</span>
-            <div className="flex -space-x-1">
-              {project.members.slice(0, 4).map((member) => (
-                <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(member.user.firstName, member.user.lastName)}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-              {project.members.length > 4 && (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium">
-                  +{project.members.length - 4}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
