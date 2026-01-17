@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConnection } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 
 export interface ARAgingTenant {
   cardCode: string;
@@ -12,6 +13,11 @@ export interface ARAgingTenant {
   over90Days: number;
   monthlyRent: number;
   securityDeposit: number;
+  // Matched tenant data from database
+  tenantId?: string;
+  firstNoticeDate?: Date | null;
+  secondNoticeDate?: Date | null;
+  finalNoticeDate?: Date | null;
 }
 
 export interface ARAgingResponse {
@@ -118,6 +124,49 @@ export async function GET(request: NextRequest) {
       // Add more mock data as needed
     };
 
+    // Fetch all tenants from database to match with BP codes
+    const allTenants = await prisma.tenant.findMany({
+      select: {
+        id: true,
+        bpCode: true,
+        notices: {
+          where: {
+            isSettled: false // Only get unsettled notices
+          },
+          select: {
+            id: true,
+            noticeNumber: true,
+            dateIssued: true,
+            isSettled: true
+          },
+          orderBy: {
+            dateIssued: 'desc'
+          }
+        }
+      }
+    });
+
+    // Create a map of tenant data by BP code
+    const tenantMap = new Map<string, {
+      tenantId: string;
+      firstNoticeDate: Date | null;
+      secondNoticeDate: Date | null;
+      finalNoticeDate: Date | null;
+    }>();
+
+    allTenants.forEach(tenant => {
+      const firstNotice = tenant.notices.find(n => n.noticeNumber === 1);
+      const secondNotice = tenant.notices.find(n => n.noticeNumber === 2);
+      const finalNotice = tenant.notices.find(n => n.noticeNumber >= 3);
+
+      tenantMap.set(tenant.bpCode, {
+        tenantId: tenant.id,
+        firstNoticeDate: firstNotice?.dateIssued || null,
+        secondNoticeDate: secondNotice?.dateIssued || null,
+        finalNoticeDate: finalNotice?.dateIssued || null
+      });
+    });
+
     const transformedData: ARAgingTenant[] = arAgingResult.recordset.map((row: {
       CardCode: string;
       CardName: string;
@@ -134,6 +183,9 @@ export async function GET(request: NextRequest) {
       // Get monthly rental from database by CardCode, default to mock data or 0
       const monthlyRental = monthlyRentalMap.get(row.CardCode) || mockMonthlyRents[row.CardCode] || 0;
 
+      // Match tenant by BP code
+      const tenantData = tenantMap.get(row.CardCode);
+
       return {
         cardCode: row.CardCode,
         cardName: row.CardName,
@@ -145,6 +197,10 @@ export async function GET(request: NextRequest) {
         over90Days: row.Over_90_Days,
         monthlyRent: monthlyRental,
         securityDeposit: securityDeposit,
+        tenantId: tenantData?.tenantId,
+        firstNoticeDate: tenantData?.firstNoticeDate || null,
+        secondNoticeDate: tenantData?.secondNoticeDate || null,
+        finalNoticeDate: tenantData?.finalNoticeDate || null,
       };
     });
 
