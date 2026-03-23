@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   Filter,
   Search,
-  X
+  X,
+  ArrowUpRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { getTenantNotices, settleNotice, deleteNotice } from "@/lib/actions/tenant-notice";
@@ -96,8 +97,8 @@ export default function TenantNoticesPage() {
       setLoading(true);
       const noticesData = await getTenantNotices({});
       
-      setNotices(noticesData as Notice[]);
-      setFilteredNotices(noticesData as Notice[]);
+      setNotices(noticesData as unknown as Notice[]);
+      setFilteredNotices(noticesData as unknown as Notice[]);
 
     } catch {
       toast.error("Failed to load notices");
@@ -168,6 +169,19 @@ export default function TenantNoticesPage() {
     };
   }, [filteredNotices]);
 
+  const latestActiveNoticeByTenant = useMemo(() => {
+    return notices.reduce((acc, notice) => {
+      if (notice.isSettled) return acc;
+
+      const currentLatest = acc.get(notice.tenant.id);
+      if (!currentLatest || notice.noticeNumber > currentLatest.noticeNumber) {
+        acc.set(notice.tenant.id, notice);
+      }
+
+      return acc;
+    }, new Map<string, Notice>());
+  }, [notices]);
+
   const clearFilters = () => {
     setFilters({
       noticeType: "all",
@@ -225,6 +239,14 @@ export default function TenantNoticesPage() {
         </Badge>
       );
     }
+  };
+
+  const canEscalateNotice = (notice: Notice) => {
+    if (notice.isSettled || notice.noticeNumber >= 3) {
+      return false;
+    }
+
+    return latestActiveNoticeByTenant.get(notice.tenant.id)?.id === notice.id;
   };
 
   const getStatusBadge = (status: string | undefined) => {
@@ -519,6 +541,18 @@ export default function TenantNoticesPage() {
                       >
                         <Eye className="h-3 w-3 text-muted-foreground" />
                       </Button>
+
+                      {canEscalateNotice(notice) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => router.push(`/notices/create?fromNoticeId=${notice.id}`)}
+                          className="h-7 w-7 p-0 rounded-none hover:bg-muted border border-transparent hover:border-border"
+                          title={`Escalate to ${notice.noticeNumber === 1 ? "2nd" : "final"} notice`}
+                        >
+                          <ArrowUpRight className="h-3 w-3 text-orange-600" />
+                        </Button>
+                      )}
                       
                       {!notice.isSettled && (
                         <AlertDialog>

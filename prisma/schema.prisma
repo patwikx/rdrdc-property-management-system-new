@@ -1033,6 +1033,7 @@ model TenantNotice {
   tenantId     String
   noticeType   NoticeType
   noticeNumber Int // 1st, 2nd, Final
+  escalatedFromNoticeId String?
   totalAmount  Float      @default(0) // Total of all items
   forMonth     String // July, August, etc.
   forYear      Int // 2025, 2024, etc.
@@ -1061,9 +1062,12 @@ model TenantNotice {
   items     NoticeItem[]
   User      User?        @relation(fields: [userId], references: [id])
   userId    String?
+  escalatedFrom TenantNotice? @relation("NoticeEscalationTrail", fields: [escalatedFromNoticeId], references: [id])
+  escalatedTo   TenantNotice[] @relation("NoticeEscalationTrail")
 
   @@index([tenantId])
   @@index([createdById])
+  @@index([escalatedFromNoticeId])
 }
 
 model NoticeItem {
