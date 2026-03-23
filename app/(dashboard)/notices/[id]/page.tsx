@@ -5,10 +5,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-import { ArrowLeft, Printer, Download, Edit3, Save, X, Plus, Trash2, Calendar, FileText, Eye } from "lucide-react";
+import { ArrowLeft, Printer, Download, Edit3, Save, X, Plus, Trash2, Calendar, FileText, Eye, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getTenantNoticeById, updateTenantNotice } from "@/lib/actions/tenant-notice";
+import { getTenantNoticeById, getTenantNotices, updateTenantNotice } from "@/lib/actions/tenant-notice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,18 @@ interface NoticeDetail {
     firstName: string;
     lastName: string;
   };
+  escalatedFrom?: {
+    id: string;
+    noticeNumber: number;
+    noticeType: string;
+    dateIssued: Date;
+  } | null;
+  escalatedTo?: Array<{
+    id: string;
+    noticeNumber: number;
+    noticeType: string;
+    dateIssued: Date;
+  }>;
   items: {
     id: string;
     description: string;
@@ -58,6 +71,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   const [noticeId, setNoticeId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [canEscalate, setCanEscalate] = useState(false);
   
   const [formData, setFormData] = useState({
     primarySignatory: "",
@@ -92,7 +106,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     const loadNotice = async () => {
       try {
         const noticeData = await getTenantNoticeById(noticeId);
-        setNotice(noticeData as NoticeDetail);
+        setNotice(noticeData as unknown as NoticeDetail);
       } catch (error) {
         toast.error("Failed to load notice");
         router.push("/notices");
@@ -102,6 +116,33 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     };
     loadNotice();
   }, [noticeId, router]);
+
+  useEffect(() => {
+    if (!notice || notice.isSettled || notice.noticeNumber >= 3) {
+      setCanEscalate(false);
+      return;
+    }
+
+    const loadEscalationState = async () => {
+      try {
+        const activeNotices = await getTenantNotices({
+          tenantId: notice.tenant.id,
+          isSettled: false
+        }) as Array<{ noticeNumber: number }>;
+
+        const highestNoticeNumber = activeNotices.reduce((max, activeNotice) => {
+          return activeNotice.noticeNumber > max ? activeNotice.noticeNumber : max;
+        }, 0);
+
+        setCanEscalate(highestNoticeNumber === notice.noticeNumber);
+      } catch (error) {
+        console.error("Failed to load escalation state:", error);
+        setCanEscalate(false);
+      }
+    };
+
+    loadEscalationState();
+  }, [notice]);
 
   // Populate form data when notice is loaded
   useEffect(() => {
@@ -203,6 +244,12 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
       warning: "WARNING",
       afterWarning: " for you to settle your balance immediately from the receipt of this notice. We are letting you know that this is your last and final opportunity to negotiate with the company concerning your outstanding obligations. We hope that this time, you will settle to avoid any inconvenience in the future."
     };
+  };
+
+  const getNoticeStepLabel = (noticeNumber: number) => {
+    if (noticeNumber <= 1) return "1st Notice";
+    if (noticeNumber === 2) return "2nd Notice";
+    return "Final Notice";
   };
 
   // Function to get signature image based on signatory name
@@ -362,7 +409,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
       
       // Reload the notice data
       const updatedNotice = await getTenantNoticeById(noticeId);
-      setNotice(updatedNotice as NoticeDetail);
+      setNotice(updatedNotice as unknown as NoticeDetail);
       setIsEditing(false);
     } catch (error) {
       console.error("Update error:", error);
@@ -510,13 +557,54 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
       <div className="container mx-auto py-6">
         {/* Header Actions */}
         <div className="flex justify-between items-center mb-6 print:hidden">
-          <Button variant="outline" onClick={() => router.back()} className="rounded-none uppercase text-xs font-mono border-border">
-            <ArrowLeft className="mr-2 h-3 w-3" />
-            Back to Notices
-          </Button>
+          <div className="space-y-3">
+            <Button variant="outline" onClick={() => router.back()} className="rounded-none uppercase text-xs font-mono border-border">
+              <ArrowLeft className="mr-2 h-3 w-3" />
+              Back to Notices
+            </Button>
+
+            {(notice.escalatedFrom || (notice.escalatedTo && notice.escalatedTo.length > 0)) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="rounded-none font-mono text-[10px] uppercase">
+                  Trail
+                </Badge>
+                {notice.escalatedFrom && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/notices/${notice.escalatedFrom?.id}`)}
+                    className="rounded-none h-7 px-2 text-[10px] font-mono uppercase border-border"
+                  >
+                    From {getNoticeStepLabel(notice.escalatedFrom.noticeNumber)}
+                  </Button>
+                )}
+                {notice.escalatedTo?.map((nextNotice) => (
+                  <Button
+                    key={nextNotice.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/notices/${nextNotice.id}`)}
+                    className="rounded-none h-7 px-2 text-[10px] font-mono uppercase border-border"
+                  >
+                    To {getNoticeStepLabel(nextNotice.noticeNumber)}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="space-x-2">
             {!isEditing && (
               <>
+                {canEscalate && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/notices/create?fromNoticeId=${notice.id}`)}
+                    className="rounded-none uppercase text-xs font-mono border-border"
+                  >
+                    <ArrowUpRight className="mr-2 h-3 w-3 text-orange-600" />
+                    Escalate Notice
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleEditToggle} className="rounded-none uppercase text-xs font-mono border-border">
                   <Edit3 className="mr-2 h-3 w-3" />
                   Edit

@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { NoticeType, NoticeStatus } from "@prisma/client";
+import { NoticeType, NoticeStatus, Prisma } from "@prisma/client";
 
 export async function getTenants() {
   try {
@@ -43,6 +43,7 @@ interface CreateNoticeData {
   noticeType: string;
   items: CreateNoticeItem[];
   forYear: number;
+  escalatedFromNoticeId?: string;
   primarySignatory: string;
   primaryTitle: string;
   primaryContact: string;
@@ -88,36 +89,54 @@ export async function createTenantNotice(data: CreateNoticeData) {
     // Calculate total amount
     const totalAmount = data.items.reduce((sum, item) => sum + item.amount, 0);
 
-    const notice = await prisma.tenantNotice.create({
-      data: {
-        tenantId: data.tenantId,
-        noticeType: noticeType as NoticeType,
-        noticeNumber,
-        totalAmount,
-        forMonth: data.items[0]?.months || new Date().toLocaleString('default', { month: 'long' }),
-        forYear: data.forYear,
-        primarySignatory: data.primarySignatory,
-        primaryTitle: data.primaryTitle,
-        primaryContact: data.primaryContact,
-        secondarySignatory: data.secondarySignatory,
-        secondaryTitle: data.secondaryTitle,
-        createdById: session.user.id,
-        items: {
-          create: data.items.map(item => {
-            // For custom status, we need to extract the actual custom text
-            const validStatuses: NoticeStatus[] = ['PAST_DUE', 'OVERDUE', 'CRITICAL', 'PENDING', 'UNPAID', 'CUSTOM'];
-            const isCustom = typeof item.status === 'string' && !validStatuses.includes(item.status as NoticeStatus);
-            
-            return {
-              description: item.description,
-              status: isCustom ? NoticeStatus.CUSTOM : item.status as NoticeStatus,
-              customStatus: isCustom ? item.status : null,
-              amount: item.amount,
-              months: item.months || new Date().toLocaleString('default', { month: 'long' }),
-            };
-          })
+    const noticeData: Prisma.TenantNoticeCreateInput = {
+      noticeType: noticeType as NoticeType,
+      noticeNumber,
+      totalAmount,
+      forMonth: data.items[0]?.months || new Date().toLocaleString('default', { month: 'long' }),
+      forYear: data.forYear,
+      primarySignatory: data.primarySignatory,
+      primaryTitle: data.primaryTitle,
+      primaryContact: data.primaryContact,
+      secondarySignatory: data.secondarySignatory,
+      secondaryTitle: data.secondaryTitle,
+      tenant: {
+        connect: {
+          id: data.tenantId
         }
       },
+      createdBy: {
+        connect: {
+          id: session.user.id
+        }
+      },
+      ...(data.escalatedFromNoticeId
+        ? {
+            escalatedFrom: {
+              connect: {
+                id: data.escalatedFromNoticeId
+              }
+            }
+          }
+        : {}),
+      items: {
+        create: data.items.map(item => {
+          const validStatuses: NoticeStatus[] = ['PAST_DUE', 'OVERDUE', 'CRITICAL', 'PENDING', 'UNPAID', 'CUSTOM'];
+          const isCustom = typeof item.status === 'string' && !validStatuses.includes(item.status as NoticeStatus);
+
+          return {
+            description: item.description,
+            status: isCustom ? NoticeStatus.CUSTOM : item.status as NoticeStatus,
+            customStatus: isCustom ? item.status : null,
+            amount: item.amount,
+            months: item.months || new Date().toLocaleString('default', { month: 'long' }),
+          };
+        })
+      }
+    };
+
+    const notice = await prisma.tenantNotice.create({
+      data: noticeData,
       include: {
         tenant: {
           select: {
@@ -174,7 +193,26 @@ export async function getTenantNotices(filters?: {
             lastName: true,
           }
         },
-        items: true
+        items: true,
+        escalatedFrom: {
+          select: {
+            id: true,
+            noticeNumber: true,
+            noticeType: true,
+            dateIssued: true,
+          }
+        },
+        escalatedTo: {
+          select: {
+            id: true,
+            noticeNumber: true,
+            noticeType: true,
+            dateIssued: true,
+          },
+          orderBy: {
+            noticeNumber: "asc"
+          }
+        }
       },
       orderBy: [
         { isSettled: "asc" },
@@ -210,7 +248,26 @@ export async function getTenantNoticeById(id: string) {
             lastName: true,
           }
         },
-        items: true
+        items: true,
+        escalatedFrom: {
+          select: {
+            id: true,
+            noticeNumber: true,
+            noticeType: true,
+            dateIssued: true,
+          }
+        },
+        escalatedTo: {
+          select: {
+            id: true,
+            noticeNumber: true,
+            noticeType: true,
+            dateIssued: true,
+          },
+          orderBy: {
+            noticeNumber: "asc"
+          }
+        }
       }
     });
 

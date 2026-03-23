@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,10 +38,11 @@ import {
   User2,
   Check,
   ChevronsUpDown,
-  Info
+  Info,
+  ArrowUpRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { createTenantNotice, getTenants, getTenantNoticeCount } from "@/lib/actions/tenant-notice";
+import { createTenantNotice, getTenantNoticeById, getTenants, getTenantNoticeCount } from "@/lib/actions/tenant-notice";
 import { cn } from "@/lib/utils";
 
 interface Tenant {
@@ -51,6 +52,29 @@ interface Tenant {
   lastName: string | null;
   company: string;
   businessName: string;
+}
+
+interface SourceNotice {
+  id: string;
+  noticeNumber: number;
+  noticeType: string;
+  isSettled: boolean;
+  dateIssued: Date;
+  forYear: number;
+  primarySignatory: string;
+  primaryTitle: string;
+  primaryContact: string;
+  secondarySignatory: string;
+  secondaryTitle: string;
+  tenant: Tenant;
+  items: {
+    id: string;
+    description: string;
+    status: string;
+    customStatus: string | null;
+    amount: number;
+    months: string | null;
+  }[];
 }
 
 const MONTHS = [
@@ -78,12 +102,16 @@ const ITEM_TYPES = [
 
 export default function CreateNoticePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourceNoticeId = searchParams.get("fromNoticeId");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSignatories, setShowSignatories] = useState(false);
   const [openTenantCombobox, setOpenTenantCombobox] = useState(false);
   const [tenantNoticeCount, setTenantNoticeCount] = useState<number>(0);
   const [loadingNoticeCount, setLoadingNoticeCount] = useState(false);
+  const [loadingSourceNotice, setLoadingSourceNotice] = useState(false);
+  const [sourceNotice, setSourceNotice] = useState<SourceNotice | null>(null);
 
   const [formData, setFormData] = useState({
     tenantId: "",
@@ -139,6 +167,86 @@ export default function CreateNoticePage() {
   useEffect(() => {
     loadTenants();
   }, []);
+
+  useEffect(() => {
+    if (!sourceNoticeId) {
+      setSourceNotice(null);
+      return;
+    }
+
+    const loadSourceNotice = async () => {
+      setLoadingSourceNotice(true);
+      try {
+        const notice = await getTenantNoticeById(sourceNoticeId);
+        const source = notice as SourceNotice | null;
+
+        if (!source) {
+          toast.error("Source notice not found");
+          router.replace("/notices/create");
+          return;
+        }
+
+        if (source.isSettled) {
+          toast.error("Settled notices cannot be escalated");
+          router.replace(`/notices/${source.id}`);
+          return;
+        }
+
+        if (source.noticeNumber >= 3) {
+          toast.error("Final notices cannot be escalated further");
+          router.replace(`/notices/${source.id}`);
+          return;
+        }
+
+        setSourceNotice(source);
+        setFormData(prev => ({
+          ...prev,
+          tenantId: source.tenant.id,
+          primarySignatory: source.primarySignatory,
+          primaryTitle: source.primaryTitle,
+          primaryContact: source.primaryContact,
+          secondarySignatory: source.secondarySignatory,
+          secondaryTitle: source.secondaryTitle
+        }));
+        setItems(
+          source.items.length > 0
+            ? source.items.map(item => {
+                const parsedMonths = item.months ? parseMonthsFromString(item.months) : [MONTHS[new Date().getMonth()]];
+                const yearMatch = item.months?.match(/\b(\d{4})\b/);
+
+                return {
+                  description: item.description,
+                  itemType: inferItemType(item.description),
+                  status: item.customStatus ? "CUSTOM" : item.status,
+                  customStatus: item.customStatus || "",
+                  amount: item.amount.toString(),
+                  months: parsedMonths,
+                  year: yearMatch?.[1] || source.forYear.toString()
+                };
+              })
+            : [
+                {
+                  description: "",
+                  itemType: "",
+                  status: "PAST_DUE",
+                  customStatus: "",
+                  amount: "",
+                  months: [MONTHS[new Date().getMonth()]],
+                  year: source.forYear.toString()
+                }
+              ]
+        );
+      } catch (error) {
+        console.error("Error loading source notice:", error);
+        toast.error("Failed to load notice for escalation");
+        router.replace("/notices/create");
+      } finally {
+        setLoadingSourceNotice(false);
+      }
+    };
+
+    loadSourceNotice();
+  }, [router, sourceNoticeId]);
 
   useEffect(() => {
     if (formData.tenantId) {
@@ -214,6 +322,40 @@ export default function CreateNoticePage() {
       i === index ? { ...item, [field]: value } : item
     );
     setItems(updatedItems);
+  };
+
+  const parseMonthsFromString = (monthString: string): string[] => {
+    const sanitizedMonthString = monthString.replace(/\b\d{4}\b/g, "").trim().replace(/\s{2,}/g, " ");
+
+    if (sanitizedMonthString.includes("—") || sanitizedMonthString.includes(" - ")) {
+      const separator = sanitizedMonthString.includes("—") ? "—" : " - ";
+      const [startMonth, endMonth] = sanitizedMonthString.split(separator).map(month => month.trim());
+      const startIndex = MONTHS.indexOf(startMonth);
+      const endIndex = MONTHS.indexOf(endMonth);
+
+      if (startIndex !== -1 && endIndex !== -1) {
+        return MONTHS.slice(startIndex, endIndex + 1);
+      }
+    }
+
+    if (sanitizedMonthString.includes(",")) {
+      return sanitizedMonthString
+        .split(",")
+        .map(month => month.trim())
+        .filter(month => MONTHS.includes(month));
+    }
+
+    return MONTHS.includes(sanitizedMonthString) ? [sanitizedMonthString] : [MONTHS[new Date().getMonth()]];
+  };
+
+  const inferItemType = (description: string) => {
+    const normalizedDescription = description.toLowerCase();
+
+    if (normalizedDescription.includes("space rental")) return "space_rental";
+    if (normalizedDescription.includes("2307") || normalizedDescription.includes("bir")) return "bir_forms";
+    if (normalizedDescription.includes("utilit")) return "utilities";
+
+    return "other";
   };
 
   const formatMonthRange = (months: string[]) => {
@@ -321,6 +463,7 @@ export default function CreateNoticePage() {
     try {
       const newNotice = await createTenantNotice({
         ...formData,
+        escalatedFromNoticeId: sourceNotice?.id,
         items: validItems.map(item => ({
           description: item.description,
           status: item.status === "CUSTOM" ? item.customStatus : item.status,
@@ -470,6 +613,22 @@ export default function CreateNoticePage() {
                     <div className="border border-border p-4 bg-background">
                       <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-muted-foreground border-b border-border pb-2">Tenant Details</h3>
 
+                      {sourceNotice && (
+                        <div className="mb-4 border border-orange-500/40 bg-orange-500/5 p-3">
+                          <div className="flex items-start gap-2">
+                            <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 text-orange-600" />
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-orange-700">
+                                Escalating Notice #{sourceNotice.noticeNumber}
+                              </p>
+                              <p className="text-[11px] font-mono uppercase text-muted-foreground">
+                                Existing line items are loaded below. You can add new charges before generating the next notice.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 gap-4">
                         {/* Tenant Selection with Combobox */}
                         <div className="space-y-1.5">
@@ -483,6 +642,7 @@ export default function CreateNoticePage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={openTenantCombobox}
+                                disabled={!!sourceNotice || loadingSourceNotice}
                                 className="w-full justify-between h-9 rounded-none border-border font-mono text-xs uppercase"
                               >
                                 {formData.tenantId
@@ -902,7 +1062,7 @@ export default function CreateNoticePage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={loading || !formData.tenantId}
+                      disabled={loading || loadingSourceNotice || !formData.tenantId}
                       className="px-6 bg-primary hover:bg-primary/90 text-primary-foreground rounded-none uppercase text-xs font-bold tracking-wider disabled:opacity-50"
                     >
                       {loading ? (
@@ -911,7 +1071,7 @@ export default function CreateNoticePage() {
                           PROCESSING...
                         </>
                       ) : (
-                        "GENERATE NOTICE"
+                        sourceNotice ? "GENERATE ESCALATED NOTICE" : "GENERATE NOTICE"
                       )}
                     </Button>
                   </div>
