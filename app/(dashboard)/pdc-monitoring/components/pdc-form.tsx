@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition, type KeyboardEvent } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Loader2, FileText, ChevronsUpDown, Check, Plus } from "lucide-react"
@@ -30,7 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { CreatePDCInput, createPDCSchema } from "@/lib/validations/pdc-valitdations"
@@ -50,6 +50,7 @@ export function PDCForm({ tenants }: PDCFormProps) {
   const [isPending, startTransition] = useTransition()
   const [amountInput, setAmountInput] = useState("")
   const [openTenantCombobox, setOpenTenantCombobox] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const form = useForm<CreatePDCInput>({
     resolver: zodResolver(createPDCSchema),
@@ -77,6 +78,40 @@ export function PDCForm({ tenants }: PDCFormProps) {
         toast.error(result.error || "Failed to create PDC")
       }
     })
+  }
+
+  function handleFormTab(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey) {
+      return
+    }
+
+    const tabStops = Array.from(
+      formRef.current?.querySelectorAll<HTMLElement>("[data-pdc-tab-stop]") ?? []
+    ).filter((element) => {
+      const isDisabled =
+        element.hasAttribute("disabled") ||
+        element.getAttribute("aria-disabled") === "true"
+
+      return !isDisabled && element.tabIndex !== -1
+    })
+
+    if (tabStops.length === 0) return
+
+    const activeElement = document.activeElement as HTMLElement | null
+    const currentIndex = tabStops.findIndex(
+      (element) => element === activeElement || element.contains(activeElement)
+    )
+
+    if (currentIndex === -1) return
+
+    event.preventDefault()
+    setOpenTenantCombobox(false)
+
+    const nextIndex = event.shiftKey
+      ? (currentIndex - 1 + tabStops.length) % tabStops.length
+      : (currentIndex + 1) % tabStops.length
+
+    requestAnimationFrame(() => tabStops[nextIndex]?.focus())
   }
 
   const formatAmountDisplay = (value: string) => {
@@ -113,7 +148,15 @@ export function PDCForm({ tenants }: PDCFormProps) {
           Register PDC
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[700px] max-w-[700px] rounded-none border-border p-0 gap-0">
+      <DialogContent
+        className="w-[calc(100vw-2rem)] max-w-[700px] rounded-none border-border p-0 gap-0"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault()
+          requestAnimationFrame(() => {
+            formRef.current?.querySelector<HTMLElement>("[data-pdc-tab-stop]")?.focus()
+          })
+        }}
+      >
         <DialogHeader className="p-4 border-b border-border bg-muted/5">
           <DialogTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
             <FileText className="h-4 w-4" />
@@ -123,19 +166,24 @@ export function PDCForm({ tenants }: PDCFormProps) {
         
         <div className="p-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              ref={formRef}
+              onSubmit={form.handleSubmit(onSubmit)}
+              onKeyDown={handleFormTab}
+              className="space-y-6"
+            >
               {/* Basic Information */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Transaction Data</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="refNo"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Reference No.</FormLabel>
                       <FormControl>
-                        <Input placeholder="REF-0000" {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
+                        <Input data-pdc-tab-stop placeholder="REF-0000" {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -146,7 +194,7 @@ export function PDCForm({ tenants }: PDCFormProps) {
                   control={form.control}
                   name="bpCode"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Business Partner</FormLabel>
                       <Popover open={openTenantCombobox} onOpenChange={setOpenTenantCombobox}>
                         <PopoverTrigger asChild>
@@ -155,52 +203,55 @@ export function PDCForm({ tenants }: PDCFormProps) {
                               variant="outline"
                               role="combobox"
                               aria-expanded={openTenantCombobox}
-                              className="w-full justify-between rounded-none font-mono text-xs uppercase h-9 border-border"
+                              data-pdc-tab-stop
+                              className="w-full min-w-0 justify-between rounded-none font-mono text-xs uppercase h-9 border-border"
                             >
-                              {field.value
-                                ? (() => {
-                                  const tenant = tenants.find((t) => t.bpCode === field.value);
-                                  const displayText = tenant ? `${tenant.company || tenant.businessName}` : "SELECT BP...";
-                                  return displayText.length > 35 ? displayText.substring(0, 35) + "..." : displayText;
-                                })()
-                                : "SELECT BP..."}
+                              <span className="min-w-0 flex-1 truncate text-left">
+                                {field.value
+                                  ? tenants.find((tenant) => tenant.bpCode === field.value)?.company ||
+                                    tenants.find((tenant) => tenant.bpCode === field.value)?.businessName ||
+                                    "SELECT BP..."
+                                  : "SELECT BP..."}
+                              </span>
                               <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0 rounded-none border-border">
+                        <PopoverContent
+                          align="end"
+                          className="w-[min(462px,calc(100vw-4rem))] p-0 rounded-none border-border"
+                        >
                           <Command className="rounded-none">
                             <CommandInput
                               placeholder="SEARCH TENANT..."
                               className="h-9 rounded-none font-mono text-xs uppercase"
                             />
-                            <CommandEmpty className="p-2 font-mono text-xs">NO TENANT FOUND.</CommandEmpty>
-                            <CommandGroup className="max-h-64 overflow-y-auto">
-                              {tenants.map((tenant) => (
-                                <CommandItem
-                                  key={tenant.bpCode}
-                                  value={`${tenant.bpCode} ${tenant.businessName} ${tenant.company || ''} ${tenant.email}`}
-                                  onSelect={() => {
-                                    field.onChange(tenant.bpCode);
-                                    setOpenTenantCombobox(false);
-                                  }}
-                                  className="cursor-pointer rounded-none font-mono text-xs"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-3 w-3",
-                                      field.value === tenant.bpCode ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col min-w-0 flex-1">
-                                    <span className="font-bold truncate uppercase">{tenant.bpCode} — {tenant.company || tenant.businessName}</span>
-                                    <span className="text-[10px] text-muted-foreground truncate font-mono">
-                                      {tenant.email}
+                            <CommandList className="max-h-64">
+                              <CommandEmpty className="p-2 font-mono text-xs">NO TENANT FOUND.</CommandEmpty>
+                              <CommandGroup>
+                                {tenants.map((tenant) => (
+                                  <CommandItem
+                                    key={tenant.bpCode}
+                                    value={`${tenant.bpCode} ${tenant.businessName} ${tenant.company || ''}`}
+                                    onSelect={() => {
+                                      field.onChange(tenant.bpCode);
+                                      setOpenTenantCombobox(false);
+                                    }}
+                                    className="cursor-pointer items-start rounded-none font-mono text-xs"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mt-0.5 mr-2 h-3 w-3",
+                                        field.value === tenant.bpCode ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <span className="min-w-0 flex-1 whitespace-normal break-words font-bold uppercase leading-5">
+                                      {tenant.bpCode} — {tenant.company || tenant.businessName}
                                     </span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
                           </Command>
                         </PopoverContent>
                       </Popover>
@@ -214,15 +265,15 @@ export function PDCForm({ tenants }: PDCFormProps) {
               {/* Check Details */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Instrument Details</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="bankName"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Bank Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="BANK NAME" {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
+                        <Input data-pdc-tab-stop placeholder="BANK NAME" {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -233,10 +284,10 @@ export function PDCForm({ tenants }: PDCFormProps) {
                   control={form.control}
                   name="checkNo"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Check No.</FormLabel>
                       <FormControl>
-                        <Input placeholder="CHECK NO." {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
+                        <Input data-pdc-tab-stop placeholder="CHECK NO." {...field} className="rounded-none font-mono text-xs uppercase h-9 border-border" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -248,16 +299,17 @@ export function PDCForm({ tenants }: PDCFormProps) {
               {/* Financial Details */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Financials</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="dueDate"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Due Date</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
                           <Input
+                            data-pdc-tab-stop
                             placeholder="MM/DD/YYYY"
                             className="rounded-none font-mono text-xs uppercase h-9 border-border"
                             value={field.value ? (
@@ -302,6 +354,7 @@ export function PDCForm({ tenants }: PDCFormProps) {
                               type="button"
                               variant="outline"
                               size="icon"
+                              tabIndex={-1}
                               className="shrink-0 rounded-none h-9 w-9 border-border"
                             >
                               <CalendarIcon className="h-4 w-4" />
@@ -329,10 +382,11 @@ export function PDCForm({ tenants }: PDCFormProps) {
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Amount</FormLabel>
                         <FormControl>
                           <Input
+                            data-pdc-tab-stop
                             type="text"
                             placeholder="0.00"
                             className="rounded-none font-mono text-xs uppercase h-9 border-border text-right"
@@ -379,6 +433,7 @@ export function PDCForm({ tenants }: PDCFormProps) {
                     <FormLabel className="text-[10px] uppercase font-bold tracking-wide">Remarks</FormLabel>
                     <FormControl>
                       <Textarea 
+                        data-pdc-tab-stop
                         placeholder="ENTER REMARKS..."
                         className="resize-none rounded-none font-mono text-xs uppercase border-border min-h-[80px]"
                         {...field}
@@ -394,13 +449,14 @@ export function PDCForm({ tenants }: PDCFormProps) {
                 <Button
                   type="button"
                   variant="outline"
+                  data-pdc-tab-stop
                   onClick={() => setOpen(false)}
                   disabled={isPending}
                   className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold border-border"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isPending} className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
+                <Button type="submit" data-pdc-tab-stop disabled={isPending} className="rounded-none h-9 text-xs font-mono uppercase tracking-wider font-bold">
                   {isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
                   Confirm Record
                 </Button>
