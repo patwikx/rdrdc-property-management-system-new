@@ -8,6 +8,7 @@ export const publicRoutes = [
   "/auth/new-verification",
   "/api/uploadthing",
   "/api/ar-aging/simple", // Public API for Google Sheets integration
+  "/api/lms/property-data", // Public API for HRIS repair work order tenant/unit lookup
 ];
 
 /**
