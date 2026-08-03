@@ -1086,6 +1086,20 @@ model NoticeItem {
   @@index([noticeId])
 }
 
+// Reusable signatory details for collection notices. A signature belongs to the
+// person, rather than to a single notice, so replacing it is reflected anywhere
+// that person signs a notice.
+model NoticeSignatory {
+  id           String   @id @default(cuid())
+  name         String
+  normalizedName String @unique
+  title        String
+  contact      String?
+  signatureUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 enum NoticeType {
   FIRST_NOTICE
   SECOND_NOTICE

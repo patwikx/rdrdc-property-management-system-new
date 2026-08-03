@@ -4,6 +4,107 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { NoticeType, NoticeStatus, Prisma } from "@prisma/client";
+import { normalizeSignatoryName } from "@/lib/utils/signatory";
+
+export interface NoticeSignatoryProfile {
+  name: string;
+  title: string;
+  contact: string | null;
+  signatureUrl: string | null;
+}
+
+export async function getNoticeSignatoryProfiles(names?: string[]) {
+  try {
+    const normalizedNames = names
+      ?.map(normalizeSignatoryName)
+      .filter(Boolean);
+
+    return await prisma.noticeSignatory.findMany({
+      where: normalizedNames?.length
+        ? { normalizedName: { in: [...new Set(normalizedNames)] } }
+        : undefined,
+      select: {
+        name: true,
+        title: true,
+        contact: true,
+        signatureUrl: true,
+      },
+      orderBy: { name: "asc" },
+    });
+  } catch (error) {
+    console.error("Error fetching notice signatory profiles:", error);
+    throw new Error("Failed to fetch notice signatories");
+  }
+}
+
+interface SaveNoticeSignatoryProfile {
+  name: string;
+  title: string;
+  contact: string | null;
+  signatureUrl?: string | null;
+}
+
+export async function saveNoticeSignatoryProfiles(profiles: SaveNoticeSignatoryProfile[]) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const validProfiles = profiles.map(profile => ({
+    ...profile,
+    name: profile.name.trim(),
+    title: profile.title.trim(),
+    contact: profile.contact?.trim() || null,
+  }));
+
+  if (validProfiles.some(profile => !profile.name || !profile.title)) {
+    throw new Error("Each signatory needs a name and title");
+  }
+
+  const keys = validProfiles.map(profile => normalizeSignatoryName(profile.name));
+  if (keys.some(key => !key) || new Set(keys).size !== keys.length) {
+    throw new Error("Primary and secondary signatories must be different people");
+  }
+
+  try {
+    const savedProfiles = await prisma.$transaction(
+      validProfiles.map((profile, index) => {
+        const normalizedName = keys[index];
+        const profileData = {
+          name: profile.name,
+          title: profile.title,
+          contact: profile.contact,
+          ...(profile.signatureUrl !== undefined ? { signatureUrl: profile.signatureUrl } : {}),
+        };
+
+        return prisma.noticeSignatory.upsert({
+          where: { normalizedName },
+          create: {
+            normalizedName,
+            name: profile.name,
+            title: profile.title,
+            contact: profile.contact,
+            signatureUrl: profile.signatureUrl ?? null,
+          },
+          update: profileData,
+          select: {
+            name: true,
+            title: true,
+            contact: true,
+            signatureUrl: true,
+          },
+        });
+      })
+    );
+
+    revalidatePath("/notices/create");
+    revalidatePath("/notices");
+    return savedProfiles;
+  } catch (error) {
+    console.error("Error saving notice signatory profiles:", error);
+    throw new Error("Failed to save notice signatories");
+  }
+}
 
 export async function getTenants() {
   try {

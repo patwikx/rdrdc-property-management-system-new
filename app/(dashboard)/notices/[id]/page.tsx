@@ -9,7 +9,14 @@ import { Badge } from "@/components/ui/badge";
 
 import { ArrowLeft, Printer, Download, Edit3, Save, X, Plus, Trash2, Calendar, FileText, Eye, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getTenantNoticeById, getTenantNotices, updateTenantNotice } from "@/lib/actions/tenant-notice";
+import {
+  getNoticeSignatoryProfiles,
+  getTenantNoticeById,
+  getTenantNotices,
+  updateTenantNotice,
+  type NoticeSignatoryProfile,
+} from "@/lib/actions/tenant-notice";
+import { normalizeSignatoryName } from "@/lib/utils/signatory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +79,7 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [canEscalate, setCanEscalate] = useState(false);
+  const [signatoryProfiles, setSignatoryProfiles] = useState<Record<string, NoticeSignatoryProfile>>({});
   
   const [formData, setFormData] = useState({
     primarySignatory: "",
@@ -106,7 +114,15 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     const loadNotice = async () => {
       try {
         const noticeData = await getTenantNoticeById(noticeId);
-        setNotice(noticeData as unknown as NoticeDetail);
+        const loadedNotice = noticeData as unknown as NoticeDetail;
+        setNotice(loadedNotice);
+        const profiles = await getNoticeSignatoryProfiles([
+          loadedNotice.primarySignatory,
+          loadedNotice.secondarySignatory,
+        ]);
+        setSignatoryProfiles(Object.fromEntries(
+          profiles.map(profile => [normalizeSignatoryName(profile.name), profile])
+        ));
       } catch (error) {
         toast.error("Failed to load notice");
         router.push("/notices");
@@ -254,6 +270,9 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
 
   // Function to get signature image based on signatory name
   const getSignatureImage = (signatoryName: string) => {
+    const savedSignature = signatoryProfiles[normalizeSignatoryName(signatoryName)]?.signatureUrl;
+    if (savedSignature) return savedSignature;
+
     const normalizedName = signatoryName.toLowerCase().replace(/\s+/g, '');
     
     // Check for common variations of the names

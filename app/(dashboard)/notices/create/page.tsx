@@ -42,8 +42,17 @@ import {
   ArrowUpRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { createTenantNotice, getTenantNoticeById, getTenants, getTenantNoticeCount } from "@/lib/actions/tenant-notice";
+import {
+  createTenantNotice,
+  getNoticeSignatoryProfiles,
+  getTenantNoticeById,
+  getTenants,
+  getTenantNoticeCount,
+  saveNoticeSignatoryProfiles,
+  type NoticeSignatoryProfile,
+} from "@/lib/actions/tenant-notice";
 import { cn } from "@/lib/utils";
+import { normalizeSignatoryName } from "@/lib/utils/signatory";
 
 interface Tenant {
   id: string;
@@ -112,6 +121,10 @@ export default function CreateNoticePage() {
   const [loadingNoticeCount, setLoadingNoticeCount] = useState(false);
   const [loadingSourceNotice, setLoadingSourceNotice] = useState(false);
   const [sourceNotice, setSourceNotice] = useState<SourceNotice | null>(null);
+  const [savingSignatories, setSavingSignatories] = useState(false);
+  const [uploadingSignature, setUploadingSignature] = useState<"primary" | "secondary" | null>(null);
+  const [signatoryProfiles, setSignatoryProfiles] = useState<Record<string, NoticeSignatoryProfile>>({});
+  const [pendingSignatureUrls, setPendingSignatureUrls] = useState<{ primary?: string; secondary?: string }>({});
 
   const [formData, setFormData] = useState({
     tenantId: "",
@@ -166,6 +179,7 @@ export default function CreateNoticePage() {
 
   useEffect(() => {
     loadTenants();
+    loadSignatoryProfiles();
   }, []);
 
   useEffect(() => {
@@ -263,6 +277,36 @@ export default function CreateNoticePage() {
       setTenants(tenantsData);
     } catch {
       toast.error("Failed to load tenants");
+    }
+  };
+
+  const loadSignatoryProfiles = async () => {
+    try {
+      const profiles = await getNoticeSignatoryProfiles();
+      const profileMap = Object.fromEntries(
+        profiles.map(profile => [normalizeSignatoryName(profile.name), profile])
+      );
+      setSignatoryProfiles(profileMap);
+
+      const primary = profileMap[normalizeSignatoryName("DARYLL JOY ENRIQUEZ")];
+      const secondary = profileMap[normalizeSignatoryName("C.A.B. LAGUINDAM")];
+      // An escalation intentionally starts with the source notice's signatories.
+      if (!sourceNoticeId && (primary || secondary)) {
+        setFormData(previous => ({
+          ...previous,
+          ...(primary ? {
+            primarySignatory: primary.name,
+            primaryTitle: primary.title,
+            primaryContact: primary.contact || "",
+          } : {}),
+          ...(secondary ? {
+            secondarySignatory: secondary.name,
+            secondaryTitle: secondary.title,
+          } : {}),
+        }));
+      }
+    } catch {
+      toast.error("Failed to load saved signatories");
     }
   };
 
@@ -377,7 +421,13 @@ export default function CreateNoticePage() {
     }
   };
 
-  const getSignatureImage = (signatoryName: string) => {
+  const getSignatureImage = (signatoryName: string, role: "primary" | "secondary") => {
+    const pendingSignature = pendingSignatureUrls[role];
+    if (pendingSignature) return pendingSignature;
+
+    const savedSignature = signatoryProfiles[normalizeSignatoryName(signatoryName)]?.signatureUrl;
+    if (savedSignature) return savedSignature;
+
     const normalizedName = signatoryName.toLowerCase().replace(/\s+/g, '');
 
     if (normalizedName.includes('daryll') || normalizedName.includes('daryl')) {
@@ -387,6 +437,74 @@ export default function CreateNoticePage() {
     }
 
     return null;
+  };
+
+  const handleSignatureUpload = async (
+    role: "primary" | "secondary",
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file for the signature");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Signature images must be 5MB or smaller");
+      return;
+    }
+
+    setUploadingSignature(role);
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      const response = await fetch("/api/upload", { method: "POST", body: uploadData });
+      const result = await response.json();
+
+      if (!response.ok || !result.fileUrl) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      setPendingSignatureUrls(previous => ({ ...previous, [role]: result.fileUrl }));
+      toast.success("Signature uploaded. Save signatories to use it on all notices.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload signature");
+    } finally {
+      setUploadingSignature(null);
+    }
+  };
+
+  const handleSaveSignatories = async () => {
+    setSavingSignatories(true);
+    try {
+      const savedProfiles = await saveNoticeSignatoryProfiles([
+        {
+          name: formData.primarySignatory,
+          title: formData.primaryTitle,
+          contact: formData.primaryContact,
+          ...(pendingSignatureUrls.primary !== undefined ? { signatureUrl: pendingSignatureUrls.primary } : {}),
+        },
+        {
+          name: formData.secondarySignatory,
+          title: formData.secondaryTitle,
+          contact: null,
+          ...(pendingSignatureUrls.secondary !== undefined ? { signatureUrl: pendingSignatureUrls.secondary } : {}),
+        },
+      ]);
+
+      setSignatoryProfiles(previous => ({
+        ...previous,
+        ...Object.fromEntries(savedProfiles.map(profile => [normalizeSignatoryName(profile.name), profile])),
+      }));
+      setPendingSignatureUrls({});
+      toast.success("Signatories saved. Their details and signatures will be used across notices.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save signatories");
+    } finally {
+      setSavingSignatories(false);
+    }
   };
 
   const selectedTenant = tenants.find(t => t.id === formData.tenantId);
@@ -963,15 +1081,28 @@ export default function CreateNoticePage() {
                         <UserCheck className="h-4 w-4" />
                         Signatories
                       </h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSignatories(!showSignatories)}
-                        className="rounded-none h-7 text-[10px] font-mono uppercase border-border"
-                      >
-                        {showSignatories ? 'HIDE' : 'EDIT'}
-                      </Button>
+                      <div className="flex gap-2">
+                        {showSignatories && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleSaveSignatories}
+                            disabled={savingSignatories || uploadingSignature !== null}
+                            className="rounded-none h-7 text-[10px] font-mono uppercase"
+                          >
+                            {savingSignatories ? "SAVING..." : "SAVE SIGNATORIES"}
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowSignatories(!showSignatories)}
+                          className="rounded-none h-7 text-[10px] font-mono uppercase border-border"
+                        >
+                          {showSignatories ? 'HIDE' : 'EDIT'}
+                        </Button>
+                      </div>
                     </div>
 
                     {showSignatories && (
@@ -1014,6 +1145,20 @@ export default function CreateNoticePage() {
                                   />
                                 </div>
                               </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Signature</Label>
+                                <div className="flex items-center gap-3">
+                                  <Input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    className="h-8 max-w-[230px] rounded-none font-mono text-[10px] border-blue-200 file:mr-2 file:border-0 file:bg-transparent file:text-[10px] file:font-bold"
+                                    disabled={uploadingSignature !== null}
+                                    onChange={(event) => handleSignatureUpload("primary", event)}
+                                  />
+                                  {uploadingSignature === "primary" && <span className="text-[10px] font-mono">UPLOADING...</span>}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">PNG, JPG, or WebP. Saving replaces this person&apos;s signature everywhere.</p>
+                              </div>
                             </div>
                           </div>
 
@@ -1042,6 +1187,20 @@ export default function CreateNoticePage() {
                                   onChange={(e) => setFormData({ ...formData, secondaryTitle: e.target.value })}
                                   placeholder="ENTER TITLE"
                                 />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase tracking-wide text-gray-700">Signature</Label>
+                                <div className="flex items-center gap-3">
+                                  <Input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    className="h-8 max-w-[230px] rounded-none font-mono text-[10px] border-green-200 file:mr-2 file:border-0 file:bg-transparent file:text-[10px] file:font-bold"
+                                    disabled={uploadingSignature !== null}
+                                    onChange={(event) => handleSignatureUpload("secondary", event)}
+                                  />
+                                  {uploadingSignature === "secondary" && <span className="text-[10px] font-mono">UPLOADING...</span>}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">PNG, JPG, or WebP. Saving replaces this person&apos;s signature everywhere.</p>
                               </div>
                             </div>
                           </div>
@@ -1222,9 +1381,9 @@ export default function CreateNoticePage() {
                     <div className="mb-4">
                       {/* Primary Signatory */}
                       <div className="mb-4 signature-container">
-                        {getSignatureImage(formData.primarySignatory) && (
+                        {getSignatureImage(formData.primarySignatory, "primary") && (
                           <Image
-                            src={getSignatureImage(formData.primarySignatory)!}
+                            src={getSignatureImage(formData.primarySignatory, "primary")!}
                             alt={`${formData.primarySignatory} signature`}
                             width={80}
                             height={25}
@@ -1246,9 +1405,9 @@ export default function CreateNoticePage() {
 
                       {/* Secondary Signatory */}
                       <div className="mt-4 signature-container">
-                        {getSignatureImage(formData.secondarySignatory) && (
+                        {getSignatureImage(formData.secondarySignatory, "secondary") && (
                           <Image
-                            src={getSignatureImage(formData.secondarySignatory)!}
+                            src={getSignatureImage(formData.secondarySignatory, "secondary")!}
                             alt={`${formData.secondarySignatory} signature`}
                             width={150}
                             height={70}
