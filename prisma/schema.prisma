@@ -1090,14 +1090,15 @@ model NoticeItem {
 // person, rather than to a single notice, so replacing it is reflected anywhere
 // that person signs a notice.
 model NoticeSignatory {
-  id           String   @id @default(cuid())
-  name         String
+  id             String   @id @default(cuid())
+  name           String
   normalizedName String @unique
-  title        String
-  contact      String?
-  signatureUrl String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  title          String
+  contact        String?
+  signatureUrl   String?
+  activeRole     String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 enum NoticeType {

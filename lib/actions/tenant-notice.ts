@@ -11,6 +11,7 @@ export interface NoticeSignatoryProfile {
   title: string;
   contact: string | null;
   signatureUrl: string | null;
+  activeRole: string | null;
 }
 
 export async function getNoticeSignatoryProfiles(names?: string[]) {
@@ -28,6 +29,7 @@ export async function getNoticeSignatoryProfiles(names?: string[]) {
         title: true,
         contact: true,
         signatureUrl: true,
+        activeRole: true,
       },
       orderBy: { name: "asc" },
     });
@@ -67,17 +69,25 @@ export async function saveNoticeSignatoryProfiles(profiles: SaveNoticeSignatoryP
   }
 
   try {
-    const savedProfiles = await prisma.$transaction(
-      validProfiles.map((profile, index) => {
+    const savedProfiles = await prisma.$transaction(async transaction => {
+      await transaction.noticeSignatory.updateMany({
+        where: { activeRole: { in: ["PRIMARY", "SECONDARY"] } },
+        data: { activeRole: null },
+      });
+
+      const saved = [];
+      for (const [index, profile] of validProfiles.entries()) {
         const normalizedName = keys[index];
+        const activeRole = index === 0 ? "PRIMARY" : "SECONDARY";
         const profileData = {
           name: profile.name,
           title: profile.title,
           contact: profile.contact,
+          activeRole,
           ...(profile.signatureUrl !== undefined ? { signatureUrl: profile.signatureUrl } : {}),
         };
 
-        return prisma.noticeSignatory.upsert({
+        const savedProfile = await transaction.noticeSignatory.upsert({
           where: { normalizedName },
           create: {
             normalizedName,
@@ -85,6 +95,7 @@ export async function saveNoticeSignatoryProfiles(profiles: SaveNoticeSignatoryP
             title: profile.title,
             contact: profile.contact,
             signatureUrl: profile.signatureUrl ?? null,
+            activeRole,
           },
           update: profileData,
           select: {
@@ -92,10 +103,14 @@ export async function saveNoticeSignatoryProfiles(profiles: SaveNoticeSignatoryP
             title: true,
             contact: true,
             signatureUrl: true,
+            activeRole: true,
           },
         });
-      })
-    );
+        saved.push(savedProfile);
+      }
+
+      return saved;
+    });
 
     revalidatePath("/notices/create");
     revalidatePath("/notices");

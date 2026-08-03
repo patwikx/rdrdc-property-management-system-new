@@ -288,8 +288,10 @@ export default function CreateNoticePage() {
       );
       setSignatoryProfiles(profileMap);
 
-      const primary = profileMap[normalizeSignatoryName("DARYLL JOY ENRIQUEZ")];
-      const secondary = profileMap[normalizeSignatoryName("C.A.B. LAGUINDAM")];
+      const primary = profiles.find(profile => profile.activeRole === "PRIMARY")
+        || profileMap[normalizeSignatoryName("DARYLL JOY ENRIQUEZ")];
+      const secondary = profiles.find(profile => profile.activeRole === "SECONDARY")
+        || profileMap[normalizeSignatoryName("C.A.B. LAGUINDAM")];
       // An escalation intentionally starts with the source notice's signatories.
       if (!sourceNoticeId && (primary || secondary)) {
         setFormData(previous => ({
