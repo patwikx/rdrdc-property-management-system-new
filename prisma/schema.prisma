@@ -1044,8 +1044,8 @@ model TenantNotice {
   primaryTitle     String @default("Credit and Collection Officer")
   primaryContact   String @default("+63998 585 0879")
 
-  secondarySignatory String @default("C.A.B. LAGUINDAM")
-  secondaryTitle     String @default("AVP-Finance/Controller")
+  secondarySignatory String
+  secondaryTitle     String
 
   // Tracking
   isSettled   Boolean   @default(false)

@@ -278,8 +278,6 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     // Check for common variations of the names
     if (normalizedName.includes('daryll') || normalizedName.includes('daryl')) {
       return '/DJE.png'; // Adjust filename as needed
-    } else if (normalizedName.includes('laguindam') || normalizedName.includes('cab') || normalizedName.includes('c.a.b')) {
-      return '/CABL.png'; // Adjust filename as needed
     }
     
     return null; // No signature found

@@ -132,8 +132,8 @@ export default function CreateNoticePage() {
     primarySignatory: "DARYLL JOY ENRIQUEZ",
     primaryTitle: "Credit and Collection Officer",
     primaryContact: "+63998 585 0879",
-    secondarySignatory: "C.A.B. LAGUINDAM",
-    secondaryTitle: "AVP - Finance/Controller"
+    secondarySignatory: "",
+    secondaryTitle: ""
   });
 
   const [items, setItems] = useState<Array<{
@@ -215,12 +215,7 @@ export default function CreateNoticePage() {
         setSourceNotice(source);
         setFormData(prev => ({
           ...prev,
-          tenantId: source.tenant.id,
-          primarySignatory: source.primarySignatory,
-          primaryTitle: source.primaryTitle,
-          primaryContact: source.primaryContact,
-          secondarySignatory: source.secondarySignatory,
-          secondaryTitle: source.secondaryTitle
+          tenantId: source.tenant.id
         }));
         setItems(
           source.items.length > 0
@@ -290,10 +285,9 @@ export default function CreateNoticePage() {
 
       const primary = profiles.find(profile => profile.activeRole === "PRIMARY")
         || profileMap[normalizeSignatoryName("DARYLL JOY ENRIQUEZ")];
-      const secondary = profiles.find(profile => profile.activeRole === "SECONDARY")
-        || profileMap[normalizeSignatoryName("C.A.B. LAGUINDAM")];
-      // An escalation intentionally starts with the source notice's signatories.
-      if (!sourceNoticeId && (primary || secondary)) {
+      const secondary = profiles.find(profile => profile.activeRole === "SECONDARY");
+      // Every new notice, including an escalation, uses the active profiles.
+      if (primary || secondary) {
         setFormData(previous => ({
           ...previous,
           ...(primary ? {
@@ -434,8 +428,6 @@ export default function CreateNoticePage() {
 
     if (normalizedName.includes('daryll') || normalizedName.includes('daryl')) {
       return '/DJE.png';
-    } else if (normalizedName.includes('laguindam') || normalizedName.includes('cab') || normalizedName.includes('c.a.b')) {
-      return '/CABL.png';
     }
 
     return null;
@@ -554,6 +546,16 @@ export default function CreateNoticePage() {
 
     if (!formData.tenantId) {
       toast.error("Please select a tenant");
+      return;
+    }
+
+    if (!formData.primarySignatory.trim() || !formData.primaryTitle.trim()) {
+      toast.error("Please enter the primary signatory's name and title");
+      return;
+    }
+
+    if (!formData.secondarySignatory.trim() || !formData.secondaryTitle.trim()) {
+      toast.error("Please enter and save the secondary signatory's name and title");
       return;
     }
 
