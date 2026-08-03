@@ -1044,8 +1044,8 @@ model TenantNotice {
   primaryTitle     String @default("Credit and Collection Officer")
   primaryContact   String @default("+63998 585 0879")
 
-  secondarySignatory String @default("C.A.B. LAGUINDAM")
-  secondaryTitle     String @default("AVP-Finance/Controller")
+  secondarySignatory String
+  secondaryTitle     String
 
   // Tracking
   isSettled   Boolean   @default(false)
@@ -1084,6 +1084,21 @@ model NoticeItem {
   notice TenantNotice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
   @@index([noticeId])
+}
+
+// Reusable signatory details for collection notices. A signature belongs to the
+// person, rather than to a single notice, so replacing it is reflected anywhere
+// that person signs a notice.
+model NoticeSignatory {
+  id             String   @id @default(cuid())
+  name           String
+  normalizedName String @unique
+  title          String
+  contact        String?
+  signatureUrl   String?
+  activeRole     String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 enum NoticeType {
