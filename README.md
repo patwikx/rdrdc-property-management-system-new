@@ -925,3 +925,15 @@ For technical support or questions, contact the IT department.
 ---
 
 **Built with ❤️ for RDRDC Property Management**
+# HRIS Property Collection Migration API
+
+The temporary migration export is available at `/api/migrations/property-collections` for the HRIS PDC and Collection Notice cutover. It is read-only, paginated, and disabled by default.
+
+Configure the legacy PMS server with:
+
+```text
+PROPERTY_COLLECTION_MIGRATION_ENABLED=true
+PROPERTY_COLLECTION_MIGRATION_API_KEY=<same strong key configured in HRIS>
+```
+
+Enable it only for the rehearsal and cutover window. Disable it after HRIS reconciliation. The endpoint accepts only Bearer-authenticated `manifest`, `pdcs`, and `notices` resources. Notice rows include their line items and Tenant BP Code.
